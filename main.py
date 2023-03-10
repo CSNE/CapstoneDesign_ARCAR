@@ -51,8 +51,11 @@ tid_camraw=gui.ImageDisplayWindow(img_disp_root,"Source Image")
 
 def display(img):
 	tid_camraw.set_image(img)
-	det,seg=ai.identify_image(img,target_object=TARGET_OBJECT)
+
+	det=ai.detect(img,target_object=TARGET_OBJECT)
 	tid_hud_det.set_image(det)
+
+	seg=ai.segment(img,target_object=TARGET_OBJECT)
 	if seg is not None:
 		tid_hud_seg.set_image(seg)
 
