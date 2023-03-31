@@ -1,7 +1,7 @@
 # Options
 
-#IMAGE_SOURCE=("WEBCAM",3) #Webcam index
-IMAGE_SOURCE=("IMGFILE","vlcsnap-2023-03-10-22h57m59s043.png") #Image file and path
+#IMAGE_SOURCE=("WEBCAM",2) #Webcam index
+IMAGE_SOURCE=("IMGFILE","testimg.png") #Image file and path
 
 # Objects in YOLOv8s.pt:
 # person / bicycle / car / motorcycle / airplane / bus / train / truck / boat
@@ -14,7 +14,7 @@ IMAGE_SOURCE=("IMGFILE","vlcsnap-2023-03-10-22h57m59s043.png") #Image file and p
 # bed / dining table / toilet / tv / laptop / mouse / remote / keyboard / cell phone
 # microwave / oven / toaster / sink / refrigerator / book / clock / vase / scissors
 # teddy bear / hair drier / toothbrush
-TARGET_OBJECT = "car"
+TARGET_OBJECT = "person"
 
 
 
@@ -37,6 +37,7 @@ import cv2
 # Local modules
 import gui
 import ai
+import depth
 
 ## GUI Setup
 img_disp_root=gui.ImageDisplayerRoot()
@@ -46,8 +47,9 @@ time.sleep(0.5) # Race condition
 tid_hud_det=gui.ImageDisplayWindow(img_disp_root,"Detection")
 tid_hud_seg=gui.ImageDisplayWindow(img_disp_root,"Segmentation")
 tid_camraw=gui.ImageDisplayWindow(img_disp_root,"Source Image")
+tid_depth=gui.ImageDisplayWindow(img_disp_root,"Depth Estimation")
 
-
+de=depth.DepthEstimator()
 
 def display(img):
 	tid_camraw.set_image(img)
@@ -58,6 +60,10 @@ def display(img):
 	seg=ai.segment(img,target_object=TARGET_OBJECT)
 	if seg is not None:
 		tid_hud_seg.set_image(seg)
+
+	dep=de.estimate(img)
+	dvis=depth.visualize_depth(dep)
+	tid_depth.set_image(dvis)
 
 
 if IMAGE_SOURCE[0]=="WEBCAM":
