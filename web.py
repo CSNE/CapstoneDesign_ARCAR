@@ -17,8 +17,8 @@ class ServerThread(threading.Thread):
 			def do_GET(self):
 				path=self.path.split("?")[0]
 				client_addr, client_port=self.client_address
-				print("GET on",path)
-				print("from",client_addr)
+				#print("GET on",path)
+				#print("from",client_addr)
 				
 				try:
 					response=outer_self._get_data(path)

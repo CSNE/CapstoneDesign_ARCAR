@@ -11,6 +11,7 @@
 <img id="det"></img>
 <img id="seg"></img>
 <img id="dep"></img>
+<img id="com"></img>
 
 <style>
 img{
@@ -25,6 +26,7 @@ var rawImg=document.getElementById("raw");
 var detImg=document.getElementById("det");
 var segImg=document.getElementById("seg");
 var depImg=document.getElementById("dep");
+var comImg=document.getElementById("com");
 function periodic(){
 	
 	var xhr=new XMLHttpRequest();
@@ -42,6 +44,7 @@ function periodic(){
 	detImg.src="det.jpg?forcereload="+(new Date()).getTime();
 	segImg.src="seg.jpg?forcereload="+(new Date()).getTime();
 	depImg.src="dep.jpg?forcereload="+(new Date()).getTime();
+	comImg.src="com.jpg?forcereload="+(new Date()).getTime();
 	
 }
 setInterval(periodic,500);

@@ -64,7 +64,7 @@ def visualize_detections(detections,size):
 
 SegmentationResult=collections.namedtuple(
 	"SegmentationResult",
-	["segments","area","confidence","name","xmin","xmax","ymin","ymax"])
+	["points","area","confidence","name","xmin","xmax","ymin","ymax"])
 
 def segment(pim):
 	# Run model
@@ -76,7 +76,7 @@ def segment(pim):
 	orig_size=result_seg.orig_shape
 	masks=result_seg.masks
 	if masks is None:
-		return None
+		return []
 	segs=masks.segments
 	areas=masks.data
 	boxes=(result_seg.boxes.xyxyn).tolist()
@@ -96,8 +96,8 @@ def segment(pim):
 		
 		results.append(
 			SegmentationResult(
-				segments=s,
-				area=a,
+				points=s,
+				area=npa,
 				confidence=c,
 				name=n,
 				xmin=b[0]*orig_size[1],
