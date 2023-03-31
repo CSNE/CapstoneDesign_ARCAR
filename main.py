@@ -1,7 +1,8 @@
 # Options
 
 #IMAGE_SOURCE=("WEBCAM",2) #Webcam index
-IMAGE_SOURCE=("IMGFILE","testimg.png") #Image file and path
+#IMAGE_SOURCE=("IMGFILE","testimg.png") #Image file and path
+IMAGE_SOURCE=("VIDFILE","../KakaoTalk_20230310_155831877.mp4") #Video file and path
 
 # Objects in YOLOv8s.pt:
 # person / bicycle / car / motorcycle / airplane / bus / train / truck / boat
@@ -14,7 +15,7 @@ IMAGE_SOURCE=("IMGFILE","testimg.png") #Image file and path
 # bed / dining table / toilet / tv / laptop / mouse / remote / keyboard / cell phone
 # microwave / oven / toaster / sink / refrigerator / book / clock / vase / scissors
 # teddy bear / hair drier / toothbrush
-TARGET_OBJECT = "person"
+TARGET_OBJECT = "car"
 
 
 
@@ -38,6 +39,7 @@ import cv2
 import gui
 import ai
 import depth
+import video
 
 ## GUI Setup
 img_disp_root=gui.ImageDisplayerRoot()
@@ -52,6 +54,10 @@ tid_depth=gui.ImageDisplayWindow(img_disp_root,"Depth Estimation")
 de=depth.DepthEstimator()
 
 def display(img):
+	if img_disp_root.opt_mirror:
+		img=img.transpose(PIL.Image.FLIP_LEFT_RIGHT)
+
+		
 	tid_camraw.set_image(img)
 
 	det=ai.detect(img,target_object=TARGET_OBJECT)
@@ -75,18 +81,17 @@ if IMAGE_SOURCE[0]=="WEBCAM":
 			break
 
 		pim=PIL.Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-		#print(pim)
-		if img_disp_root.opt_mirror:
-			pim=pim.transpose(PIL.Image.FLIP_LEFT_RIGHT)
 
 		display(pim)
 
 elif IMAGE_SOURCE[0]=="IMGFILE":
 	display(PIL.Image.open(IMAGE_SOURCE[1]))
 elif IMAGE_SOURCE[0]=="VIDFILE":
-	#TODO implement video reading
-	pass
+	startT=time.time()
+	while True:
+		vf=video.get_video_frame(IMAGE_SOURCE[1],time.time()-startT)
+		display(vf)
 else:
 	0/0
 
-print("Terminated.")
+print("Main thread terminated.")

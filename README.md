@@ -10,6 +10,8 @@ CUDA: `pip3 install torch torchvision`
 `pip3 install tensorboardX`
 #### YOLOv8
 `pip3 install ultralytics`
+#### FFMPEG
+`apt install ffmpeg`
 #### Get code
 `git clone --recurse-submodules https://github.com/CSNE/CapstoneDesign_ARCAR.git`
 

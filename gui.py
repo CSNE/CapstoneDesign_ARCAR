@@ -26,6 +26,7 @@ class ImageDisplayerRoot(threading.Thread):
 	def rootwindow(self):
 		return self._tkroot
 	def run(self):
+		print("tk thread started.")
 		self._tkroot=tkinter.Tk()
 		self._kill_btn=tkinter.Button(self._tkroot,
 								text="Die",
@@ -37,6 +38,7 @@ class ImageDisplayerRoot(threading.Thread):
 								variable=self._mirror_var)
 		self._mirror_cb.pack()
 		self._tkroot.mainloop()
+		print("tk thread terminated.")
 
 class ImageDisplayWindow:
 	def __init__(self,idr,title):

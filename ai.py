@@ -61,6 +61,9 @@ def segment(pim,*,target_object):
 	# Get results
 	orig_size=result_seg.orig_shape
 	masks=result_seg.masks
+	if masks is None:
+		return None
+		
 	segs=masks.segments
 	areas=masks.data
 	confidences=(result_seg.boxes.conf).tolist()
