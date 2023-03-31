@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>ARCAR Web Renderer</title>
+</head>
+
+<body>
+
+<div id="information"></div>
+<img id="raw"></img>
+<img id="det"></img>
+<img id="seg"></img>
+<img id="dep"></img>
+
+<style>
+img{
+	width:480px;
+	height:360px;
+}
+</style>
+<script>
+
+var infoDiv=document.getElementById("information");
+var rawImg=document.getElementById("raw");
+var detImg=document.getElementById("det");
+var segImg=document.getElementById("seg");
+var depImg=document.getElementById("dep");
+function periodic(){
+	
+	var xhr=new XMLHttpRequest();
+	xhr.open("GET","/information");
+	xhr.addEventListener("load",function(e){
+		if (xhr.status==200) infoDiv.innerHTML=xhr.responseText;
+	});
+	xhr.addEventListener("error",function(e){
+		console.log("Request errored.");
+	});
+	xhr.overrideMimeType("text/plain");
+	xhr.send();
+	
+	rawImg.src="raw.jpg?forcereload="+(new Date()).getTime();
+	detImg.src="det.jpg?forcereload="+(new Date()).getTime();
+	segImg.src="seg.jpg?forcereload="+(new Date()).getTime();
+	depImg.src="dep.jpg?forcereload="+(new Date()).getTime();
+	
+}
+setInterval(periodic,500);
+</script>
+</body>
+
+
+</html>
