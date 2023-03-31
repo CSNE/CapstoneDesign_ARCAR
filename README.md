@@ -24,4 +24,17 @@ CUDA: `pip3 install torch torchvision`
 `yolo detect predict model=yolov8n.pt source='https://ultralytics.com/images/bus.jpg' show=True`
 
 ## Run
-`python3 main.py`
+`main.py --source SOURCE --input-file INPUT_FILE --webcam-number WEBCAM_NUMBER --output OUTPUT`  
+`--source` `-src`: select the frame source. `webcam`, `image`, or `video`  
+`--input-file` `-i`: for `image` and `video` sources, you need to supply the file path here.  
+`--webcam-number` `-wc`: for `webcam` source, you can set the webcam number here. If not, defaults to 0.  
+`--output` `-o`: Select how to visualize the program output.  
+- `tk`: Outputs to a `tkinter` GUI.
+- `web`: Starts a web server. Go to `http://localhost:28301` to view results.
+- `file`: outputs to a JPG file.
+- `nothing`: Don't output anything.
+
+Examples:  
+`python3 main.py --source image -i testimg.png --output nothing`  
+`python3 main.py --source video --input-file video.mp4 --output tk`  
+`python3 main.py -src webcam -wc 2 -o web`  

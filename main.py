@@ -1,13 +1,37 @@
 # Options
 
-#IMAGE_SOURCE=("WEBCAM",2) #Webcam index
-#IMAGE_SOURCE=("IMGFILE","testimg.png") #Image file and path
-IMAGE_SOURCE=("VIDFILE","../KakaoTalk_20230310_155831877.mp4") #Video file and path
+import argparse
+import sys
 
-#OUTPUT_MODE="TK"
-OUTPUT_MODE="WEB"
-#OUTPUT_MODE="NOTHING"
-#OUTPUT_MODE="FILE"
+ap=argparse.ArgumentParser(
+	description="ARCAR Python Program")
+ap.add_argument(
+	"--source","-src",
+	choices=["webcam","image","video"],
+	required=True)
+ap.add_argument(
+	"--input-file","-i")
+ap.add_argument(
+	"--webcam-number","-wc",
+	default=0)
+ap.add_argument(
+	"--output","-o",
+	choices=["tk","web","file","nothing"],
+	required=True)
+
+args=ap.parse_args()
+
+arg_source=args.source
+arg_wc=args.webcam_number
+if arg_source in ("image","video"):
+	if "input_file" not in args:
+		print("For image or video input, you need to supply the input file.")
+		print("( --input-file=FILE or -f FILE )")
+		sys.exit(1)
+	else:
+		arg_infile=args.input_file
+		
+arg_output=args.output
 
 # Standard Library
 import time
@@ -18,17 +42,17 @@ import cv2
 import numpy as np
 
 # Local modules
-if OUTPUT_MODE=="TK":
+if arg_output=="tk":
 	import gui
 import ai
 import depth
 import video
-if OUTPUT_MODE=="WEB":
+if arg_output=="web":
 	import web
 import maths
 
 ## GUI Setup
-if OUTPUT_MODE=="TK":
+if arg_output=="tk":
 	img_disp_root=gui.ImageDisplayerRoot()
 	img_disp_root.start()
 	time.sleep(0.5) # Race condition
@@ -42,7 +66,7 @@ if OUTPUT_MODE=="TK":
 
 
 # Web Server setup
-if OUTPUT_MODE=="WEB":
+if arg_output=="web":
 	server_port=28301
 	st=web.ServerThread(server_port)
 	st.start()
@@ -56,7 +80,7 @@ font=PIL.ImageFont.truetype("/usr/share/fonts/TTF/Hack-Bold.ttf",size=36)
 de=depth.DepthEstimator()
 
 def display(img):
-	if OUTPUT_MODE=="TK":
+	if arg_output=="tk":
 		if img_disp_root.opt_mirror:
 			img=img.transpose(PIL.Image.FLIP_LEFT_RIGHT)
 	
@@ -102,20 +126,20 @@ def display(img):
 			fill="#00FFFF",font=font,anchor="ms")
 	
 	# Output
-	if OUTPUT_MODE=="TK":
+	if arg_output=="tk":
 		tid_camraw.set_image(img)
 		#tid_hud_det.set_image(det_vis)
 		tid_hud_seg.set_image(seg_vis)
 		tid_depth.set_image(dvis)
 		tid_combined.set_image(combined_vis)
-	elif OUTPUT_MODE=="WEB":
+	elif arg_output=="web":
 		st.put_image("/raw.jpg",img)
 		#st.put_image("/det.jpg",det_vis)
 		st.put_image("/seg.jpg",seg_vis)
 		st.put_image("/dep.jpg",dvis)
 		st.put_image("/com.jpg",combined_vis)
 		st.put_string("/information","{:.1f}s".format(vt))
-	elif OUTPUT_MODE=="FILE":
+	elif arg_output=="file":
 		img.save("out_raw.jpg")
 		#det_vis.save("out_det.jpg")
 		seg_vis.save("out_seg.jpg")
@@ -124,8 +148,8 @@ def display(img):
 		
 
 # Image Sources
-if IMAGE_SOURCE[0]=="WEBCAM":
-	camera=cv2.VideoCapture(IMAGE_SOURCE[1])
+if arg_source=="webcam":
+	camera=cv2.VideoCapture(arg_wc)
 	while True:
 		res,img=camera.read()
 		if not res:
@@ -134,15 +158,14 @@ if IMAGE_SOURCE[0]=="WEBCAM":
 		pim=PIL.Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
 		display(pim)
 
-elif IMAGE_SOURCE[0]=="IMGFILE":
-	display(PIL.Image.open(IMAGE_SOURCE[1]))
-elif IMAGE_SOURCE[0]=="VIDFILE":
+elif arg_source=="image":
+	display(PIL.Image.open(arg_infile))
+elif arg_source=="video":
 	startT=time.time()
 	while True:
 		vt=time.time()-startT
-		vf=video.get_video_frame(IMAGE_SOURCE[1],vt)
+		vf=video.get_video_frame(arg_infile,vt)
 		display(vf)
-else:
-	0/0
+
 
 print("Main thread terminated.")
