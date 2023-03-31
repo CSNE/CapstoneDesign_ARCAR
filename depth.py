@@ -4,34 +4,36 @@ import os
 import sys
 import glob
 import argparse
+import time
+import io
+
 import numpy as np
 import PIL.Image as pil
-import matplotlib as mpl
-import matplotlib.cm as cm
-import matplotlib.pyplot as plt
-
-mpl.use('TKAgg')
 
 import torch
 from torchvision import transforms, datasets
 
+import matplotlib as mpl
+import matplotlib.cm as cm
+import matplotlib.pyplot as plt
+# Workaround for Matplotlib erroring on Qt error
+mpl.use('TKAgg')
 
+# Import from MonoDepth2
 sys.path.append("monodepth2")
-
 import networks
 from layers import disp_to_depth
 from utils import download_model_if_doesnt_exist
 from evaluate_depth import STEREO_SCALE_FACTOR
 
-import time
-import io
+
 
 class DepthEstimator:
 	def __init__(self,model_name="mono+stereo_640x192"):
 		self._model_name=model_name
 		self.net_setup()
 	def net_setup(self):
-		print("Setup...")
+		print("Setup DepthEstimator...")
 		if torch.cuda.is_available() and not args.no_cuda:
 			self.device = torch.device("cuda")
 		else:

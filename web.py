@@ -4,7 +4,18 @@ import time
 import io
 import json
 
+import PIL.Image
+
 class ServerThread(threading.Thread):
+	'''
+	A server. Start with:
+	st=ServerThread(PORT)
+	st.start()
+	Insert data with
+	st.put_data("/test",b"asdf")
+	
+	now server will reply with "asdf" whenever you access localhost:PORT/test
+	'''
 	def __init__(self,port):
 		super().__init__()
 		self._port=port
@@ -17,8 +28,6 @@ class ServerThread(threading.Thread):
 			def do_GET(self):
 				path=self.path.split("?")[0]
 				client_addr, client_port=self.client_address
-				#print("GET on",path)
-				#print("from",client_addr)
 				
 				try:
 					response=outer_self._get_data(path)
@@ -43,9 +52,9 @@ class ServerThread(threading.Thread):
 		bio=io.BytesIO()
 		json.dump(d,bio)
 		self.put_data(k,bio.getvalue())
-		
 	def _get_data(self,k):
 		return self._serve_data[k]
+		
 	def run(self):
 		print("Server thread started")
 		self._serv=http.server.ThreadingHTTPServer(('',self._port),self._reqhandler)
@@ -60,7 +69,11 @@ if __name__=="__main__":
 		page=f.read()
 	st=ServerThread(28301)
 	st.put_data("/",page)
-	st.put_data("/test","testdata".encode())
+	st.put_image("/raw.jpg",PIL.Image.open("testimg.png"))
+	st.put_image("/seg.jpg",PIL.Image.open("testimg.png"))
+	st.put_image("/dep.jpg",PIL.Image.open("testimg.png"))
+	st.put_image("/com.jpg",PIL.Image.open("testimg.png"))
+	st.put_string("/information","asdf")
 	st.start()
 	for i in range(10):
 		print(i)

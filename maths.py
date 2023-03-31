@@ -1,4 +1,3 @@
-import torch.nn.functional
 import numpy
 import scipy.ndimage
 

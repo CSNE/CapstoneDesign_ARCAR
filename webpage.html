@@ -19,32 +19,31 @@ img{
 }
 </style>
 <script>
-
-var infoDiv=document.getElementById("information");
-var rawImg=document.getElementById("raw");
-var segImg=document.getElementById("seg");
-var depImg=document.getElementById("dep");
-var comImg=document.getElementById("com");
-function periodic(){
+	var infoDiv=document.getElementById("information");
+	var rawImg=document.getElementById("raw");
+	var segImg=document.getElementById("seg");
+	var depImg=document.getElementById("dep");
+	var comImg=document.getElementById("com");
 	
-	var xhr=new XMLHttpRequest();
-	xhr.open("GET","/information");
-	xhr.addEventListener("load",function(e){
-		if (xhr.status==200) infoDiv.innerHTML=xhr.responseText;
-	});
-	xhr.addEventListener("error",function(e){
-		console.log("Request errored.");
-	});
-	xhr.overrideMimeType("text/plain");
-	xhr.send();
 	
-	rawImg.src="raw.jpg?forcereload="+(new Date()).getTime();
-	segImg.src="seg.jpg?forcereload="+(new Date()).getTime();
-	depImg.src="dep.jpg?forcereload="+(new Date()).getTime();
-	comImg.src="com.jpg?forcereload="+(new Date()).getTime();
-	
-}
-setInterval(periodic,500);
+	function periodic(){
+		var xhr=new XMLHttpRequest();
+		xhr.open("GET","/information");
+		xhr.addEventListener("load",function(e){
+			if (xhr.status==200) infoDiv.innerHTML=xhr.responseText;
+		});
+		xhr.addEventListener("error",function(e){
+			console.log("Request errored.");
+		});
+		xhr.overrideMimeType("text/plain");
+		xhr.send();
+		
+		rawImg.src="raw.jpg?forcereload="+(new Date()).getTime();
+		segImg.src="seg.jpg?forcereload="+(new Date()).getTime();
+		depImg.src="dep.jpg?forcereload="+(new Date()).getTime();
+		comImg.src="com.jpg?forcereload="+(new Date()).getTime();
+	}
+	setInterval(periodic,200);
 </script>
 </body>
 
