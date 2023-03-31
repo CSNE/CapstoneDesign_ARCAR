@@ -118,7 +118,7 @@ def visualize_depth(arr,target_aspect=(9/16)):
 	bio=io.BytesIO()
 	plt.savefig(bio)
 	bio.seek(0)
-	return pil.open(bio)
+	return pil.open(bio).convert("RGB")
 
 if __name__=="__main__":
 	t1=time.time()

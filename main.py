@@ -1,11 +1,13 @@
 # Options
 
 #IMAGE_SOURCE=("WEBCAM",2) #Webcam index
-#IMAGE_SOURCE=("IMGFILE","testimg.png") #Image file and path
-IMAGE_SOURCE=("VIDFILE","../KakaoTalk_20230310_155831877.mp4") #Video file and path
+IMAGE_SOURCE=("IMGFILE","testimg.png") #Image file and path
+#IMAGE_SOURCE=("VIDFILE","../KakaoTalk_20230310_155831877.mp4") #Video file and path
 
 #OUTPUT_MODE="TK"
-OUTPUT_MODE="WEB"
+#OUTPUT_MODE="WEB"
+OUTPUT_MODE="NOTHING"
+#OUTPUT_MODE="FILE"
 
 # Objects in YOLOv8s.pt:
 # person / bicycle / car / motorcycle / airplane / bus / train / truck / boat
@@ -80,19 +82,33 @@ def display(img):
 		tid_camraw.set_image(img)
 	elif OUTPUT_MODE=="WEB":
 		st.put_image("/raw.jpg",img)
+	elif OUTPUT_MODE=="FILE":
+		img.save("out_raw.jpg")
 
-	det=ai.detect(img,target_object=TARGET_OBJECT)
+	dets=ai.detect(img)
+	for d in dets:
+		print(F"X{d.xmin:.0f}-{d.xmax:.0f} Y{d.ymin:.0f}-{d.ymax:.0f} C{d.confidence:.3f} {d.name}")
+	det_vis=ai.visualize_detections(dets,img.size)
+	#print("DETVIS",det_vis.size)
 	if OUTPUT_MODE=="TK":
-		tid_hud_det.set_image(det)
+		tid_hud_det.set_image(det_vis)
 	elif OUTPUT_MODE=="WEB":
-		st.put_image("/det.jpg",det)
+		st.put_image("/det.jpg",det_vis)
+	elif OUTPUT_MODE=="FILE":
+		det_vis.save("out_det.jpg")
 
-	seg=ai.segment(img,target_object=TARGET_OBJECT)
-	if seg is not None:
-		if OUTPUT_MODE=="TK":
-			tid_hud_seg.set_image(seg)
-		elif OUTPUT_MODE=="WEB":
-			st.put_image("/seg.jpg",seg)
+	segs=ai.segment(img)
+	for s in segs:
+		print(F"X{s.xmin:.0f}-{s.xmax:.0f} Y{s.ymin:.0f}-{s.ymax:.0f} C{s.confidence:.3f} {s.name}")
+	seg_vis=ai.visualize_segmentation(segs,img.size)
+	#print("SEGVIS",seg_vis.size)
+
+	if OUTPUT_MODE=="TK":
+		tid_hud_seg.set_image(seg_vis)
+	elif OUTPUT_MODE=="WEB":
+		st.put_image("/seg.jpg",seg_vis)
+	elif OUTPUT_MODE=="FILE":
+		seg_vis.save("out_seg.jpg")
 
 	dep=de.estimate(img)
 	dvis=depth.visualize_depth(dep)
@@ -100,6 +116,8 @@ def display(img):
 		tid_depth.set_image(dvis)
 	elif OUTPUT_MODE=="WEB":
 		st.put_image("/dep.jpg",dvis)
+	elif OUTPUT_MODE=="FILE":
+		dvis.save("out_dep.jpg")
 	
 	
 

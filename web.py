@@ -2,6 +2,7 @@ import http.server
 import threading
 import time
 import io
+import json
 
 class ServerThread(threading.Thread):
 	def __init__(self,port):
@@ -38,6 +39,10 @@ class ServerThread(threading.Thread):
 		self.put_data(k,bio.getvalue())
 	def put_string(self,k,s):
 		self.put_data(k,s.encode())
+	def put_json(self,k,d):
+		bio=io.BytesIO()
+		json.dump(d,bio)
+		self.put_data(k,bio.getvalue())
 		
 	def _get_data(self,k):
 		return self._serve_data[k]
