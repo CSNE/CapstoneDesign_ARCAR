@@ -59,6 +59,7 @@ if OUTPUT_MODE=="TK":
 	tid_hud_seg=gui.ImageDisplayWindow(img_disp_root,"Segmentation")
 	tid_camraw=gui.ImageDisplayWindow(img_disp_root,"Source Image")
 	tid_depth=gui.ImageDisplayWindow(img_disp_root,"Depth Estimation")
+	tid_combined=gui.ImageDisplayWindow(img_disp_root,"Combined")
 
 de=depth.DepthEstimator()
 
@@ -74,52 +75,22 @@ if OUTPUT_MODE=="WEB":
 
 
 def display(img):
-	
 	if OUTPUT_MODE=="TK":
 		if img_disp_root.opt_mirror:
 			img=img.transpose(PIL.Image.FLIP_LEFT_RIGHT)
 			
-	
-	if OUTPUT_MODE=="TK":
-		tid_camraw.set_image(img)
-	elif OUTPUT_MODE=="WEB":
-		st.put_image("/raw.jpg",img)
-	elif OUTPUT_MODE=="FILE":
-		img.save("out_raw.jpg")
-
 	dets=ai.detect(img)
 	for d in dets:
 		print(F"X{d.xmin:.0f}-{d.xmax:.0f} Y{d.ymin:.0f}-{d.ymax:.0f} C{d.confidence:.3f} {d.name}")
 	det_vis=ai.visualize_detections(dets,img.size)
-	#print("DETVIS",det_vis.size)
-	if OUTPUT_MODE=="TK":
-		tid_hud_det.set_image(det_vis)
-	elif OUTPUT_MODE=="WEB":
-		st.put_image("/det.jpg",det_vis)
-	elif OUTPUT_MODE=="FILE":
-		det_vis.save("out_det.jpg")
 
 	segs=ai.segment(img)
 	for s in segs:
 		print(F"X{s.xmin:.0f}-{s.xmax:.0f} Y{s.ymin:.0f}-{s.ymax:.0f} C{s.confidence:.3f} {s.name}")
 	seg_vis=ai.visualize_segmentation(segs,img.size)
-	#print("SEGVIS",seg_vis.size)
-
-	if OUTPUT_MODE=="TK":
-		tid_hud_seg.set_image(seg_vis)
-	elif OUTPUT_MODE=="WEB":
-		st.put_image("/seg.jpg",seg_vis)
-	elif OUTPUT_MODE=="FILE":
-		seg_vis.save("out_seg.jpg")
 
 	dep=de.estimate(img)
 	dvis=depth.visualize_depth(dep)
-	if OUTPUT_MODE=="TK":
-		tid_depth.set_image(dvis)
-	elif OUTPUT_MODE=="WEB":
-		st.put_image("/dep.jpg",dvis)
-	elif OUTPUT_MODE=="FILE":
-		dvis.save("out_dep.jpg")
 	
 	font=PIL.ImageFont.truetype("/usr/share/fonts/TTF/Hack-Bold.ttf",size=36)
 	combined_vis=PIL.Image.new("RGB",img.size)
@@ -165,11 +136,24 @@ def display(img):
 		s=F"{s.name}\n{depth_mean:.1f}m"
 		draw.text((bbox_center_X,bbox_center_Y),s,
 			fill="#00FFFF",font=font,anchor="ms")
-			
-	#combined_vis.save("out_combined.jpg")
-	if OUTPUT_MODE=="WEB":
+	
+	if OUTPUT_MODE=="TK":
+		tid_camraw.set_image(img)
+		tid_hud_det.set_image(det_vis)
+		tid_hud_seg.set_image(seg_vis)
+		tid_depth.set_image(dvis)
+		tid_combined.set_image(combined_vis)
+	elif OUTPUT_MODE=="WEB":
+		st.put_image("/raw.jpg",img)
+		st.put_image("/det.jpg",det_vis)
+		st.put_image("/seg.jpg",seg_vis)
+		st.put_image("/dep.jpg",dvis)
 		st.put_image("/com.jpg",combined_vis)
 	elif OUTPUT_MODE=="FILE":
+		img.save("out_raw.jpg")
+		det_vis.save("out_det.jpg")
+		seg_vis.save("out_seg.jpg")
+		dvis.save("out_dep.jpg")
 		combined_vis.save("out_com.jpg")
 		
 	
