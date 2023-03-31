@@ -55,7 +55,7 @@ if OUTPUT_MODE=="TK":
 	img_disp_root.start()
 	time.sleep(0.5) # Race condition
 
-	tid_hud_det=gui.ImageDisplayWindow(img_disp_root,"Detection")
+	#tid_hud_det=gui.ImageDisplayWindow(img_disp_root,"Detection")
 	tid_hud_seg=gui.ImageDisplayWindow(img_disp_root,"Segmentation")
 	tid_camraw=gui.ImageDisplayWindow(img_disp_root,"Source Image")
 	tid_depth=gui.ImageDisplayWindow(img_disp_root,"Depth Estimation")
@@ -78,11 +78,13 @@ def display(img):
 	if OUTPUT_MODE=="TK":
 		if img_disp_root.opt_mirror:
 			img=img.transpose(PIL.Image.FLIP_LEFT_RIGHT)
-			
+	
+	'''
 	dets=ai.detect(img)
 	for d in dets:
 		print(F"X{d.xmin:.0f}-{d.xmax:.0f} Y{d.ymin:.0f}-{d.ymax:.0f} C{d.confidence:.3f} {d.name}")
 	det_vis=ai.visualize_detections(dets,img.size)
+	'''
 
 	segs=ai.segment(img)
 	for s in segs:
@@ -139,19 +141,19 @@ def display(img):
 	
 	if OUTPUT_MODE=="TK":
 		tid_camraw.set_image(img)
-		tid_hud_det.set_image(det_vis)
+		#tid_hud_det.set_image(det_vis)
 		tid_hud_seg.set_image(seg_vis)
 		tid_depth.set_image(dvis)
 		tid_combined.set_image(combined_vis)
 	elif OUTPUT_MODE=="WEB":
 		st.put_image("/raw.jpg",img)
-		st.put_image("/det.jpg",det_vis)
+		#st.put_image("/det.jpg",det_vis)
 		st.put_image("/seg.jpg",seg_vis)
 		st.put_image("/dep.jpg",dvis)
 		st.put_image("/com.jpg",combined_vis)
 	elif OUTPUT_MODE=="FILE":
 		img.save("out_raw.jpg")
-		det_vis.save("out_det.jpg")
+		#det_vis.save("out_det.jpg")
 		seg_vis.save("out_seg.jpg")
 		dvis.save("out_dep.jpg")
 		combined_vis.save("out_com.jpg")

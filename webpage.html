@@ -8,7 +8,6 @@
 
 <div id="information"></div>
 <img id="raw"></img>
-<img id="det"></img>
 <img id="seg"></img>
 <img id="dep"></img>
 <img id="com"></img>
@@ -23,7 +22,6 @@ img{
 
 var infoDiv=document.getElementById("information");
 var rawImg=document.getElementById("raw");
-var detImg=document.getElementById("det");
 var segImg=document.getElementById("seg");
 var depImg=document.getElementById("dep");
 var comImg=document.getElementById("com");
@@ -41,7 +39,6 @@ function periodic(){
 	xhr.send();
 	
 	rawImg.src="raw.jpg?forcereload="+(new Date()).getTime();
-	detImg.src="det.jpg?forcereload="+(new Date()).getTime();
 	segImg.src="seg.jpg?forcereload="+(new Date()).getTime();
 	depImg.src="dep.jpg?forcereload="+(new Date()).getTime();
 	comImg.src="com.jpg?forcereload="+(new Date()).getTime();
