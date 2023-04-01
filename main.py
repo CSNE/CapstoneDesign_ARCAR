@@ -15,6 +15,10 @@ ap.add_argument(
 	"--webcam-number","-wc",
 	default=0)
 ap.add_argument(
+	"--video-speed","-vs",
+	type=float,
+	default=1.0)
+ap.add_argument(
 	"--output","-o",
 	choices=["tk","web","file","nothing"],
 	required=True)
@@ -23,6 +27,7 @@ args=ap.parse_args()
 
 arg_source=args.source
 arg_wc=args.webcam_number
+arg_vs=args.video_speed
 if arg_source in ("image","video"):
 	if "input_file" not in args:
 		print("For image or video input, you need to supply the input file.")
@@ -73,6 +78,9 @@ if arg_output=="web":
 	with open("webpage.html","rb") as f:
 		page=f.read()
 	st.put_data("/",page)
+	with open("webpage.js","rb") as f:
+		page=f.read()
+	st.put_data("/webpage.js",page,"text/javascript")
 	time.sleep(0.2)
 
 
@@ -97,6 +105,7 @@ def display(img):
 	# Combine
 	combined_vis=PIL.Image.new("RGB",img.size)
 	draw=PIL.ImageDraw.Draw(combined_vis)
+	objects_json=[]
 	for s in segs:
 		
 		area_bool=~s.area.astype(bool)
@@ -111,7 +120,9 @@ def display(img):
 		print(F"{s.name} {s.confidence:.3f} {depth_mean:.1f}m")
 		
 		bbox_center_X=(s.xmin+s.xmax)/2
+		bbox_size_X=s.xmax-s.xmin
 		bbox_center_Y=(s.ymin+s.ymax)/2
+		bbox_size_Y=s.ymax-s.ymin
 		shp=s.area.shape
 		
 		for i in range(len(s.points)):
@@ -121,10 +132,31 @@ def display(img):
 			endX=  s.points[j][0]*img.width
 			endY=  s.points[j][1]*img.height
 			draw.line((startX,startY,endX,endY),fill="#FF0000",width=3)
-		s=F"{s.name}\n{depth_mean:.1f}m"
-		draw.text((bbox_center_X,bbox_center_Y),s,
+		draw.text((bbox_center_X,bbox_center_Y),F"{s.name}\n{depth_mean:.1f}m",
 			fill="#00FFFF",font=font,anchor="ms")
-	
+		
+		# 5 meters is the reference point - calibrate later
+		distance_scaling_factor=depth_mean/5
+		# at reference distance, how large is the screen? - again, calibrate later
+		screen_dim_X=3
+		screen_dim_Y=screen_dim_X/img.width*img.height
+		rel_coords_X=(bbox_center_X-(img.width/2))/img.width
+		actual_coords_X=rel_coords_X*screen_dim_X*distance_scaling_factor
+		actual_size_X=bbox_size_X/img.width*screen_dim_X*distance_scaling_factor
+		rel_coords_Y=(bbox_center_Y-(img.height/2))/img.height
+		actual_coords_Y=rel_coords_Y*screen_dim_Y*distance_scaling_factor
+		actual_size_Y=bbox_size_Y/img.height*screen_dim_Y*distance_scaling_factor
+		#assert type(s.name) is str
+		#print(type(actual_coords_X))
+		obj_data={"name":str(s.name),
+			 "coordX":float(actual_coords_X),
+			 "coordY":float(actual_coords_Y),
+			 "coordZ":float(depth_mean),
+			 "sizeX":float(actual_size_X),
+			 "sizeY":float(actual_size_Y)}
+		for k in obj_data:
+			print(k,obj_data[k])
+		objects_json.append(obj_data)
 	# Output
 	if arg_output=="tk":
 		tid_camraw.set_image(img)
@@ -139,6 +171,7 @@ def display(img):
 		st.put_image("/dep.jpg",dvis)
 		st.put_image("/com.jpg",combined_vis)
 		st.put_string("/information","{:.1f}s".format(vt))
+		st.put_json("/objects",objects_json)
 	elif arg_output=="file":
 		img.save("out_raw.jpg")
 		#det_vis.save("out_det.jpg")
@@ -163,7 +196,7 @@ elif arg_source=="image":
 elif arg_source=="video":
 	startT=time.time()
 	while True:
-		vt=time.time()-startT
+		vt=(time.time()-startT)*arg_vs
 		vf=video.get_video_frame(arg_infile,vt)
 		display(vf)
 

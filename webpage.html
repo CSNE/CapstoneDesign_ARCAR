@@ -2,24 +2,32 @@
 <html>
 <head>
 <title>ARCAR Web Renderer</title>
+<script type="module" src="./webpage.js"></script>
+<script>
+
+</script>
 </head>
 
 <body>
 
 <div id="information"></div>
+<div id="objson"></div>
 <img id="raw"></img>
 <img id="seg"></img>
 <img id="dep"></img>
 <img id="com"></img>
-
+<canvas width="640" height="480" id="cvs"></canvas>
 <style>
 img{
 	width:480px;
 	height:360px;
 }
 </style>
+
+
 <script>
 	var infoDiv=document.getElementById("information");
+	var objsonDiv=document.getElementById("objson");
 	var rawImg=document.getElementById("raw");
 	var segImg=document.getElementById("seg");
 	var depImg=document.getElementById("dep");

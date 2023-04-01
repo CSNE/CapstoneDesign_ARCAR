@@ -20,6 +20,7 @@ class ServerThread(threading.Thread):
 		super().__init__()
 		self._port=port
 		self._serve_data=dict()
+		self._mimetypes=dict()
 		
 		outer_self=self
 		class ReqHandler(http.server.BaseHTTPRequestHandler):
@@ -32,6 +33,8 @@ class ServerThread(threading.Thread):
 				try:
 					response=outer_self._get_data(path)
 					self.send_response(http.server.HTTPStatus.OK)
+					if path in outer_self._mimetypes:
+						self.send_header("Content-Type",outer_self._mimetypes[path])
 					self.end_headers()
 					self.wfile.write(response)
 				except KeyError:
@@ -40,18 +43,20 @@ class ServerThread(threading.Thread):
 				
 		self._reqhandler=ReqHandler
 		
-	def put_data(self,k,v):
+	def put_data(self,k,v,mimetype=None):
 		self._serve_data[k]=v
+		if mimetype is not None:
+			self._mimetypes[k]=mimetype
 	def put_image(self,k,img):
 		bio=io.BytesIO()
 		img.convert("RGB").save(bio,format="JPEG")
-		self.put_data(k,bio.getvalue())
+		self.put_data(k,bio.getvalue(),"image/jpeg")
 	def put_string(self,k,s):
-		self.put_data(k,s.encode())
+		self.put_data(k,s.encode(),"text/plain")
 	def put_json(self,k,d):
-		bio=io.BytesIO()
+		bio=io.StringIO()
 		json.dump(d,bio)
-		self.put_data(k,bio.getvalue())
+		self.put_data(k,bio.getvalue().encode(),"text/javascript")
 	def _get_data(self,k):
 		return self._serve_data[k]
 		
