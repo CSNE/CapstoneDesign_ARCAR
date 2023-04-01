@@ -1,10 +1,13 @@
+# Video-related functions
+
 import subprocess
 import io
 import PIL.Image
 
 def get_video_frame(vidpath,t):
 	'''
-	Grab video frame at time t (seconds)
+	Grab video frame at time t (seconds).
+	Depends on FFMPEG.
 	'''
 	
 	args=["ffmpeg"] # use FFMPEG
@@ -23,6 +26,7 @@ def get_video_frame(vidpath,t):
 	return img
 	
 if __name__=="__main__":
+	# Testing
 	vf=get_video_frame("../KakaoTalk_20230310_155831877.mp4",1.53)
 	vf.show()
 	

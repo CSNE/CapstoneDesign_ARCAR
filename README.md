@@ -27,6 +27,7 @@ CUDA: `pip3 install torch torchvision`
 `python3 main.py [args]`  
 `--source` `-src`: Required. Select the frame source. `webcam`, `image`, `video`, or `screenshot`  
 `--input-file` `-i`: for `image` and `video` sources, you need to supply the file path here.  
+`--video-speed` `-vs`: for `video` source, you can supply a video speed multiplier here. For example, `-vs 0.5` will play the video at half speed.  
 `--webcam-number` `-wc`: for `webcam` source, you can set the webcam number here. If not, defaults to 0.  
 `--screenshot-region` `-sr`: for `screenshot` source, you can set the capture region. If not specified, captures the whole desktop.  
 `--output` `-o`: Required. Select how to visualize the program output.  

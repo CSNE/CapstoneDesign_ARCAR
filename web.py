@@ -1,3 +1,5 @@
+# Webserver-related code
+
 import http.server
 import threading
 import time
@@ -8,11 +10,14 @@ import PIL.Image
 
 class ServerThread(threading.Thread):
 	'''
-	A server. Start with:
+	A programmable server on its own thread. Start with:
 	st=ServerThread(PORT)
 	st.start()
+	
 	Insert data with
-	st.put_data("/test",b"asdf")
+	st.put_data("/test",b"asdf",mimetype="text/plain")
+	st.put_image("/img.png",pil_image)
+	etc
 	
 	now server will reply with "asdf" whenever you access localhost:PORT/test
 	'''
@@ -69,7 +74,7 @@ class ServerThread(threading.Thread):
 		self._serv.shutdown()
 	
 if __name__=="__main__":
-	
+	# Testing
 	with open("webpage.html","rb") as f:
 		page=f.read()
 	st=ServerThread(28301)

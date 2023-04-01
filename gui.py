@@ -1,12 +1,15 @@
-'''
-Some helper classes, for displaying an image with tkinter.
-'''
+# Some helper classes, for displaying an image with tkinter.
+
 
 import PIL.ImageTk
 import tkinter
 import threading
 
 class ImageDisplayerRoot(threading.Thread):
+	'''
+	A tkinter root instance running on its own thread.
+	For usage with ImageDisplayWindow.
+	'''
 	def __init__(self,*args,**kwargs):
 		super().__init__(*args,**kwargs)
 		self._alive=True
@@ -41,6 +44,9 @@ class ImageDisplayerRoot(threading.Thread):
 		print("tk thread terminated.")
 
 class ImageDisplayWindow:
+	'''
+	A tkinter window that displays an image.
+	'''
 	def __init__(self,idr,title):
 		self._idr=idr
 		self._idr.run_in_tk_thread(self._initialize)

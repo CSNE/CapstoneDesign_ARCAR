@@ -1,3 +1,5 @@
+# YOLO-related functions.
+
 # 3rd-Party
 import ultralytics
 import PIL.ImageDraw
@@ -15,11 +17,15 @@ model_det = ultralytics.YOLO("yolov8s.pt")
 model_seg = ultralytics.YOLO("yolov8s-seg.pt")
 #model = YOLO("yolov8s-cls.pt")
 
+# namedtuple for storing the detection results.
 DetectionResult=collections.namedtuple(
 	"DetectionResult",
 	["xmin","xmax","ymin","ymax","confidence","name"])
 
 def detect(pim):
+	'''
+	Run detection on YOLO, given a PIL image.
+	'''
 	# Run model
 	results_det=model_det(pim)
 	assert len(results_det)==1
@@ -31,7 +37,7 @@ def detect(pim):
 	confidences=(result_det.boxes.conf).tolist()
 	classes=(result_det.boxes.cls).tolist()
 
-	# Draw the bounding boxes
+	# collect results
 	results=[]
 	for i in range(len(boxes)):
 		b=boxes[i] # This is in relative coordinates
@@ -49,6 +55,9 @@ def detect(pim):
 	return results
 
 def visualize_detections(detections,size):
+	'''
+	Visualze detection results.
+	'''
 	# Prepare to draw
 	det_out=PIL.Image.new("RGB",size)
 	draw=PIL.ImageDraw.Draw(det_out)
@@ -57,16 +66,19 @@ def visualize_detections(detections,size):
 	for d in detections:
 		# Convert to actual coordinates
 		bo=[d.xmin,d.ymin,d.xmax,d.ymax]
-
-		#print(F"X{bo[0]:.0f}-{bo[2]:.0f}/{orig_size[1]} Y{bo[1]:.0f}-{bo[3]:.0f}/{orig_size[0]} C{c:.3f} {n}")
 		draw.rectangle(bo,outline="#FF0000",width=3)
 	return det_out
 
+# namedtuple for storing the segmentation results.
 SegmentationResult=collections.namedtuple(
 	"SegmentationResult",
 	["points","area","confidence","name","xmin","xmax","ymin","ymax"])
 
 def segment(pim):
+	'''
+	Run segmentation on YOLO, given a PIL image.
+	'''
+	
 	# Run model
 	results_seg=model_seg(pim)
 	assert len(results_seg)==1
@@ -75,7 +87,7 @@ def segment(pim):
 	# Get results
 	orig_size=result_seg.orig_shape
 	masks=result_seg.masks
-	if masks is None:
+	if masks is None: # No detections
 		return []
 	segs=masks.segments
 	areas=masks.data
@@ -83,6 +95,7 @@ def segment(pim):
 	confidences=(result_seg.boxes.conf).tolist()
 	classes=(result_seg.boxes.cls).tolist()
 	
+	# collect results
 	results=[]
 	for i in range(len(masks)):
 		# Mask data
@@ -107,12 +120,14 @@ def segment(pim):
 	return results
 
 def visualize_segmentation(segments,size):
+	'''
+	Visualze segmentation results.
+	'''
 	# Draw all masks on image
 	seg_out=PIL.Image.new("RGB",size)
 	for s in segments:
 		ai=PIL.Image.fromarray(numpy.uint8(s.area*255)).convert("L")
 		
-		#assert ai.size == seg_out.size
 		# Randomly colorize area
 		randcom_color=[random.randint(100,255) for i in range(3)]
 		aic=PIL.ImageOps.colorize(ai,(0,0,0),randcom_color)

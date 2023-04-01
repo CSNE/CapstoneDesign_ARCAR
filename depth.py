@@ -1,9 +1,8 @@
+# Functions using MonoDepth2.
 # Code mostly copied from monodepth2/test_simple.py
 
 import os
 import sys
-import glob
-import argparse
 import time
 import io
 
@@ -11,7 +10,7 @@ import numpy as np
 import PIL.Image as pil
 
 import torch
-from torchvision import transforms, datasets
+from torchvision import transforms
 
 import matplotlib as mpl
 import matplotlib.cm as cm
@@ -29,10 +28,19 @@ from evaluate_depth import STEREO_SCALE_FACTOR
 
 
 class DepthEstimator:
+	'''
+	Class for running the monodepth2 code.
+	Will load & setup model on initialization.
+	and estimate() does the actual depth estimation.
+	'''
 	def __init__(self,model_name="mono+stereo_640x192"):
 		self._model_name=model_name
 		self.net_setup()
 	def net_setup(self):
+		'''
+		Setup network. Automatically run on initialization.
+		Code mostly from monodepth2/test_simple.py
+		'''
 		print("Setup DepthEstimator...")
 		if torch.cuda.is_available() and not args.no_cuda:
 			self.device = torch.device("cuda")
@@ -69,6 +77,10 @@ class DepthEstimator:
 		self.depth_decoder.eval()
 
 	def estimate(self,img,metric_depth=True):
+		'''
+		Run estimation on PIL image. Returns depth map.
+		Code mostly from monodepth2/test_simple.py
+		'''
 		if metric_depth and "stereo" not in self._model_name:
 			print("Warning: The --pred_metric_depth flag only makes sense for stereo-trained KITTI "
 				"models. For mono-trained models, output depths will not in metric space.")
@@ -104,9 +116,11 @@ class DepthEstimator:
 		return depth_data
 
 
-# aspect 0.5 -> width twice of height
-def visualize_depth(arr,target_aspect=(9/16)):
 
+def visualize_depth(arr,target_aspect=(9/16)):
+	'''
+	Visualize depth map to a PIL image, using matplotlib
+	'''
 	array_aspect=arr.shape[0]/arr.shape[1]
 
 	fig = plt.figure()
@@ -122,7 +136,9 @@ def visualize_depth(arr,target_aspect=(9/16)):
 	bio.seek(0)
 	return pil.open(bio).convert("RGB")
 
+
 if __name__=="__main__":
+	# Testing code.
 	t1=time.time()
 	src_img=pil.open("testimg.png")
 	t2=time.time()
