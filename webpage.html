@@ -1,53 +1,43 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>ARCAR Web Renderer</title>
-<script type="module" src="./webpage.js"></script>
-<script>
-
-</script>
+	<title>ARCAR Web Renderer</title>
+	<script type="module" src="./webpage.js"></script>
 </head>
-
 <body>
-
-<div id="information"></div>
-<div id="objson"></div>
-<img id="raw" style="width:480px;height:270px;"></img>
-<img id="seg" style="width:480px;height:270px;"></img>
-<img id="dep" style="width:480px;height:270px;"></img>
-<img id="com" style="width:720px;height:405px;"></img>
-<canvas id="cvs"></canvas>
-
-
-<script>
-	var infoDiv=document.getElementById("information");
-	var objsonDiv=document.getElementById("objson");
-	var rawImg=document.getElementById("raw");
-	var segImg=document.getElementById("seg");
-	var depImg=document.getElementById("dep");
-	var comImg=document.getElementById("com");
+	<div id="information"></div>
+	<img id="raw" style="width:480px;height:270px;"></img>
+	<img id="seg" style="width:480px;height:270px;"></img>
+	<img id="dep" style="width:480px;height:270px;"></img>
+	<img id="com" style="width:720px;height:405px;"></img>
+	<canvas id="cvs"></canvas>
 	
-	
-	function periodic(){
-		var xhr=new XMLHttpRequest();
-		xhr.open("GET","/information");
-		xhr.addEventListener("load",function(e){
-			if (xhr.status==200) infoDiv.innerHTML=xhr.responseText;
-		});
-		xhr.addEventListener("error",function(e){
-			console.log("Request errored.");
-		});
-		xhr.overrideMimeType("text/plain");
-		xhr.send();
+	<script>
+		// Periodically fetch data form server
+		var infoDiv=document.getElementById("information");
+		var rawImg=document.getElementById("raw");
+		var segImg=document.getElementById("seg");
+		var depImg=document.getElementById("dep");
+		var comImg=document.getElementById("com");
 		
-		rawImg.src="raw.jpg?forcereload="+(new Date()).getTime();
-		segImg.src="seg.jpg?forcereload="+(new Date()).getTime();
-		depImg.src="dep.jpg?forcereload="+(new Date()).getTime();
-		comImg.src="com.jpg?forcereload="+(new Date()).getTime();
-	}
-	setInterval(periodic,200);
-</script>
-</body>
-
-
+		function periodic(){
+			var xhr=new XMLHttpRequest();
+			xhr.open("GET","/information");
+			xhr.addEventListener("load",function(e){
+				if (xhr.status==200) infoDiv.innerHTML=xhr.responseText;
+			});
+			xhr.addEventListener("error",function(e){
+				console.log("Request errored.");
+			});
+			xhr.overrideMimeType("text/plain");
+			xhr.send();
+			
+			rawImg.src="raw.jpg?forcereload="+(new Date()).getTime();
+			segImg.src="seg.jpg?forcereload="+(new Date()).getTime();
+			depImg.src="dep.jpg?forcereload="+(new Date()).getTime();
+			comImg.src="com.jpg?forcereload="+(new Date()).getTime();
+		}
+		setInterval(periodic,200);
+	</script>
+	</body>
 </html>
