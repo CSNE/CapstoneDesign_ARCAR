@@ -6,8 +6,8 @@ import { OrbitControls } from "https://cdn.skypack.dev/three@0.132.2/examples/js
 
 // init
 
-const w=640;
-const h=480;
+const w=720;
+const h=405;
 
 const camera = new THREE.PerspectiveCamera( 70, w/h, 0.01, 1000 );
 camera.position.z = 1;
@@ -38,12 +38,12 @@ const lineMat= new THREE.MeshBasicMaterial();
 lineMat.color.setRGB(1,1,0);
 for (var i=0;i<(baselineX_num+1);i++){
 	var baseLine = new THREE.Mesh(lineGeom,lineMat);
-	baseLine.position.z=i*baselineX_spacing;
+	baseLine.position.z=-i*baselineX_spacing;
 	scene.add(baseLine);
 }
 const lineGeomZ = new THREE.BoxGeometry(baseline_thickness,baseline_thickness,baselineZ_length);
 var baseLineZ = new THREE.Mesh(lineGeomZ,lineMat);
-baseLineZ.position.z=baselineZ_length/2;
+baseLineZ.position.z=-baselineZ_length/2;
 scene.add(baseLineZ);
 
 
@@ -78,11 +78,11 @@ scene.add(cgMesh);
 const renderer = new THREE.WebGLRenderer( { antialias: true, canvas:cvs} );
 renderer.setSize( w,h );
 renderer.setAnimationLoop( animation );
-document.body.appendChild( renderer.domElement );
+//document.body.appendChild( renderer.domElement );
 
 
 const controls = new OrbitControls( camera, renderer.domElement );
-camera.position.set( 0, 3, -10 );
+camera.position.set( 0, 3, 10 );
 controls.update();
 // animation
 
@@ -93,9 +93,11 @@ function animation( time ) {
 	renderer.render( scene, camera );
 }
 
+const loader = new THREE.TextureLoader();
+
 var object_meshes=[];
 function setObjects(objs){
-	console.log(object_meshes.length);
+	//console.log(object_meshes.length);
 	for (var i=0;i<object_meshes.length;i++){
 		scene.remove(object_meshes[i])
 	}
@@ -109,10 +111,13 @@ function setObjects(objs){
 		objMat.side=THREE.DoubleSide;
 		//objMat.color.setRGB(Math.random(),Math.random(),Math.random());
 		objMat.color.setRGB(1,1,1);
+		objMat.map=loader.load(obj["texture"]);
 		const objMesh = new THREE.Mesh(objGeom,objMat)
-		objMesh.position.x=-obj["coordX"];
-		objMesh.position.y=-obj["coordY"];
-		objMesh.position.z=obj["coordZ"];
+		objMesh.position.x=obj["coordX"];
+		objMesh.position.y=obj["coordY"];
+		objMesh.position.z=-obj["coordZ"];
+		
+		
 		
 		scene.add(objMesh);
 		object_meshes.push(objMesh)

@@ -2,6 +2,8 @@
 
 import argparse
 import sys
+import base64
+import io
 
 ap=argparse.ArgumentParser(
 	description="ARCAR Python Program")
@@ -13,6 +15,7 @@ ap.add_argument(
 	"--input-file","-i")
 ap.add_argument(
 	"--webcam-number","-wc",
+	type=int,
 	default=0)
 ap.add_argument(
 	"--video-speed","-vs",
@@ -87,15 +90,17 @@ if arg_output=="web":
 font=PIL.ImageFont.truetype("/usr/share/fonts/TTF/Hack-Bold.ttf",size=36)
 de=depth.DepthEstimator()
 
+frmN=0
 def display(img):
+	global frmN
+	frmN+=1
+	
 	if arg_output=="tk":
 		if img_disp_root.opt_mirror:
 			img=img.transpose(PIL.Image.FLIP_LEFT_RIGHT)
 	
 	# Segmentation
 	segs=ai.segment(img)
-	for s in segs:
-		print(F"X{s.xmin:.0f}-{s.xmax:.0f} Y{s.ymin:.0f}-{s.ymax:.0f} C{s.confidence:.3f} {s.name}")
 	seg_vis=ai.visualize_segmentation(segs,img.size)
 	
 	# Depth estimation
@@ -117,7 +122,6 @@ def display(img):
 		masked_depth=np.ma.MaskedArray(dep_rsz,mask=area_bool)
 		depth_mean=masked_depth.mean()
 		
-		print(F"{s.name} {s.confidence:.3f} {depth_mean:.1f}m")
 		
 		bbox_center_X=(s.xmin+s.xmax)/2
 		bbox_size_X=s.xmax-s.xmin
@@ -138,7 +142,7 @@ def display(img):
 		# 5 meters is the reference point - calibrate later
 		distance_scaling_factor=depth_mean/5
 		# at reference distance, how large is the screen? - again, calibrate later
-		screen_dim_X=3
+		screen_dim_X=7
 		screen_dim_Y=screen_dim_X/img.width*img.height
 		rel_coords_X=(bbox_center_X-(img.width/2))/img.width
 		actual_coords_X=rel_coords_X*screen_dim_X*distance_scaling_factor
@@ -148,14 +152,28 @@ def display(img):
 		actual_size_Y=bbox_size_Y/img.height*screen_dim_Y*distance_scaling_factor
 		#assert type(s.name) is str
 		#print(type(actual_coords_X))
+		
+		
+		tex=img.crop((s.xmin,s.ymin,s.xmax,s.ymax))
+		if tex.width>tex.height:
+			if tex.width>100:
+				tex=tex.resize((100,round(100/tex.width*tex.height)))
+		else:
+			if tex.height>100:
+				tex=tex.resize((round(100/tex.height*tex.width),100))
+		
+		bio=io.BytesIO()
+		tex.save(bio,format="JPEG")
+		b64=base64.b64encode(bio.getvalue()).decode()
+		
 		obj_data={"name":str(s.name),
 			 "coordX":float(actual_coords_X),
 			 "coordY":float(actual_coords_Y),
 			 "coordZ":float(depth_mean),
 			 "sizeX":float(actual_size_X),
-			 "sizeY":float(actual_size_Y)}
-		for k in obj_data:
-			print(k,obj_data[k])
+			 "sizeY":float(actual_size_Y),
+			 "texture":"data:image/jpeg;base64,"+b64}
+		
 		objects_json.append(obj_data)
 	# Output
 	if arg_output=="tk":
@@ -170,7 +188,7 @@ def display(img):
 		st.put_image("/seg.jpg",seg_vis)
 		st.put_image("/dep.jpg",dvis)
 		st.put_image("/com.jpg",combined_vis)
-		st.put_string("/information","{:.1f}s".format(vt))
+		st.put_string("/information",str(frmN))
 		st.put_json("/objects",objects_json)
 	elif arg_output=="file":
 		img.save("out_raw.jpg")
@@ -186,7 +204,7 @@ if arg_source=="webcam":
 	while True:
 		res,img=camera.read()
 		if not res:
-			print("Cam read failed!")
+			print("Cam read {} failed!".format(arg_wc))
 			break
 		pim=PIL.Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
 		display(pim)
