@@ -4,12 +4,13 @@ import argparse
 import sys
 import base64
 import io
+import PIL.ImageGrab
 
 ap=argparse.ArgumentParser(
 	description="ARCAR Python Program")
 ap.add_argument(
 	"--source","-src",
-	choices=["webcam","image","video"],
+	choices=["webcam","image","video","screenshot"],
 	required=True)
 ap.add_argument(
 	"--input-file","-i")
@@ -21,6 +22,8 @@ ap.add_argument(
 	"--video-speed","-vs",
 	type=float,
 	default=1.0)
+ap.add_argument(
+	"--screenshot-region","-sr")
 ap.add_argument(
 	"--output","-o",
 	choices=["tk","web","file","nothing"],
@@ -38,6 +41,18 @@ if arg_source in ("image","video"):
 		sys.exit(1)
 	else:
 		arg_infile=args.input_file
+if args.screenshot_region is not None:
+	
+	spl=args.screenshot_region.split(",")
+	try:
+		if len(spl) != 4:
+			raise ValueError
+		arg_sr=[int(i) for i in spl]
+	except ValueError:
+		print("--screenshot-region must be 4 integers, separated by commas without spaces")
+		sys.exit(1)
+else:
+	arg_sr=None
 		
 arg_output=args.output
 
@@ -217,6 +232,9 @@ elif arg_source=="video":
 		vt=(time.time()-startT)*arg_vs
 		vf=video.get_video_frame(arg_infile,vt)
 		display(vf)
+elif arg_source=="screenshot":
+	while True:
+		display(PIL.ImageGrab.grab(arg_sr))
 
 
 print("Main thread terminated.")
