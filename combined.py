@@ -42,7 +42,30 @@ def calculate_segdepth(segments,depthmap):
 			depth_max=masked_depth.max()))
 	return result
 
-font=PIL.ImageFont.truetype("/usr/share/fonts/TTF/Hack-Bold.ttf",size=36)
+font_list=[
+	"/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf", # Ubuntu
+	"/usr/share/fonts/dejavu-sans-mono-fonts/DejaVuSansMono-Bold.ttf", # Fedora 37
+	"/usr/share/fonts/TTF/DejaVuSansMono-Bold.ttf", # Archlinux
+	"arialbd.ttf", # Windows
+	"arial.ttf" # Windows 2
+	]
+font_size=36
+font=None
+#font=PIL.ImageFont.truetype("/usr/share/fonts/TTF/Hack-Bold.ttf",size=36)
+for font_path in font_list:
+	try:
+		font=PIL.ImageFont.truetype(font_path,size=36)
+		print("Font",font_path.split("/")[-1],"loaded")
+		break
+	except OSError:
+		pass
+
+
+if font is None:
+	print("Font load failed - loading default font")
+	font=PIL.ImageFont.load_default()
+
+
 def visualize_segdepth(segdepths,size):
 	'''
 	Visualize segdepths.

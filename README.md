@@ -1,21 +1,27 @@
 # Capstone Design / ARCAR
 
 ## Installation
+#### Python
+Tested on Python `3.10`. Some required packages below are not available on `3.11`.  
+You can install all dependencies directly to system python, but using `conda` might be a good idea.
 #### PyTorch
 https://pytorch.org/get-started/locally  
 CPU: `pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cpu`  
 CUDA: `pip3 install torch torchvision`
 #### Other dependencies
-`pip3 install matplotlib opencv scikit-image`  
+`pip3 install matplotlib opencv-python scikit-image`  
 `pip3 install tensorboardX`
 #### YOLOv8
 `pip3 install ultralytics`
 #### FFMPEG
-`apt install ffmpeg`
+Only required for video input.  
+`apt install ffmpeg`  
+On Windows, download a precompiled `ffmpeg` binary and put it in `PATH` somewhere.
 #### Get code
 `git clone --recurse-submodules https://github.com/CSNE/CapstoneDesign_ARCAR.git`
 
-## Check install
+## Verify install
+Some commands you can run to make sure the dependencies are installed correctly.
 #### Monodepth2
 `cd monodepth2`  
 `python3 test_simple.py --image_path assets/test_image.jpg --model_name mono+stereo_640x192`
