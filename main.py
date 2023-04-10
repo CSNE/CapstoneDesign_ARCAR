@@ -6,7 +6,7 @@ ap=argparse.ArgumentParser(
 	description="ARCAR Python Program")
 ap.add_argument(
 	"--source","-src",
-	choices=["webcam","image","video","screenshot"],
+	choices=["webcam","image","video","screenshot","kinect"],
 	required=True)
 ap.add_argument(
 	"--input-file","-i")
@@ -24,6 +24,9 @@ ap.add_argument(
 	"--output","-o",
 	choices=["tk","web","file","nothing"],
 	required=True)
+ap.add_argument(
+	"--single-frame","-sf",
+	action="store_true")
 
 args=ap.parse_args()
 
@@ -51,6 +54,7 @@ else:
 	arg_sr=None
 		
 arg_output=args.output
+arg_singleframe=args.single_frame
 
 
 
@@ -74,7 +78,8 @@ if arg_output=="web":
 	import web
 import maths
 import combined
-
+if arg_source=="kinect":
+	import kinect
 
 
 ## GUI Setup
@@ -108,7 +113,7 @@ de=depth.DepthEstimator()
 
 # Display function
 frmN=0
-def display(img):
+def display(img,dep=None):
 	global frmN
 	frmN+=1
 	
@@ -120,13 +125,14 @@ def display(img):
 	segs=ai.segment(img)
 	seg_vis=ai.visualize_segmentation(segs,img.size)
 	
-	# Depth estimation
-	dep=de.estimate(img)
+	if dep is None:
+		# Depth estimation
+		dep=de.estimate(img)
 	dvis=depth.visualize_depth(dep)
 	
 	# Combine
 	segdepths=combined.calculate_segdepth(segs,dep)
-	combined_vis=combined.visualize_segdepth(segdepths,img.size)
+	combined_vis=combined.visualize_segdepth(segdepths,img.size,img)
 	
 	# Output
 	if arg_output=="tk":
@@ -159,20 +165,30 @@ if arg_source=="webcam":
 			break
 		pim=PIL.Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
 		display(pim)
-
+		if arg_singleframe: break
+elif arg_source=="kinect":
+	k4a=kinect.getK4A()
+	k4a.start()
+	while True:
+		kcd=kinect.getCap(k4a)
+		display(kcd.color_image,kcd.depth_data_mapped)
+		if arg_singleframe: break
 elif arg_source=="image":
-	display(PIL.Image.open(arg_infile))
-	
+	while True:
+		display(PIL.Image.open(arg_infile))
+		if arg_singleframe: break
 elif arg_source=="video":
 	startT=time.time()
 	while True:
 		vt=(time.time()-startT)*arg_vs
 		vf=video.get_video_frame(arg_infile,vt)
 		display(vf)
+		if arg_singleframe: break
 		
 elif arg_source=="screenshot":
 	while True:
 		display(PIL.ImageGrab.grab(arg_sr))
+		if arg_singleframe: break
 
 
 print("Main thread terminated.")

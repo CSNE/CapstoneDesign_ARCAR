@@ -66,11 +66,14 @@ if font is None:
 	font=PIL.ImageFont.load_default()
 
 
-def visualize_segdepth(segdepths,size):
+def visualize_segdepth(segdepths,size,bg=None):
 	'''
 	Visualize segdepths.
 	'''
-	vis=PIL.Image.new("RGB",size)
+	if bg is None:
+		vis=PIL.Image.new("RGB",size)
+	else:
+		vis=bg.copy()
 	draw=PIL.ImageDraw.Draw(vis)
 	
 	for sd in segdepths:
