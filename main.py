@@ -127,7 +127,7 @@ def display(img,dep=None):
 	
 	if dep is None:
 		# Depth estimation
-		dep=de.estimate(img)
+		dep=de.estimate(img,depth_multiplier=0.2)
 	dvis=depth.visualize_depth(dep)
 	
 	# Combine

@@ -76,7 +76,7 @@ class DepthEstimator:
 		self.depth_decoder.to(self.device)
 		self.depth_decoder.eval()
 
-	def estimate(self,img,metric_depth=True):
+	def estimate(self,img,*,metric_depth=True,depth_multiplier=1.0):
 		'''
 		Run estimation on PIL image. Returns depth map.
 		Code mostly from monodepth2/test_simple.py
@@ -104,7 +104,7 @@ class DepthEstimator:
 			scaled_disp, depth = disp_to_depth(disp, 0.1, 100)
 			depth_data=depth.cpu().numpy()
 			if metric_depth:
-				depth_data = STEREO_SCALE_FACTOR * depth_data
+				depth_data = STEREO_SCALE_FACTOR * depth_data * depth_multiplier
 
 		# 'unpack' twice since depth is [1][1][192][640]
 		assert len(depth_data)==1

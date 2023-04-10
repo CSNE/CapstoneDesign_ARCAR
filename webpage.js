@@ -19,10 +19,10 @@ scene.add(dlight);
 scene.add(dlight.target);
 
 // Base Lines
-const baseline_thickness=0.02;
-const baselineX_width=20;
-const baselineX_spacing=5;
-const baselineX_num=10;
+const baseline_thickness=0.01;
+const baselineX_width=10;
+const baselineX_spacing=1;
+const baselineX_num=20;
 const baselineZ_length=baselineX_spacing*baselineX_num;
 
 const lineGeom = new THREE.BoxGeometry(16,baseline_thickness,baseline_thickness);
@@ -38,13 +38,14 @@ var baseLineZ = new THREE.Mesh(lineGeomZ,lineMat);
 baseLineZ.position.z=-baselineZ_length/2;
 scene.add(baseLineZ);
 
+/*
 // Origin cube (represents viewer/camera)
 const viewerGeometry = new THREE.BoxGeometry( 0.5, 0.5, 0.5 );
 const viewerMat= new THREE.MeshPhongMaterial()
 viewerMat.color.setRGB(1,0.5,0)
 const viewerBox = new THREE.Mesh(viewerGeometry,viewerMat)
 scene.add(viewerBox);
-
+*/
 
 
 // Renderer
@@ -55,9 +56,9 @@ renderer.setSize(w,h);
 renderer.setAnimationLoop( animation );
 
 // Camera controls
-const camera = new THREE.PerspectiveCamera( 70, w/h, 0.01, 1000 );
+const camera = new THREE.PerspectiveCamera( 60, w/h, 0.001, 1000 );
 const controls = new OrbitControls( camera, renderer.domElement );
-camera.position.set( 0, 3, 10 );
+camera.position.set( 0, 1, 3 );
 controls.update();
 
 // Anim Loop
