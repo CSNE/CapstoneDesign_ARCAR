@@ -4,29 +4,30 @@ import sys
 
 ap=argparse.ArgumentParser(
 	description="ARCAR Python Program")
+
+# Required
 ap.add_argument(
 	"--source","-src",
 	choices=["webcam","image","video","screenshot","kinect"],
 	required=True)
 ap.add_argument(
-	"--input-file","-i")
+	"--output","-o",
+	choices=["tk","web","file","nothing"],
+	required=True)
+
+# Per-Input
 ap.add_argument(
 	"--webcam-number","-wc",
 	type=int,
 	default=0)
+ap.add_argument(
+	"--input-file","-i")
 ap.add_argument(
 	"--video-speed","-vs",
 	type=float,
 	default=1.0)
 ap.add_argument(
 	"--screenshot-region","-sr")
-ap.add_argument(
-	"--output","-o",
-	choices=["tk","web","file","nothing"],
-	required=True)
-ap.add_argument(
-	"--single-frame","-sf",
-	action="store_true")
 ap.add_argument(
 	"--kinect-depth","-kd",
 	choices=[
@@ -49,6 +50,15 @@ ap.add_argument(
 	"--kinect-fps","-kf",
 	choices=["5","15","30"],
 	default="15")
+
+# Optional
+ap.add_argument(
+	"--single-frame","-sf",
+	action="store_true")
+ap.add_argument(
+	'--verbose', '-v',
+	action='count',
+	default=0)
 
 args=ap.parse_args()
 
@@ -78,6 +88,7 @@ else:
 arg_output=args.output
 arg_singleframe=args.single_frame
 
+arg_verblevel=args.verbose
 
 
 
@@ -133,6 +144,16 @@ if arg_source=="kinect":
 		"15":kinect.FPS.FPS_15,
 		"30":kinect.FPS.FPS_30
 		}[args.kinect_fps]
+
+
+# Make YOLO quiet
+import ultralytics.yolo.utils
+import logging
+ultralytics.yolo.utils.LOGGER.setLevel(logging.WARNING)
+if arg_verblevel>2:
+	ultralytics.yolo.utils.LOGGER.setLevel(logging.INFO)
+if arg_verblevel>3:
+	ultralytics.yolo.utils.LOGGER.setLevel(logging.DEBUG)
 
 
 ## GUI Setup

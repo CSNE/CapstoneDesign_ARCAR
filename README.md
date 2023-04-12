@@ -37,19 +37,22 @@ Some commands you can run to make sure the dependencies are installed correctly.
 ## Run
 `python3 main.py [args]`  
 - `--source` `-src` : Required. Select the frame source. `webcam`, `kinect`, `image`, `video`, or `screenshot`  
-- `--input-file` `-i` : for `image` and `video` sources, you need to supply the file path here.  
-- `--video-speed` `-vs` : for `video` source, you can supply a video speed multiplier here. For example, `-vs 0.5` will play the video at half speed.  
-- `--webcam-number` `-wc` : for `webcam` source, you can set the webcam number here. If not, defaults to 0.  
-- `--screenshot-region` `-sr` : for `screenshot` source, you can set the capture region. If not specified, captures the whole desktop.  
-- `--output` `-o` : Required. Select how to visualize the program output.  
+- `--output` `-o` : Required. Select how to visualize the program output.
     - `tk`: Outputs to a `tkinter` GUI.
     - `web`: Starts a web server. Go to `http://localhost:28301` to view results.
     - `file`: outputs to a JPG file.
     - `nothing`: Don't output anything.
-- `--single-frame` `-sf` : Exit after processing a single frame. Use in combination with `-o file` for debugging.  
+- `--webcam-number` `-wc` : For `webcam` source, you can set the webcam number here. If not, defaults to 0.
+- `--input-file` `-i` : For `image` and `video` sources, you need to supply the file path here.
+- `--video-speed` `-vs` : For `video` source, you can supply a video speed multiplier here. For example, `-vs 0.5` will play the video at half speed.
+- `--screenshot-region` `-sr` : For `screenshot` source, you can set the capture region. If not specified, captures the whole desktop.
+- `--kinect-depth` `-kd` / `--kinect-rgb` `-kr` / `--kinect-fps` `-kf` : For `kinect` source, configure Azure Kinect capture settings. View `--help` for possible values.
+- `--single-frame` `-sf` : Exit after processing a single frame. Use in combination with `-o file` for debugging.
+- `--verbose` `-v` : Verbose logging. Repeat for even more verbosity. (`-vvv`)
 
 Examples:  
 `python3 main.py --source=image -i testimg.png --single-frame --output file`  
 `python3 main.py --source video --input-file video.mp4 --output tk`  
 `python3 main.py -src webcam -wc 2 -o web`  
 `python3 main.py --source=screenshot --screenshot-region=1920,0,3840,1080 --output=web`  
+`python3 main.py --source=kinect --kinect-depth=NFOV_2X2BINNED --kinect-rgb 1080 -kf 5 --output=web`
