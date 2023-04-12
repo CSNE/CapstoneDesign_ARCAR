@@ -4,12 +4,16 @@ import base64
 import io
 import PIL.ImageFont
 import numpy.ma
+import numpy
 import maths
 import collections
 
+#tmp
+import depth
+
 # A namedtuple for storing the depth along with the segment.
 SegDepth=collections.namedtuple(
-	"SegDepth",["segment","depth_average","depth_min","depth_max"])
+	"SegDepth",["segment","depth_average","depth_min","depth_max","depth_valid"])
 
 def calculate_segdepth(segments,depthmap):
 	'''
@@ -18,26 +22,34 @@ def calculate_segdepth(segments,depthmap):
 	Returns a list of SegDepths
 	'''
 	result=[]
-	depthmap_resized=None
+	#depthmap_resized=None
 	for s in segments:
 		# YOLO provides the area as a float array of either 1.0 or 0.0
-		# We cast that to a boolean and invert it
-		# Refer to the numpy.MaskedArray docs for why
-		area_bool=~s.area.astype(bool)
+		# We resize this to fit the depth map size
+		# And then convert it to MaskedArray
+		area_resized=maths.resize_matrix(s.area,depthmap.shape)
+		area_resized_masked=numpy.ma.masked_less_equal(area_resized, 0.5)
 		
-		# Resize depth map to area map
-		if depthmap_resized is None: # cache it
-			depthmap_resized=maths.resize_matrix(depthmap,s.area.shape)
-		# sanity check - the shape's dimensions should be consistent i think
-		assert depthmap_resized.shape == s.area.shape
-		
-		# Masked array
-		masked_depth=numpy.ma.MaskedArray(depthmap_resized,mask=area_bool)
+		# Combine masks.
+		# Only take depth data if in segment area AND is valid depth
+		# Mask is used for exclusion, not inclusion so we actually OR here.
+		assert area_resized_masked.shape == depthmap.shape
+		combined_mask=numpy.logical_or(area_resized_masked.mask,depthmap.mask)
+
+		# Create maskedarray, take mean
+		masked_depth=numpy.ma.MaskedArray(depthmap,mask=combined_mask)
 		depth_mean=masked_depth.mean()
+
+
+		# No valid depth data
+		if depth_mean is numpy.ma.masked:
+			depth_mean=None
+		#print("Depth",depth_mean,repr(depth_mean),type(depth_mean))
 		
 		result.append(SegDepth(
 			segment=s,
-			depth_average=masked_depth.mean(),
+			depth_valid=(depth_mean is not None),
+			depth_average=depth_mean,
 			depth_min=masked_depth.min(),
 			depth_max=masked_depth.max()))
 	return result

@@ -41,9 +41,9 @@ def getCap(k4a:PyK4A):
     capture = k4a.get_capture()
     return KinectCaptureData(
         color_image=cv2_to_pil(capture.color), 
-        depth_data_raw=depth_millimeter_to_meters(capture.depth),
-        depth_data_mapped=depth_millimeter_to_meters(capture.transformed_depth),
-        depth_visualization=cv2_to_pil(colorize(capture.transformed_depth, (None, 10000), cv2.COLORMAP_JET)),
+        depth_data_raw=depth_millimeter_to_meters(filter_out_zeros(capture.depth)),
+        depth_data_mapped=depth_millimeter_to_meters(filter_out_zeros(capture.transformed_depth)),
+        depth_visualization=cv2_to_pil(colorize(filter_out_zeros(capture.transformed_depth), (None, 10000), cv2.COLORMAP_JET)),
         IR_image=None,#cv2_to_pil(capture.ir),
         IR_mapped=None)#cv2_to_pil(capture.transformed_ir))
 
@@ -57,7 +57,9 @@ def depth_millimeter_to_meters(depth_data):
     # Convert millimeter data of Kinect SDK to meters
     # This is to match how MonoDepth handles things
     return depth_data.astype(float)/1000.0
-
+def filter_out_zeros(depth_data):
+    # Mask out zeroes.
+    return np.ma.masked_equal(depth_data, 0)
 
 def main():
     k4a = getK4A() 

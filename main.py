@@ -132,6 +132,10 @@ def display(img,dep=None):
 	
 	# Combine
 	segdepths=combined.calculate_segdepth(segs,dep)
+	all_segs=len(segdepths)
+	segdepths=[i for i in segdepths if i.depth_valid]
+	filtered_segdepths=len(segdepths)
+	print(F"Filtered {all_segs-filtered_segdepths} out SegDepths out of {all_segs} because it has no depth data.")
 	combined_vis=combined.visualize_segdepth(segdepths,img.size,img)
 	
 	# Output
@@ -195,6 +199,7 @@ try:
 	capture_loop()
 except KeyboardInterrupt:
 	print("^C Received. Exiting...")
+finally:
 	if arg_output=="web":
 		st.die()
 print("Main thread terminated.")
