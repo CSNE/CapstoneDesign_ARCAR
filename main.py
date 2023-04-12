@@ -27,6 +27,28 @@ ap.add_argument(
 ap.add_argument(
 	"--single-frame","-sf",
 	action="store_true")
+ap.add_argument(
+	"--kinect-depth","-kd",
+	choices=[
+		'NFOV_2X2BINNED', "nb",
+		'NFOV_UNBINNED', "nu",
+		'WFOV_2X2BINNED', "wb",
+		'WFOV_UNBINNED', "wu"],
+	default="NFOV_UNBINNED")
+ap.add_argument(
+	"--kinect-rgb","-kr",
+	choices=[
+		'RES_720P',  "720",
+		'RES_1080P', "1080",
+		'RES_1440P', "1440",
+		'RES_1536P', "1536",
+		'RES_2160P', "2160",
+		'RES_3072P', "3072"],
+	default="RES_720P")
+ap.add_argument(
+	"--kinect-fps","-kf",
+	choices=["5","15","30"],
+	default="15")
 
 args=ap.parse_args()
 
@@ -58,6 +80,8 @@ arg_singleframe=args.single_frame
 
 
 
+
+
 # Imports
 # Standard Library
 import time
@@ -80,6 +104,35 @@ import maths
 import combined
 if arg_source=="kinect":
 	import kinect
+	arg_kinect_depth={
+		'NFOV_2X2BINNED':kinect.DepthMode.NFOV_2X2BINNED,
+		"nb":kinect.DepthMode.NFOV_2X2BINNED,
+		'NFOV_UNBINNED':kinect.DepthMode.NFOV_UNBINNED,
+		"nu":kinect.DepthMode.NFOV_UNBINNED,
+		'WFOV_2X2BINNED':kinect.DepthMode.WFOV_2X2BINNED,
+		"wb":kinect.DepthMode.WFOV_2X2BINNED,
+		'WFOV_UNBINNED':kinect.DepthMode.WFOV_UNBINNED,
+		"wu":kinect.DepthMode.WFOV_UNBINNED
+		}[args.kinect_depth]
+	arg_kinect_rgb={
+		'RES_720P':kinect.ColorResolution.RES_720P,
+		"720":kinect.ColorResolution.RES_720P,
+		'RES_1080P':kinect.ColorResolution.RES_1080P,
+		"1080":kinect.ColorResolution.RES_1080P,
+		'RES_1440P':kinect.ColorResolution.RES_1440P,
+		"1440":kinect.ColorResolution.RES_1440P,
+		'RES_1536P':kinect.ColorResolution.RES_1536P,
+		"1536":kinect.ColorResolution.RES_1536P,
+		'RES_2160P':kinect.ColorResolution.RES_2160P,
+		"2160":kinect.ColorResolution.RES_2160P,
+		'RES_3072P':kinect.ColorResolution.RES_3072P,
+		"3072":kinect.ColorResolution.RES_3072P
+		}[args.kinect_rgb]
+	arg_kinect_fps={
+		"5":kinect.FPS.FPS_5,
+		"15":kinect.FPS.FPS_15,
+		"30":kinect.FPS.FPS_30
+		}[args.kinect_fps]
 
 
 ## GUI Setup
@@ -172,7 +225,7 @@ def capture_loop():
 			display(pim)
 			if arg_singleframe: break
 	elif arg_source=="kinect":
-		k4a=kinect.getK4A()
+		k4a=kinect.getK4A(arg_kinect_rgb,arg_kinect_depth,arg_kinect_fps)
 		k4a.start()
 		while True:
 			kcd=kinect.getCap(k4a)

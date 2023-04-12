@@ -19,11 +19,17 @@ def colorize(
     img = cv2.applyColorMap(img, colormap)
     return img
 
-def getK4A(): # get k4a
+
+ColorResolution=pyk4a.ColorResolution
+DepthMode=pyk4a.DepthMode
+FPS=pyk4a.FPS
+
+def getK4A(cr:ColorResolution,dm:DepthMode,fps:FPS): # get k4a
     k4a = PyK4A(
         Config(
-            color_resolution=pyk4a.ColorResolution.RES_720P,
-            depth_mode=pyk4a.DepthMode.NFOV_UNBINNED,
+            color_resolution=cr,
+            depth_mode=dm,
+            camera_fps=fps
         )
     )
     return k4a
