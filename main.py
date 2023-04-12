@@ -234,14 +234,20 @@ def display(img,dep=None):
 	
 	timer.start("Combining")
 	# Combine
-	segdepths=combined.calculate_segdepth(segs,dep)
-	all_segs=len(segdepths)
-	segdepths=[i for i in segdepths if i.depth_valid]
-	filtered_segdepths=len(segdepths)
-	diff=all_segs-filtered_segdepths
+	segdepths_raw=combined.calculate_segdepth(segs,dep)
+
+	# Filter out SegDepths with too little depth data
+	segdepths_valid=[]
+	for sd in segdepths_raw:
+		if sd.depth_valid_ratio<0.1:
+			continue
+		segdepths_valid.append(sd)
+	diff=len(segdepths_raw)-len(segdepths_valid)
 	if diff != 0:
-		print(F"Filtered {diff} out SegDepths out of {all_segs} because it has no depth data.")
-	combined_vis=combined.visualize_segdepth(segdepths,img.size,img)
+		print(F"Filtered {diff} out SegDepths out of {len(segdepths_raw)} because of insufficient depth data")
+
+	# Visualize Segdepths
+	combined_vis=combined.visualize_segdepth(segdepths_valid,img.size,img)
 	
 	timer.start("Output")
 	# Output
@@ -256,7 +262,7 @@ def display(img,dep=None):
 		st.put_image("/dep.jpg",dvis)
 		st.put_image("/com.jpg",combined_vis)
 		st.put_string("/information",str(frmN))
-		objects_json=combined.segdepths_to_json(segdepths,img)
+		objects_json=combined.segdepths_to_json(segdepths_valid,img)
 		st.put_json("/objects",objects_json)
 	elif arg_output=="file":
 		img.save("out_raw.jpg")

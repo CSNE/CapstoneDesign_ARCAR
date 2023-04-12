@@ -13,7 +13,10 @@ import depth
 
 # A namedtuple for storing the depth along with the segment.
 SegDepth=collections.namedtuple(
-	"SegDepth",["segment","depth_average","depth_min","depth_max","depth_valid"])
+	"SegDepth",
+	["segment",
+	 "depth_average","depth_min","depth_max",
+	 "depth_valid","depth_valid_ratio"])
 
 def calculate_segdepth(segments,depthmap):
 	'''
@@ -37,21 +40,23 @@ def calculate_segdepth(segments,depthmap):
 		combined_mask=numpy.logical_or(area_resized_masked.mask,depthmap.mask)
 
 		# Create maskedarray, take mean
-		masked_depth=numpy.ma.MaskedArray(depthmap,mask=combined_mask)
-		depth_mean=masked_depth.mean()
+		intersection_masked_depth=numpy.ma.MaskedArray(depthmap,mask=combined_mask)
 
+		valid_depth_pixel_count=intersection_masked_depth.count()
+		area_pixel_count=area_resized_masked.count()
+		#print(area_pixel_count,valid_depth_pixel_count)
+		depth_valid_ratio=valid_depth_pixel_count/area_pixel_count
 
 		# No valid depth data
-		if depth_mean is numpy.ma.masked:
-			depth_mean=None
-		#print("Depth",depth_mean,repr(depth_mean),type(depth_mean))
+
 		
 		result.append(SegDepth(
 			segment=s,
-			depth_valid=(depth_mean is not None),
-			depth_average=depth_mean,
-			depth_min=masked_depth.min(),
-			depth_max=masked_depth.max()))
+			depth_average=intersection_masked_depth.mean(),
+			depth_min=intersection_masked_depth.min(),
+			depth_max=intersection_masked_depth.max(),
+			depth_valid=(valid_depth_pixel_count>1),
+			depth_valid_ratio=depth_valid_ratio))
 	return result
 
 font_list=[
@@ -91,6 +96,7 @@ def visualize_segdepth(segdepths,size,bg=None):
 	for sd in segdepths:
 		
 		dep=sd.depth_average
+		dep_percentage=sd.depth_valid_ratio*100
 		seg=sd.segment
 		
 		bbox_center_X=(seg.xmin+seg.xmax)/2
@@ -106,7 +112,9 @@ def visualize_segdepth(segdepths,size,bg=None):
 			draw.line((startX,startY,endX,endY),fill="#FF0000",width=3)
 			
 		# Write text
-		draw.text((bbox_center_X,bbox_center_Y),F"{seg.name}\n{dep:.1f}m",
+		draw.text(
+			(bbox_center_X,bbox_center_Y),
+			F"{seg.name}\n{dep:.1f}m\n{dep_percentage:.1f}%",
 			fill="#00FFFF",font=font,anchor="ms")
 	return vis
 
