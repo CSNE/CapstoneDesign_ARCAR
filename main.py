@@ -155,40 +155,46 @@ def display(img,dep=None):
 		combined_vis.save("out_com.jpg")
 		
 
-# Image Sources
-if arg_source=="webcam":
-	camera=cv2.VideoCapture(arg_wc)
-	while True:
-		res,img=camera.read()
-		if not res:
-			print("Cam read {} failed!".format(arg_wc))
-			break
-		pim=PIL.Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-		display(pim)
-		if arg_singleframe: break
-elif arg_source=="kinect":
-	k4a=kinect.getK4A()
-	k4a.start()
-	while True:
-		kcd=kinect.getCap(k4a)
-		display(kcd.color_image,kcd.depth_data_mapped)
-		if arg_singleframe: break
-elif arg_source=="image":
-	while True:
-		display(PIL.Image.open(arg_infile))
-		if arg_singleframe: break
-elif arg_source=="video":
-	startT=time.time()
-	while True:
-		vt=(time.time()-startT)*arg_vs
-		vf=video.get_video_frame(arg_infile,vt)
-		display(vf)
-		if arg_singleframe: break
-		
-elif arg_source=="screenshot":
-	while True:
-		display(PIL.ImageGrab.grab(arg_sr))
-		if arg_singleframe: break
+# Main capture loop
+def capture_loop():
+	if arg_source=="webcam":
+		camera=cv2.VideoCapture(arg_wc)
+		while True:
+			res,img=camera.read()
+			if not res:
+				print("Cam read {} failed!".format(arg_wc))
+				break
+			pim=PIL.Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+			display(pim)
+			if arg_singleframe: break
+	elif arg_source=="kinect":
+		k4a=kinect.getK4A()
+		k4a.start()
+		while True:
+			kcd=kinect.getCap(k4a)
+			display(kcd.color_image,kcd.depth_data_mapped)
+			if arg_singleframe: break
+	elif arg_source=="image":
+		while True:
+			display(PIL.Image.open(arg_infile))
+			if arg_singleframe: break
+	elif arg_source=="video":
+		startT=time.time()
+		while True:
+			vt=(time.time()-startT)*arg_vs
+			vf=video.get_video_frame(arg_infile,vt)
+			display(vf)
+			if arg_singleframe: break
 
+	elif arg_source=="screenshot":
+		while True:
+			display(PIL.ImageGrab.grab(arg_sr))
+			if arg_singleframe: break
 
+try:
+	capture_loop()
+except KeyboardInterrupt:
+	print("^C Received. Exiting...")
+	if arg_output=="web":
+		st.die()
 print("Main thread terminated.")
