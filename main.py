@@ -48,8 +48,11 @@ if arguments.output=="tk":
 
 	tid_hud_seg=tk_display.ImageDisplayWindow(img_disp_root,"Segmentation")
 	tid_camraw=tk_display.ImageDisplayWindow(img_disp_root,"Source Image")
-	tid_depth=tk_display.ImageDisplayWindow(img_disp_root,"Depth Estimation")
+	#tid_depth=tk_display.ImageDisplayWindow(img_disp_root,"Depth Estimation")
 	tid_combined=tk_display.ImageDisplayWindow(img_disp_root,"Combined")
+	tid_depthAI=tk_display.ImageDisplayWindow(img_disp_root,"AI Depth")
+	tid_depthIR=tk_display.ImageDisplayWindow(img_disp_root,"IR Depth")
+	tid_depthCompare=tk_display.ImageDisplayWindow(img_disp_root,"Depth Compare")
 
 # Web Server setup
 if arguments.output=="web":
@@ -93,7 +96,7 @@ timer=SequenceTimer()
 
 # Display function
 frmN=0
-def display(img,dep=None):
+def display(img,ir_depth=None):
 	global frmN
 	frmN+=1
 	print(F"\nFrame {frmN}")
@@ -110,15 +113,30 @@ def display(img,dep=None):
 	
 
 	timer.start("Depth")
-	if dep is None:
-		# Depth estimation
-		dep=monodepth_driver.estimate_depth(img,depth_multiplier=0.2)
-	dvis=visualizations.visualize_matrix(dep)
+	# Depth estimation
+	ai_depth=monodepth_driver.estimate_depth(img,depth_multiplier=0.2)
+
+	if ir_depth is not None:
+		compare_vis=visualizations.compare_depthmaps(
+			ai=ai_depth,ir=ir_depth)
+		#compared.show()
+		ir_vis=visualizations.visualize_matrix(ir_depth,"IR Depth")
+	else:
+		compare_vis=PIL.Image.new("RGB",(16,16))
+		ir_vis=PIL.Image.new("RGB",(16,16))
+	ai_vis=visualizations.visualize_matrix(ai_depth,"AI Depth")
+
+	if ir_depth is None:
+		depth=ai_depth
+	else:
+		depth=ir_depth
+
+	dvis=visualizations.visualize_matrix(depth)
 	
 
 	timer.start("Combining")
 	# Combine
-	segdepths_raw=combined.calculate_segdepth(segs,dep)
+	segdepths_raw=combined.calculate_segdepth(segs,depth)
 
 	# Filter out SegDepths with too little depth data
 	segdepths_valid=[]
@@ -139,8 +157,11 @@ def display(img,dep=None):
 	if arguments.output=="tk":
 		tid_camraw.set_image(img)
 		tid_hud_seg.set_image(seg_vis)
-		tid_depth.set_image(dvis)
+		#tid_depth.set_image(dvis)
 		tid_combined.set_image(combined_vis)
+		tid_depthAI.set_image(ai_vis)
+		tid_depthIR.set_image(ir_vis)
+		tid_depthCompare.set_image(compare_vis)
 	elif arguments.output=="web":
 		st.put_image("/raw.jpg",img)
 		st.put_image("/seg.jpg",seg_vis)
@@ -149,11 +170,17 @@ def display(img,dep=None):
 		st.put_string("/information",str(frmN))
 		objects_json=combined.segdepths_to_json(segdepths_valid,img)
 		st.put_json("/objects",objects_json)
+		st.put_image("/dai.jpg",ai_vis)
+		st.put_image("/dir.jpg",ir_vis)
+		st.put_image("/dcm.jpg",compare_vis)
 	elif arguments.output=="file":
 		img.save("out_raw.jpg")
 		seg_vis.save("out_seg.jpg")
 		dvis.save("out_dep.jpg")
 		combined_vis.save("out_com.jpg")
+		compare_vis.save("out_compare.jpg")
+		ir_vis.save("out_IR.jpg")
+		ai_vis.save("out_AI.jpg")
 	timer.start("Get Frame")
 
 

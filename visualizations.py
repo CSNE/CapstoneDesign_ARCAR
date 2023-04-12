@@ -35,7 +35,7 @@ def visualize_segmentations(segments: list[yolodriver.SegmentationResult],size):
 
 	return seg_out
 
-def visualize_matrix(arr,target_aspect=(9/16)):
+def visualize_matrix(arr,title=None,target_aspect=(9/16)):
 	'''
 	Visualize a numpy 2D array to a PIL image, using matplotlib
 	'''
@@ -44,7 +44,8 @@ def visualize_matrix(arr,target_aspect=(9/16)):
 	fig = plt.figure()
 	cmap=mpl.colormaps.get_cmap("plasma").reversed()
 	ax = fig.add_subplot()
-	ax.set_title('Distance')
+	if title is not None:
+		ax.set_title(title)
 	plt.imshow(arr,cmap=cmap)
 	ax.set_aspect(target_aspect/array_aspect) #height=N*width
 	plt.colorbar(orientation='vertical')
@@ -52,6 +53,7 @@ def visualize_matrix(arr,target_aspect=(9/16)):
 	bio=io.BytesIO()
 	plt.savefig(bio)
 	bio.seek(0)
+	plt.close(fig)
 	return PIL.Image.open(bio).convert("RGB")
 
 # Load Font
@@ -110,3 +112,42 @@ def visualize_segdepth(segdepths,size,bg=None):
 			F"{seg.name}\n{dep:.1f}m\n{dep_percentage:.1f}%",
 			fill="#00FFFF",font=font,anchor="ms")
 	return vis
+
+import random
+import maths
+def compare_depthmaps(*,ai,ir,sample=100):
+	# Get all valid IR coords
+	valid_ir_coords=numpy.transpose(numpy.nonzero(~ir.mask)).tolist()
+	sample_points=random.sample(valid_ir_coords,sample)
+
+	# Resize AI to IR
+	ai_resized=maths.resize_matrix(ai,ir.shape)
+
+	xdata=[]
+	ydata=[]
+	for y,x in sample_points:
+		#print("Coords:",x,y)
+		point_ai=ai_resized[y][x]
+		point_ir=ir[y][x]
+		#print("AI",point_ai,"IR",point_ir)
+		xdata.append(point_ai)
+		ydata.append(point_ir)
+	return scatter(x=xdata,y=ydata,xlabel="AI Depth",ylabel="IR Depth")
+
+
+def scatter(*,x,y,xlabel=None,ylabel=None):
+	fig = plt.figure()
+	plt.scatter(x,y)
+	if xlabel is not None:
+		plt.xlabel(xlabel)
+	if ylabel is not None:
+		plt.ylabel(ylabel)
+
+	bio=io.BytesIO()
+	plt.savefig(bio)
+	bio.seek(0)
+	plt.close(fig)
+	return PIL.Image.open(bio).convert("RGB")
+
+if __name__=="__main__":
+	scatter([1,2],[1,2]).show()

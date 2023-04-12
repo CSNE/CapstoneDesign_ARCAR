@@ -11,6 +11,9 @@
 	<img id="dep" style="width:480px;height:270px;"></img>
 	<img id="com" style="width:720px;height:405px;"></img>
 	<canvas id="cvs"></canvas>
+	<img id="dai" style="width:480px;height:270px;"></img>
+	<img id="dir" style="width:480px;height:270px;"></img>
+	<img id="dcm" style="width:480px;height:270px;"></img>
 	
 	<script>
 		// Periodically fetch data form server
@@ -19,6 +22,9 @@
 		var segImg=document.getElementById("seg");
 		var depImg=document.getElementById("dep");
 		var comImg=document.getElementById("com");
+		var daiImg=document.getElementById("dai");
+		var dirImg=document.getElementById("dir");
+		var dcmImg=document.getElementById("dcm");
 		
 		function periodic(){
 			var xhr=new XMLHttpRequest();
@@ -36,6 +42,9 @@
 			segImg.src="seg.jpg?forcereload="+(new Date()).getTime();
 			depImg.src="dep.jpg?forcereload="+(new Date()).getTime();
 			comImg.src="com.jpg?forcereload="+(new Date()).getTime();
+			daiImg.src="dai.jpg?forcereload="+(new Date()).getTime();
+			dirImg.src="dir.jpg?forcereload="+(new Date()).getTime();
+			dcmImg.src="dcm.jpg?forcereload="+(new Date()).getTime();
 		}
 		setInterval(periodic,200);
 	</script>
