@@ -89,7 +89,7 @@ def segment(pim):
 	masks=result_seg.masks
 	if masks is None: # No detections
 		return []
-	segs=masks.segments
+	segs=masks.xyn
 	areas=masks.data
 	boxes=(result_seg.boxes.xyxyn).tolist()
 	confidences=(result_seg.boxes.conf).tolist()
