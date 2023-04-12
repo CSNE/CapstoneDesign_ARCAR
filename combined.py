@@ -8,8 +8,6 @@ import numpy
 import maths
 import collections
 
-#tmp
-import depth
 
 # A namedtuple for storing the depth along with the segment.
 SegDepth=collections.namedtuple(
@@ -62,64 +60,7 @@ def calculate_segdepth(segments,depthmap):
 			depth_valid_ratio=depth_valid_ratio))
 	return result
 
-font_list=[
-	"/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf", # Ubuntu
-	"/usr/share/fonts/dejavu-sans-mono-fonts/DejaVuSansMono-Bold.ttf", # Fedora 37
-	"/usr/share/fonts/TTF/DejaVuSansMono-Bold.ttf", # Archlinux
-	"arialbd.ttf", # Windows
-	"arial.ttf" # Windows 2
-	]
-font_size=36
-font=None
-#font=PIL.ImageFont.truetype("/usr/share/fonts/TTF/Hack-Bold.ttf",size=36)
-for font_path in font_list:
-	try:
-		font=PIL.ImageFont.truetype(font_path,size=36)
-		print("Font",font_path.split("/")[-1],"loaded")
-		break
-	except OSError:
-		pass
 
-
-if font is None:
-	print("Font load failed - loading default font")
-	font=PIL.ImageFont.load_default()
-
-
-def visualize_segdepth(segdepths,size,bg=None):
-	'''
-	Visualize segdepths.
-	'''
-	if bg is None:
-		vis=PIL.Image.new("RGB",size)
-	else:
-		vis=bg.copy()
-	draw=PIL.ImageDraw.Draw(vis)
-	
-	for sd in segdepths:
-		
-		dep=sd.depth_average
-		dep_percentage=sd.depth_valid_ratio*100
-		seg=sd.segment
-		
-		bbox_center_X=(seg.xmin+seg.xmax)/2
-		bbox_center_Y=(seg.ymin+seg.ymax)/2
-		
-		# Draw outline
-		for i in range(len(seg.points)):
-			j=i-1
-			startX=seg.points[i][0]*size[0]
-			startY=seg.points[i][1]*size[1]
-			endX=  seg.points[j][0]*size[0]
-			endY=  seg.points[j][1]*size[1]
-			draw.line((startX,startY,endX,endY),fill="#FF0000",width=3)
-			
-		# Write text
-		draw.text(
-			(bbox_center_X,bbox_center_Y),
-			F"{seg.name}\n{dep:.1f}m\n{dep_percentage:.1f}%",
-			fill="#00FFFF",font=font,anchor="ms")
-	return vis
 
 def segdepths_to_json(segdepths,orig_img):
 	'''

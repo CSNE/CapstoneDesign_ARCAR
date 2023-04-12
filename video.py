@@ -25,8 +25,4 @@ def get_video_frame(vidpath,t):
 	img.load()
 	return img
 	
-if __name__=="__main__":
-	# Testing
-	vf=get_video_frame("../KakaoTalk_20230310_155831877.mp4",1.53)
-	vf.show()
 	

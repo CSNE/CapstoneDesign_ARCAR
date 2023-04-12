@@ -4,7 +4,6 @@
 import os
 import sys
 import time
-import io
 
 import numpy as np
 import PIL.Image as pil
@@ -12,11 +11,7 @@ import PIL.Image as pil
 import torch
 from torchvision import transforms
 
-import matplotlib as mpl
-import matplotlib.cm as cm
-import matplotlib.pyplot as plt
-# Workaround for Matplotlib erroring on Qt error
-mpl.use('TKAgg')
+
 
 # Import from MonoDepth2
 sys.path.append("monodepth2")
@@ -27,7 +22,7 @@ from evaluate_depth import STEREO_SCALE_FACTOR
 
 
 
-class DepthEstimator:
+class _DepthEstimator:
 	'''
 	Class for running the monodepth2 code.
 	Will load & setup model on initialization.
@@ -115,50 +110,18 @@ class DepthEstimator:
 
 		return depth_data
 
-
-
-def visualize_depth(arr,target_aspect=(9/16)):
-	'''
-	Visualize depth map to a PIL image, using matplotlib
-	'''
-	array_aspect=arr.shape[0]/arr.shape[1]
-
-	fig = plt.figure()
-	cmap=mpl.colormaps.get_cmap("plasma").reversed()
-	ax = fig.add_subplot()
-	ax.set_title('Distance')
-	plt.imshow(arr,cmap=cmap)
-	ax.set_aspect(target_aspect/array_aspect) #height=N*width
-	plt.colorbar(orientation='vertical')
-
-	bio=io.BytesIO()
-	plt.savefig(bio)
-	bio.seek(0)
-	return pil.open(bio).convert("RGB")
-
+# Just initialize a global one.
+_de=_DepthEstimator()
+def estimate_depth(img,depth_multiplier=1.0):
+	return _de.estimate(img,depth_multiplier=depth_multiplier)
 
 if __name__=="__main__":
 	# Testing code.
-	t1=time.time()
+	import visualizations
 	src_img=pil.open("testimg.png")
-	t2=time.time()
-	de=DepthEstimator("mono+stereo_640x192")
-	t3=time.time()
-	dat=de.estimate(src_img)
-	t4=time.time()
-	vis=visualize_depth(dat)
-	t5=time.time()
-	vis.save("out.png")
-	t6=time.time()
-
-	print(dat,dat.shape)
-	print(vis.height,vis.width)
-
-	print("Image open",round((t2-t1)*1000),"ms")
-	print("Net setup",round((t3-t2)*1000),"ms")
-	print("Estimate",round((t4-t3)*1000),"ms")
-	print("Visualize",round((t5-t4)*1000),"ms")
-	print("Save image",round((t6-t5)*1000),"ms")
+	dat=estimate_depth(src_img)
+	vis=visualizations.visualize_matrix(dat)
+	vis.show()
 
 
 

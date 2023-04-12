@@ -20,9 +20,35 @@ def colorize(
     return img
 
 
-ColorResolution=pyk4a.ColorResolution
-DepthMode=pyk4a.DepthMode
-FPS=pyk4a.FPS
+DepthMode={
+    'NFOV_2X2BINNED': pyk4a.DepthMode.NFOV_2X2BINNED,
+    "nb":             pyk4a.DepthMode.NFOV_2X2BINNED,
+    'NFOV_UNBINNED':  pyk4a.DepthMode.NFOV_UNBINNED,
+    "nu":             pyk4a.DepthMode.NFOV_UNBINNED,
+    'WFOV_2X2BINNED': pyk4a.DepthMode.WFOV_2X2BINNED,
+    "wb":             pyk4a.DepthMode.WFOV_2X2BINNED,
+    'WFOV_UNBINNED':  pyk4a.DepthMode.WFOV_UNBINNED,
+    "wu":             pyk4a.DepthMode.WFOV_UNBINNED
+    }
+ColorResolution={
+    'RES_720P':  pyk4a.ColorResolution.RES_720P,
+    "720":       pyk4a.ColorResolution.RES_720P,
+    'RES_1080P': pyk4a.ColorResolution.RES_1080P,
+    "1080":      pyk4a.ColorResolution.RES_1080P,
+    'RES_1440P': pyk4a.ColorResolution.RES_1440P,
+    "1440":      pyk4a.ColorResolution.RES_1440P,
+    'RES_1536P': pyk4a.ColorResolution.RES_1536P,
+    "1536":      pyk4a.ColorResolution.RES_1536P,
+    'RES_2160P': pyk4a.ColorResolution.RES_2160P,
+    "2160":      pyk4a.ColorResolution.RES_2160P,
+    'RES_3072P': pyk4a.ColorResolution.RES_3072P,
+    "3072":      pyk4a.ColorResolution.RES_3072P
+    }
+FPS={
+    "5":pyk4a.FPS.FPS_5,
+    "15":pyk4a.FPS.FPS_15,
+    "30":pyk4a.FPS.FPS_30
+    }
 
 def getK4A(cr:ColorResolution,dm:DepthMode,fps:FPS): # get k4a
     k4a = PyK4A(
@@ -53,37 +79,30 @@ def getCap(k4a:PyK4A):
         IR_image=None,#cv2_to_pil(capture.ir),
         IR_mapped=None)#cv2_to_pil(capture.transformed_ir))
 
+
 def cv2_to_pil(cv2_image):
     # Convert CV2 image to PIL image
     # The rest of the code uses PIL images, so this just makes things
     # easier to handle
     conv = cv2.cvtColor(cv2_image, cv2.COLOR_BGR2RGB)
     return PIL.Image.fromarray(conv)
+
 def depth_millimeter_to_meters(depth_data):
     # Convert millimeter data of Kinect SDK to meters
     # This is to match how MonoDepth handles things
     return depth_data.astype(float)/1000.0
+
 def filter_out_zeros(depth_data):
     # Mask out zeroes.
     return np.ma.masked_equal(depth_data, 0)
 
-def main():
-    k4a = getK4A() 
-    k4a.start()
 
-    kcd = getCap(k4a)
-    print("Color")
-    print(type(kcd.color_image))
-    kcd.color_image.show()
-    print("Depth Mapped")
-    print(type(kcd.depth_data_mapped))
-    print(kcd.depth_data_mapped.dtype)
-    print(kcd.depth_data_mapped)
-    kcd.depth_visualization.show()
-    
-    
-
-    
 if __name__ == "__main__":
-    main()
+    # Testing code
+    k4a = getK4A(pyk4a.ColorResolution.RES_720P,
+                 pyk4a.DepthMode.NFOV_UNBINNED,
+                 pyk4a.FPS.FPS_15)
+    k4a.start()
+    kcd = getCap(k4a)
+    kcd.color_image.show()
 

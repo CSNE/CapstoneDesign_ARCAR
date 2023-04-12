@@ -75,15 +75,8 @@ class ServerThread(threading.Thread):
 	
 if __name__=="__main__":
 	# Testing
-	with open("webpage.html","rb") as f:
-		page=f.read()
 	st=ServerThread(28301)
-	st.put_data("/",page)
-	st.put_image("/raw.jpg",PIL.Image.open("testimg.png"))
-	st.put_image("/seg.jpg",PIL.Image.open("testimg.png"))
-	st.put_image("/dep.jpg",PIL.Image.open("testimg.png"))
-	st.put_image("/com.jpg",PIL.Image.open("testimg.png"))
-	st.put_string("/information","asdf")
+	st.put_string("/","asdf")
 	st.start()
 	for i in range(10):
 		print(i)
