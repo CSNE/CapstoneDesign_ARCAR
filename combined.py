@@ -37,7 +37,10 @@ def calculate_segdepth(segments,depthmap):
 		# Only take depth data if in segment area AND is valid depth
 		# Mask is used for exclusion, not inclusion so we actually OR here.
 		assert area_resized_masked.shape == depthmap.shape
-		combined_mask=numpy.logical_or(area_resized_masked.mask,depthmap.mask)
+		if hasattr(depthmap,"mask"): # Only if depthmap is maskedarray
+			combined_mask=numpy.logical_or(area_resized_masked.mask,depthmap.mask)
+		else:
+			combined_mask=area_resized_masked.mask
 
 		# Create maskedarray, take mean
 		intersection_masked_depth=numpy.ma.MaskedArray(depthmap,mask=combined_mask)
