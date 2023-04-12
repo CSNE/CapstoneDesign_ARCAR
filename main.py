@@ -181,37 +181,69 @@ if arg_output=="web":
 	st.put_data("/webpage.js",page,"text/javascript")
 	time.sleep(0.2)
 
+class SequenceTimer:
+	def __init__(self):
+		self._current_segment_name=None
+		self._current_segment_start=None
+	def _start_segment(self,name,t):
+		self._current_segment_name=name
+		self._current_segment_start=t
+	def _end_segment(self,t):
+		if self._current_segment_name is None:
+			return
+		n=self._current_segment_name
+		delta=t-self._current_segment_start
+		print("{:>16s}: {:>6.1f}ms".format(n,delta*1000))
+		self._current_segment_name=None
+		self._current_segment_start=None
+	def start(self,name):
+		t=time.time()
+		self._end_segment(t)
+		self._start_segment(name,t)
+	def end(self):
+		self._end_segment(time.time())
 
 # Global variables
 de=depth.DepthEstimator()
+timer=SequenceTimer()
 
 # Display function
 frmN=0
 def display(img,dep=None):
+
 	global frmN
 	frmN+=1
+
+	print(F"\nFrame {frmN}")
 	
+
 	if arg_output=="tk":
 		if img_disp_root.opt_mirror:
 			img=img.transpose(PIL.Image.FLIP_LEFT_RIGHT)
 	
+	timer.start("Segmentation")
 	# Segmentation
 	segs=ai.segment(img)
 	seg_vis=ai.visualize_segmentation(segs,img.size)
 	
+	timer.start("Depth")
 	if dep is None:
 		# Depth estimation
 		dep=de.estimate(img,depth_multiplier=0.2)
 	dvis=depth.visualize_depth(dep)
 	
+	timer.start("Combining")
 	# Combine
 	segdepths=combined.calculate_segdepth(segs,dep)
 	all_segs=len(segdepths)
 	segdepths=[i for i in segdepths if i.depth_valid]
 	filtered_segdepths=len(segdepths)
-	print(F"Filtered {all_segs-filtered_segdepths} out SegDepths out of {all_segs} because it has no depth data.")
+	diff=all_segs-filtered_segdepths
+	if diff != 0:
+		print(F"Filtered {diff} out SegDepths out of {all_segs} because it has no depth data.")
 	combined_vis=combined.visualize_segdepth(segdepths,img.size,img)
 	
+	timer.start("Output")
 	# Output
 	if arg_output=="tk":
 		tid_camraw.set_image(img)
@@ -231,6 +263,7 @@ def display(img,dep=None):
 		seg_vis.save("out_seg.jpg")
 		dvis.save("out_dep.jpg")
 		combined_vis.save("out_com.jpg")
+	timer.start("Get Frame")
 		
 
 # Main capture loop
