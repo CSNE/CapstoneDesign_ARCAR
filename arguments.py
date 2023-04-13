@@ -9,7 +9,7 @@ _ap=argparse.ArgumentParser(description="ARCAR Python Program")
 # Required
 _ap.add_argument(
 	"--source","-src",
-	choices=["webcam","image","video","screenshot","kinect"],
+	choices=["webcam","image","video","screenshot","kinect","kinectcapture"],
 	required=True)
 _ap.add_argument(
 	"--output","-o",
@@ -61,9 +61,9 @@ output=_args.output
 wc=_args.webcam_number
 vs=_args.video_speed
 
-if source in ("image","video"):
+if source in ("image","video","kinectcapture"):
 	if "input_file" not in _args:
-		print("For image or video input, you need to supply the input file.")
+		print("For image or video or kinectcapture input, you need to supply the input file or directory.")
 		print("( --input-file=FILE or -f FILE )")
 		sys.exit(1)
 	else:

@@ -5,6 +5,7 @@ from typing import Optional, Tuple
 from pyk4a import Config, PyK4A
 import collections
 import PIL.Image
+import io
 
 def colorize(
     image: np.ndarray,
@@ -64,20 +65,14 @@ KinectCaptureData=collections.namedtuple(
     "KinectCaptureData",
     ["color_image", # RGB Color Image [PIL.Image]
      "depth_data_raw", # Raw Depth data [ndarray[float]] (depth in meters)
-     "depth_data_mapped", # Depth data, mapped to the geometry of RGB image. [ndarray[float]]
-     "depth_visualization", # Depth visuals. [PIL.Image]
-     "IR_image", # IR Image NYI
-     "IR_mapped" # IR, mapped to the geometry of RGB image. NYI
+     "depth_data_mapped" # Depth data, mapped to the geometry of RGB image. [ndarray[float]]
      ])
 def getCap(k4a:PyK4A):
     capture = k4a.get_capture()
     return KinectCaptureData(
         color_image=cv2_to_pil(capture.color), 
         depth_data_raw=depth_millimeter_to_meters(filter_out_zeros(capture.depth)),
-        depth_data_mapped=depth_millimeter_to_meters(filter_out_zeros(capture.transformed_depth)),
-        depth_visualization=cv2_to_pil(colorize(filter_out_zeros(capture.transformed_depth), (None, 10000), cv2.COLORMAP_JET)),
-        IR_image=None,#cv2_to_pil(capture.ir),
-        IR_mapped=None)#cv2_to_pil(capture.transformed_ir))
+        depth_data_mapped=depth_millimeter_to_meters(filter_out_zeros(capture.transformed_depth)))
 
 
 def cv2_to_pil(cv2_image):
@@ -95,6 +90,7 @@ def depth_millimeter_to_meters(depth_data):
 def filter_out_zeros(depth_data):
     # Mask out zeroes.
     return np.ma.masked_equal(depth_data, 0)
+
 
 
 if __name__ == "__main__":

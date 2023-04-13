@@ -6,6 +6,9 @@ import arguments
 # Imports
 # Standard Library
 import time
+import os.path
+import os
+import random
 
 
 # 3rd party
@@ -28,6 +31,8 @@ import combined
 if arguments.source=="kinect":
 	import kinect
 import visualizations
+if arguments.source=="kinectcapture":
+	import kinect_capture
 
 
 # Make YOLO quiet
@@ -114,13 +119,14 @@ def display(img,ir_depth=None):
 
 	timer.start("Depth")
 	# Depth estimation
-	ai_depth=monodepth_driver.estimate_depth(img,depth_multiplier=0.2)
+	ai_depth=monodepth_driver.estimate_depth(img,depth_multiplier=0.3)
 
 	if ir_depth is not None:
 		compare_vis=visualizations.compare_depthmaps(
 			ai=ai_depth,ir=ir_depth)
 		#compared.show()
 		ir_vis=visualizations.visualize_matrix(ir_depth,"IR Depth")
+		print("IR avail: {}/{}".format(ir_depth.count(),ir_depth.size))
 	else:
 		compare_vis=PIL.Image.new("RGB",(16,16))
 		ir_vis=PIL.Image.new("RGB",(16,16))
@@ -219,6 +225,27 @@ def capture_loop():
 		while True:
 			display(PIL.ImageGrab.grab(arguments.sr))
 			if arguments.singleframe: break
+
+	elif arguments.source=="kinectcapture":
+		if os.path.isdir(arguments.infile):
+			filepaths=[
+				os.path.join(arguments.infile,fn)
+				for fn in os.listdir(arguments.infile)]
+		else:
+			filepaths=[arguments.infile]
+
+		idx=0
+		while True:
+			#filepath=filepaths[idx]
+			filepath=random.choice(filepaths)
+			print(filepath)
+			idx=(idx+1)%len(filepaths)
+			kcd=kinect_capture.load_capture(filepath)
+			display(kcd.color_image,kcd.depth_data_mapped)
+			if arguments.singleframe: break
+			#input()
+
+
 
 try:
 	capture_loop()

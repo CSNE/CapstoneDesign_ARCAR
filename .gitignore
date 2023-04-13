@@ -1,3 +1,4 @@
 *.pt
 __pycache__/
 models/
+kinect_captures/
