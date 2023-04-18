@@ -45,7 +45,7 @@ class ServerThread(threading.Thread):
 		super().__init__()
 		self._port=port
 		self._handlers=dict()
-		self._mimetypes=dict()
+		self._serv=None
 		
 		outer_self=self
 		class ReqHandler(http.server.BaseHTTPRequestHandler):
@@ -107,7 +107,9 @@ class ServerThread(threading.Thread):
 		self._serv.serve_forever()
 		print("Server thread stopped")
 	def die(self):
-		self._serv.shutdown()
+		if self._serv is not None:
+			print("Killing server...")
+			self._serv.shutdown()
 	
 if __name__=="__main__":
 	# Testing

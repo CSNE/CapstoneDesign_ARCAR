@@ -9,6 +9,7 @@ import time
 import os.path
 import os
 import random
+import traceback
 
 
 # 3rd party
@@ -70,7 +71,7 @@ if arguments.output=="web":
 	with open("webpage.js","rb") as f:
 		page=f.read()
 	st.put_data("/webpage.js",page,"text/javascript")
-	time.sleep(0.2)
+	time.sleep(1.0)
 
 # Simple timer
 class SequenceTimer:
@@ -284,6 +285,8 @@ try:
 	capture_loop()
 except KeyboardInterrupt:
 	print("^C Received. Exiting...")
+except:
+	traceback.print_exc()
 finally:
 	if arguments.output=="web":
 		st.die()
