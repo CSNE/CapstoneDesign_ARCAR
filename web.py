@@ -7,8 +7,17 @@ import io
 import json
 import urllib.parse
 import collections
+import sys
 
 import PIL.Image
+
+class ErrorSupressedServer(http.server.ThreadingHTTPServer):
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,*kwargs)
+	def handle_error(self, request, client_address):
+		# Override from BaseServer from Lib/socketserver.py
+		exc_type,exc,tb=sys.exc_info()
+		print(F"{exc_type.__name__} on server. Ignoring.")
 
 WebResponse=collections.namedtuple(
 	"WebResponse",
@@ -94,7 +103,7 @@ class ServerThread(threading.Thread):
 		
 	def run(self):
 		print("Server thread started")
-		self._serv=http.server.ThreadingHTTPServer(('',self._port),self._reqhandler)
+		self._serv=ErrorSupressedServer(('',self._port),self._reqhandler)
 		self._serv.serve_forever()
 		print("Server thread stopped")
 	def die(self):
