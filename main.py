@@ -239,40 +239,55 @@ def capture_loop():
 			filepaths=[arguments.infile]
 
 		playback_autonext=False
-		playback_frame=random.choice(filepaths)
-		playback_last_frame=None
+		playback_frameN=0
+		playback_lastN=None
 
 		if arguments.output=="web":
 			def playback_countrol_handler(q):
 				nonlocal playback_autonext
-				nonlocal playback_frame
+				nonlocal playback_frameN
 				t=q["type"][0]
 				print("PCH",t)
 				if t=="pause":
 					playback_autonext=False
 				elif t=="play":
 					playback_autonext=True
-				elif t=="next":
-					playback_frame=random.choice(filepaths)
+				elif t=="+1":
+					playback_frameN+=1
+				elif t=="-1":
+					playback_frameN-=1
+				elif t=="-10":
+					playback_frameN-=10
+				elif t=="+10":
+					playback_frameN+=10
+				elif t=="-100":
+					playback_frameN-=100
+				elif t=="+100":
+					playback_frameN+=100
+				elif t=="rand":
+					playback_frameN=random.randint(0,len(filepaths)-1)
 				else:
-					0/0
+					print("Unknown command",q)
 			st.set_handler("/playbackControl",playback_countrol_handler)
 
 		while True:
 			if playback_autonext:
-				playback_frame=random.choice(filepaths)
+				playback_frameN+=1
 
-			if playback_frame != playback_last_frame:
+			if playback_frameN != playback_lastN:
 				while True:
-					print("Load",playback_frame)
-					kcd=kinect_capture.load_capture(playback_frame)
+					if playback_frameN<0:
+						playback_frameN=0
+					playback_frameN=playback_frameN%len(filepaths)
+					print("Load",playback_frameN)
+					kcd=kinect_capture.load_capture(filepaths[playback_frameN])
 					err=kinect_capture.detect_error(kcd.color_image)
 					if err:
 						print("Image seems errored. Get another frame.")
-						playback_frame=random.choice(filepaths)
+						playback_frameN+=1
 						continue
 					display(kcd.color_image,kcd.depth_data_mapped)
-					playback_last_frame=playback_frame
+					playback_lastN=playback_frameN
 					break
 			else:
 				time.sleep(0.1)
