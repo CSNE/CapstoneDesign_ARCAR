@@ -5,6 +5,11 @@
 	<script type="module" src="./webpage.js"></script>
 </head>
 <body>
+	<div id="buttonContainer">
+	<button onclick="playbackControl('pause');">Pause</button>
+	<button onclick="playbackControl('play');">Play</button>
+	<button onclick="playbackControl('next');">Next</button>
+	</div>
 	<div id="information"></div>
 	<img id="raw" style="width:480px;height:270px;"></img>
 	<img id="seg" style="width:480px;height:270px;"></img>
@@ -47,6 +52,12 @@
 			dcmImg.src="dcm.jpg?forcereload="+(new Date()).getTime();
 		}
 		setInterval(periodic,200);
+
+		function playbackControl(type){
+			var xhr=new XMLHttpRequest();
+			xhr.open("GET","/playbackControl?type="+type);
+			xhr.send();
+		}
 	</script>
 	</body>
 </html>

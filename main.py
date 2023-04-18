@@ -203,7 +203,10 @@ def capture_loop():
 			display(pim)
 			if arguments.singleframe: break
 	elif arguments.source=="kinect":
-		k4a=kinect.getK4A(arguments.kinect_rgb,arguments.kinect_depth,arguments.kinect_fps)
+		k4a=kinect.getK4A(
+			arguments.kinect_rgb,
+			arguments.kinect_depth,
+			arguments.kinect_fps)
 		k4a.start()
 		while True:
 			kcd=kinect.getCap(k4a)
@@ -234,14 +237,36 @@ def capture_loop():
 		else:
 			filepaths=[arguments.infile]
 
-		idx=0
+		playback_autonext=False
+		playback_frame=random.choice(filepaths)
+		playback_last_frame=None
+
+		if arguments.output=="web":
+			def playback_countrol_handler(q):
+				nonlocal playback_autonext
+				nonlocal playback_frame
+				t=q["type"][0]
+				print("PCH",t)
+				if t=="pause":
+					playback_autonext=False
+				elif t=="play":
+					playback_autonext=True
+				elif t=="next":
+					playback_frame=random.choice(filepaths)
+				else:
+					0/0
+			st.set_handler("/playbackControl",playback_countrol_handler)
+
 		while True:
-			#filepath=filepaths[idx]
-			filepath=random.choice(filepaths)
-			print(filepath)
-			idx=(idx+1)%len(filepaths)
-			kcd=kinect_capture.load_capture(filepath)
-			display(kcd.color_image,kcd.depth_data_mapped)
+			if playback_autonext:
+				playback_frame=random.choice(filepaths)
+				print(playback_frame)
+			if playback_frame != playback_last_frame:
+				kcd=kinect_capture.load_capture(playback_frame)
+				display(kcd.color_image,kcd.depth_data_mapped)
+				playback_last_frame=playback_frame
+			else:
+				time.sleep(0.1)
 			if arguments.singleframe: break
 			#input()
 

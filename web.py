@@ -5,8 +5,14 @@ import threading
 import time
 import io
 import json
+import urllib.parse
+import collections
 
 import PIL.Image
+
+WebResponse=collections.namedtuple(
+	"WebResponse",
+	["content","mimetype"])
 
 class ServerThread(threading.Thread):
 	'''
@@ -20,11 +26,16 @@ class ServerThread(threading.Thread):
 	etc
 	
 	now server will reply with "asdf" whenever you access localhost:PORT/test
+
+	Set custom handler with
+	st.set_handler("/dynamic",lambda q: WebResponse(content=F"Query:{q}".encode(),mimetype="text/plain"))
+
+	now server will reply with the query string when you access /dynamic
 	'''
 	def __init__(self,port):
 		super().__init__()
 		self._port=port
-		self._serve_data=dict()
+		self._handlers=dict()
 		self._mimetypes=dict()
 		
 		outer_self=self
@@ -32,26 +43,36 @@ class ServerThread(threading.Thread):
 			def log_message(self, format, *args): #supress log messages
 				return
 			def do_GET(self):
-				path=self.path.split("?")[0]
+				parsed_path=urllib.parse.urlparse(self.path)
+				#print(parsed_path)
+				path=parsed_path.path
+				qs=urllib.parse.parse_qs(parsed_path.query)
+				#print(qs)
+
 				client_addr, client_port=self.client_address
 				
-				try:
-					response=outer_self._get_data(path)
+				if path in outer_self._handlers:
+					wr=outer_self._handlers[path](qs)
+
 					self.send_response(http.server.HTTPStatus.OK)
-					if path in outer_self._mimetypes:
-						self.send_header("Content-Type",outer_self._mimetypes[path])
-					self.end_headers()
-					self.wfile.write(response)
-				except KeyError:
+					if wr is None:
+						self.end_headers()
+					else:
+						if wr.mimetype is not None:
+							self.send_header("Content-Type",wr.mimetype)
+						self.end_headers()
+						self.wfile.write(wr.content)
+				else:
 					self.send_error(404)
 					self.end_headers()
 				
 		self._reqhandler=ReqHandler
 		
 	def put_data(self,k,v,mimetype=None):
-		self._serve_data[k]=v
-		if mimetype is not None:
-			self._mimetypes[k]=mimetype
+
+		resp= WebResponse(content=v,mimetype=mimetype)
+		self.set_handler(k,lambda q: resp)
+
 	def put_image(self,k,img):
 		bio=io.BytesIO()
 		img.convert("RGB").save(bio,format="JPEG")
@@ -62,8 +83,14 @@ class ServerThread(threading.Thread):
 		bio=io.StringIO()
 		json.dump(d,bio)
 		self.put_data(k,bio.getvalue().encode(),"text/javascript")
-	def _get_data(self,k):
-		return self._serve_data[k]
+
+	def set_handler(self,path,f):
+		'''
+		Set handler for a path. f should be a function that
+		takes a dict of query, and (optinally) returns a webpage.
+		This has priority over regular data.
+		'''
+		self._handlers[path]=f
 		
 	def run(self):
 		print("Server thread started")
@@ -77,6 +104,7 @@ if __name__=="__main__":
 	# Testing
 	st=ServerThread(28301)
 	st.put_string("/","asdf")
+	st.set_handler("/dynamic",lambda q: WebResponse(content=F"Query:{q}".encode(),mimetype="text/plain"))
 	st.start()
 	for i in range(10):
 		print(i)
