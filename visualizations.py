@@ -9,7 +9,7 @@ import matplotlib as mpl
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 # Workaround for Matplotlib erroring on Qt error
-mpl.use('TKAgg')
+mpl.use('Agg')
 
 import numpy
 import random
@@ -118,7 +118,8 @@ import maths
 def compare_depthmaps(*,ai,ir,sample=100):
 	# Get all valid IR coords
 	valid_ir_coords=numpy.transpose(numpy.nonzero(~ir.mask)).tolist()
-	sample_points=random.sample(valid_ir_coords,sample)
+	sampleN=min(sample,len(valid_ir_coords))
+	sample_points=random.sample(valid_ir_coords,sampleN)
 
 	# Resize AI to IR
 	ai_resized=maths.resize_matrix(ai,ir.shape)
