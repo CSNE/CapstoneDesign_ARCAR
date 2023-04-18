@@ -44,6 +44,7 @@ def visualize_matrix(arr,title=None,target_aspect=(9/16)):
 	fig = plt.figure()
 	cmap=mpl.colormaps.get_cmap("plasma").reversed()
 	ax = fig.add_subplot()
+	ax.set_facecolor("#00A000")
 	if title is not None:
 		ax.set_title(title)
 	plt.imshow(arr,cmap=cmap)
