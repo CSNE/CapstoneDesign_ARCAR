@@ -260,11 +260,19 @@ def capture_loop():
 		while True:
 			if playback_autonext:
 				playback_frame=random.choice(filepaths)
-				print(playback_frame)
+
 			if playback_frame != playback_last_frame:
-				kcd=kinect_capture.load_capture(playback_frame)
-				display(kcd.color_image,kcd.depth_data_mapped)
-				playback_last_frame=playback_frame
+				while True:
+					print("Load",playback_frame)
+					kcd=kinect_capture.load_capture(playback_frame)
+					err=kinect_capture.detect_error(kcd.color_image)
+					if err:
+						print("Image seems errored. Get another frame.")
+						playback_frame=random.choice(filepaths)
+						continue
+					display(kcd.color_image,kcd.depth_data_mapped)
+					playback_last_frame=playback_frame
+					break
 			else:
 				time.sleep(0.1)
 			if arguments.singleframe: break
