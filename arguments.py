@@ -1,8 +1,6 @@
 import argparse
 import sys
 
-import kinect
-
 # Arguments Definition
 _ap=argparse.ArgumentParser(description="ARCAR Python Program")
 
@@ -31,15 +29,25 @@ _ap.add_argument(
 	"--screenshot-region","-sr")
 _ap.add_argument(
 	"--kinect-depth","-kd",
-	choices=list(kinect.DepthMode.keys()),
+	choices=[
+		'NFOV_2X2BINNED',"nb",
+		'NFOV_UNBINNED',"nu",
+		'WFOV_2X2BINNED',"wb",
+		'WFOV_UNBINNED',"wu"],
 	default="NFOV_UNBINNED")
 _ap.add_argument(
 	"--kinect-rgb","-kr",
-	choices=list(kinect.ColorResolution.keys()),
+	choices=[
+		'RES_720P',"720",
+		'RES_1080P',"1080",
+		'RES_1440P',"1440",
+		'RES_1536P',"1536",
+		'RES_2160P',"2160",
+		'RES_3072P',"3072"],
 	default="RES_720P")
 _ap.add_argument(
 	"--kinect-fps","-kf",
-	choices=list(kinect.FPS.keys()),
+	choices=["5","15","30"],
 	default="15")
 
 # Optional
@@ -62,7 +70,7 @@ wc=_args.webcam_number
 vs=_args.video_speed
 
 if source in ("image","video","kinectcapture"):
-	if "input_file" not in _args:
+	if _args.input_file is None:
 		print("For image or video or kinectcapture input, you need to supply the input file or directory.")
 		print("( --input-file=FILE or -f FILE )")
 		sys.exit(1)
@@ -81,9 +89,9 @@ if _args.screenshot_region is not None:
 else:
 	sr=None
 
-kinect_depth=kinect.DepthMode[_args.kinect_depth]
-kinect_rgb=kinect.ColorResolution[_args.kinect_rgb]
-kinect_fps=kinect.FPS[_args.kinect_fps]
+kinect_depth=_args.kinect_depth
+kinect_rgb=_args.kinect_rgb
+kinect_fps=_args.kinect_fps
 
 singleframe=_args.single_frame
 verblevel=_args.verbose

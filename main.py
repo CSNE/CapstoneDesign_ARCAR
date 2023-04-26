@@ -30,10 +30,10 @@ if arguments.output=="web":
 import maths
 import combined
 if arguments.source=="kinect":
-	import kinect
+	import kinect_hardware
 import visualizations
 if arguments.source=="kinectcapture":
-	import kinect_capture
+	import kinect_record
 
 
 # Make YOLO quiet
@@ -204,13 +204,13 @@ def capture_loop():
 			display(pim)
 			if arguments.singleframe: break
 	elif arguments.source=="kinect":
-		k4a=kinect.getK4A(
+		k4a=kinect_hardware.getK4A(
 			arguments.kinect_rgb,
 			arguments.kinect_depth,
 			arguments.kinect_fps)
 		k4a.start()
 		while True:
-			kcd=kinect.getCap(k4a)
+			kcd=kinect_hardware.getCap(k4a)
 			display(kcd.color_image,kcd.depth_data_mapped)
 			if arguments.singleframe: break
 	elif arguments.source=="image":
@@ -237,7 +237,8 @@ def capture_loop():
 				for fn in os.listdir(arguments.infile)]
 		else:
 			filepaths=[arguments.infile]
-
+		filepaths.sort()
+		
 		playback_autonext=False
 		playback_frameN=0
 		playback_lastN=None
@@ -280,8 +281,8 @@ def capture_loop():
 						playback_frameN=0
 					playback_frameN=playback_frameN%len(filepaths)
 					print("Load",playback_frameN)
-					kcd=kinect_capture.load_capture(filepaths[playback_frameN])
-					err=kinect_capture.detect_error(kcd.color_image)
+					kcd=kinect_record.load_capture(filepaths[playback_frameN])
+					err=kinect_record.detect_error(kcd.color_image)
 					if err:
 						print("Image seems errored. Get another frame.")
 						playback_frameN+=1

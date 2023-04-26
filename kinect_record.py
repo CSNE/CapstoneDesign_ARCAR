@@ -1,4 +1,4 @@
-import kinect
+import kinect_common
 import datetime
 import os.path
 import os
@@ -14,33 +14,18 @@ def pil_to_npa(pimg):
 def npa_to_pil(npa):
 	return PIL.Image.fromarray(npa)
 
-def save_capture(filepath:str, kcd:kinect.KinectCaptureData):
+def save_capture(filepath:str, kcd:kinect_common.KinectCaptureData):
 	numpy.savez(
 		filepath,
 		colorimage=pil_to_npa(kcd.color_image),
 		depth_raw=kcd.depth_data_raw,
 		depth_mapped=kcd.depth_data_mapped)
-def load_capture(filepath:str) -> kinect.KinectCaptureData:
+def load_capture(filepath:str) -> kinect_common.KinectCaptureData:
 	with numpy.load(filepath) as dat:
-		return kinect.KinectCaptureData(
+		return kinect_common.KinectCaptureData(
 			color_image=npa_to_pil(dat["colorimage"]),
 			depth_data_raw=dat["depth_raw"],
-			depth_data_mapped=kinect.filter_out_zeros(dat["depth_mapped"]))
-'''
-if __name__ == "__main__":
-	# Testing code
-	k4a = kinect.getK4A(
-		kinect.ColorResolution["720"],
-		kinect.DepthMode["nu"],
-		kinect.FPS["15"])
-	k4a.start()
-	kcd = getCap(k4a)
-	save_capture("test.npz",kcd)
-	del kcd
-	kcd=load_capture("test.npz")
-	ci=kcd.color_image
-	ci.show()
-'''
+			depth_data_mapped=kinect_common.filter_out_zeros(dat["depth_mapped"]))
 
 def capture_video(
 	*,
@@ -51,6 +36,7 @@ def capture_video(
 	comment:str):
 
 	import tk_display
+	import kinect_hardware
 
 	param_str=F"R[{res}]_I[{ir}]_F[{fps}]_P[{period}]"
 
@@ -68,10 +54,7 @@ def capture_video(
 	print(savedir)
 	os.mkdir(savedir)
 
-	k4a = kinect.getK4A(
-		kinect.ColorResolution[res],
-		kinect.DepthMode[ir],
-		kinect.FPS[fps])
+	k4a = kinect_hardware.getK4A(res,ir,fps)
 	k4a.start()
 
 	frameN=0
@@ -83,7 +66,7 @@ def capture_video(
 			time.sleep(0.01)
 		loopBeginT=time.time()
 
-		kcd = kinect.getCap(k4a)
+		kcd = kinect_hardware.getCap(k4a)
 		if detect_error(kcd.color_image):
 			print("Errored! Retry....")
 			time.sleep(0.1)
