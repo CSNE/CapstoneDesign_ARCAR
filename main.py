@@ -23,7 +23,7 @@ if arguments.output=="tk":
 	import tk_display
 import yolodriver
 import monodepth_driver
-if arguments.source=="webcam":
+if arguments.source in ("webcam","webcam_stereo"):
 	import webcam
 if arguments.source=="video":
 	import video
@@ -36,7 +36,7 @@ if arguments.source=="kinect":
 import visualizations
 if arguments.source=="kinectcapture":
 	import kinect_record
-
+import stereo
 
 # Make YOLO quiet
 import ultralytics.yolo.utils
@@ -104,7 +104,7 @@ timer=SequenceTimer()
 
 # Display function
 frmN=0
-def display(img,ir_depth=None):
+def display(img,*,alt_img=None,ir_depth=None):
 	global frmN
 	frmN+=1
 	print(F"\nFrame {frmN}")
@@ -129,7 +129,8 @@ def display(img,ir_depth=None):
 			ai=ai_depth,ir=ir_depth)
 		#compared.show()
 		ir_vis=visualizations.visualize_matrix(ir_depth,"IR Depth")
-		print("IR avail: {}/{}".format(ir_depth.count(),ir_depth.size))
+		if hasattr(ir_depth,"count"): # Only has it if MaskedArray
+			print("IR avail: {}/{}".format(ir_depth.count(),ir_depth.size))
 	else:
 		compare_vis=PIL.Image.new("RGB",(16,16))
 		ir_vis=PIL.Image.new("RGB",(16,16))
@@ -174,7 +175,8 @@ def display(img,ir_depth=None):
 	elif arguments.output=="web":
 		st.put_image("/raw.jpg",img)
 		st.put_image("/seg.jpg",seg_vis)
-		st.put_image("/dep.jpg",dvis)
+		if alt_img is not None:
+			st.put_image("/str.jpg",alt_img)
 		st.put_image("/com.jpg",combined_vis)
 		st.put_string("/information",str(frmN))
 		objects_json=combined.segdepths_to_json(segdepths_valid,img)
@@ -201,6 +203,17 @@ def capture_loop():
 			pim=camera.grab()
 			display(pim)
 			if arguments.singleframe: break
+	if arguments.source=="webcam_stereo":
+		cameraL=webcam.Webcam(arguments.wcL)
+		cameraR=webcam.Webcam(arguments.wcR)
+		while True:
+			pimL=cameraL.grab()
+			pimR=cameraR.grab()
+			disparity=stereo.stereo_calculate(
+				left=pimL,right=pimR,
+				depth_multiplier=0.01)
+			display(pimL,alt_img=pimR,ir_depth=disparity)
+			if arguments.singleframe: break
 	elif arguments.source=="kinect":
 		k4a=kinect_hardware.getK4A(
 			arguments.kinect_rgb,
@@ -209,11 +222,20 @@ def capture_loop():
 		k4a.start()
 		while True:
 			kcd=kinect_hardware.getCap(k4a)
-			display(kcd.color_image,kcd.depth_data_mapped)
+			display(kcd.color_image,ir_depth=kcd.depth_data_mapped)
 			if arguments.singleframe: break
 	elif arguments.source=="image":
 		while True:
 			display(PIL.Image.open(arguments.infile))
+			if arguments.singleframe: break
+	elif arguments.source=="image_stereo":
+		while True:
+			iL=PIL.Image.open(arguments.infileL).convert("RGB")
+			iR=PIL.Image.open(arguments.infileR).convert("RGB")
+			disparity=stereo.stereo_calculate(
+				left=iL,right=iR,
+				depth_multiplier=0.01)
+			display(iL,alt_img=iR,ir_depth=disparity)
 			if arguments.singleframe: break
 	elif arguments.source=="video":
 		startT=time.time()
@@ -285,7 +307,7 @@ def capture_loop():
 						print("Image seems errored. Get another frame.")
 						playback_frameN+=1
 						continue
-					display(kcd.color_image,kcd.depth_data_mapped)
+					display(kcd.color_image,ir_depth=kcd.depth_data_mapped)
 					playback_lastN=playback_frameN
 					break
 			else:

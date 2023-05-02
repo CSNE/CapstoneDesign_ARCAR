@@ -118,9 +118,15 @@ import random
 import maths
 def compare_depthmaps(*,ai,ir,sample=100):
 	# Get all valid IR coords
-	valid_ir_coords=numpy.transpose(numpy.nonzero(~ir.mask)).tolist()
-	sampleN=min(sample,len(valid_ir_coords))
-	sample_points=random.sample(valid_ir_coords,sampleN)
+	if hasattr(ir,"mask"): #MaskedArray (Kinect)
+		valid_ir_coords=numpy.transpose(numpy.nonzero(~ir.mask)).tolist()
+		sampleN=min(sample,len(valid_ir_coords))
+		sample_points=random.sample(valid_ir_coords,sampleN)
+	else: #Regular array (CV2 Stereoscopy)
+		sample_points=[
+			(random.randint(0,ir.shape[0]-1),
+			 random.randint(0,ir.shape[1]-1)) for i in range(sample)]
+
 
 	# Resize AI to IR
 	ai_resized=maths.resize_matrix(ai,ir.shape)

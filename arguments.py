@@ -7,7 +7,9 @@ _ap=argparse.ArgumentParser(description="ARCAR Python Program")
 # Required
 _ap.add_argument(
 	"--source","-src",
-	choices=["webcam","image","video","screenshot","kinect","kinectcapture"],
+	choices=["webcam","webcam_stereo",
+		  "image","image_stereo","video","screenshot",
+		  "kinect","kinectcapture"],
 	required=True)
 _ap.add_argument(
 	"--output","-o",
@@ -20,7 +22,17 @@ _ap.add_argument(
 	type=int,
 	default=0)
 _ap.add_argument(
+	"--webcam-left","-wl",
+	type=int)
+_ap.add_argument(
+	"--webcam-right","-wr",
+	type=int)
+_ap.add_argument(
 	"--input-file","-i")
+_ap.add_argument(
+	"--input-left","-il")
+_ap.add_argument(
+	"--input-right","-ir")
 _ap.add_argument(
 	"--video-speed","-vs",
 	type=float,
@@ -76,6 +88,24 @@ if source in ("image","video","kinectcapture"):
 		sys.exit(1)
 	else:
 		infile=_args.input_file
+
+if source in ("webcam_stereo",):
+	if (_args.webcam_left is None) or (_args.webcam_right is None):
+		print("For webcam_stereo source, you need to supply both webcam's number.")
+		print("( --webcam-left N --webcam-left N )")
+		sys.exit(1)
+	else:
+		wcL=_args.webcam_left
+		wcR=_args.webcam_right
+
+if source in ("image_stereo",):
+	if (_args.input_left is None) or (_args.input_right is None):
+		print("For image_stereo source, you need to supply both files.")
+		print("( --input-left FILE --input-right FILE )")
+		sys.exit(1)
+	else:
+		infileL=_args.input_left
+		infileR=_args.input_right
 
 if _args.screenshot_region is not None:
 	spl=_args.screenshot_region.split(",")
