@@ -23,6 +23,8 @@ if arguments.output=="tk":
 	import tk_display
 import yolodriver
 import monodepth_driver
+if arguments.source=="webcam":
+	import webcam
 if arguments.source=="video":
 	import video
 if arguments.output=="web":
@@ -194,13 +196,9 @@ def display(img,ir_depth=None):
 # Main capture loop
 def capture_loop():
 	if arguments.source=="webcam":
-		camera=cv2.VideoCapture(arguments.wc)
+		camera=webcam.Webcam(arguments.wc)
 		while True:
-			res,img=camera.read()
-			if not res:
-				print("Cam read {} failed!".format(arguments.wc))
-				break
-			pim=PIL.Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+			pim=camera.grab()
 			display(pim)
 			if arguments.singleframe: break
 	elif arguments.source=="kinect":
