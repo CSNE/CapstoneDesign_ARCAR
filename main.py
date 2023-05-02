@@ -211,7 +211,7 @@ def capture_loop():
 			pimR=cameraR.grab()
 			disparity=stereo.stereo_calculate(
 				left=pimL,right=pimR,
-				depth_multiplier=0.01)
+				depth_multiplier=100)
 			display(pimL,alt_img=pimR,ir_depth=disparity)
 			if arguments.singleframe: break
 	elif arguments.source=="kinect":
@@ -234,7 +234,7 @@ def capture_loop():
 			iR=PIL.Image.open(arguments.infileR).convert("RGB")
 			disparity=stereo.stereo_calculate(
 				left=iL,right=iR,
-				depth_multiplier=0.01)
+				depth_multiplier=100)
 			display(iL,alt_img=iR,ir_depth=disparity)
 			if arguments.singleframe: break
 	elif arguments.source=="video":

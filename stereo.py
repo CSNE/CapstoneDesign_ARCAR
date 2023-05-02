@@ -14,7 +14,10 @@ def stereo_calculate(*,left,right,depth_multiplier=1.0):
 	disparity = stereo.compute(
 		cv2.cvtColor(pil2cv(left), cv2.COLOR_BGR2GRAY),
 		cv2.cvtColor(pil2cv(right), cv2.COLOR_BGR2GRAY))
-	return disparity.astype(float)*depth_multiplier
+	disparity_masked=numpy.ma.masked_less_equal(disparity,0)
+	disparity_float=disparity_masked.astype(float)
+	depth=1/disparity_float
+	return depth*depth_multiplier
 
 def demo_realtime():
 	img_disp_root=tk_display.ImageDisplayerRoot()
