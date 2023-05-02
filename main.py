@@ -48,32 +48,7 @@ if arguments.verblevel>3:
 	ultralytics.yolo.utils.LOGGER.setLevel(logging.DEBUG)
 
 
-## GUI Setup
-if arguments.output=="tk":
-	img_disp_root=tk_display.ImageDisplayerRoot()
-	img_disp_root.start()
-	time.sleep(0.5) # Race condition
 
-	tid_hud_seg=tk_display.ImageDisplayWindow(img_disp_root,"Segmentation")
-	tid_camraw=tk_display.ImageDisplayWindow(img_disp_root,"Source Image")
-	#tid_depth=tk_display.ImageDisplayWindow(img_disp_root,"Depth Estimation")
-	tid_combined=tk_display.ImageDisplayWindow(img_disp_root,"Combined")
-	tid_depthAI=tk_display.ImageDisplayWindow(img_disp_root,"AI Depth")
-	tid_depthIR=tk_display.ImageDisplayWindow(img_disp_root,"IR Depth")
-	tid_depthCompare=tk_display.ImageDisplayWindow(img_disp_root,"Depth Compare")
-
-# Web Server setup
-if arguments.output=="web":
-	server_port=28301
-	st=web.ServerThread(server_port)
-	st.start()
-	with open("webpage.html","rb") as f:
-		page=f.read()
-	st.put_data("/",page)
-	with open("webpage.js","rb") as f:
-		page=f.read()
-	st.put_data("/webpage.js",page,"text/javascript")
-	time.sleep(1.0)
 
 # Simple timer
 class SequenceTimer:
@@ -101,6 +76,37 @@ class SequenceTimer:
 
 # Global variables
 timer=SequenceTimer()
+cleanup_functions=[]
+
+
+## GUI Setup
+if arguments.output=="tk":
+	img_disp_root=tk_display.ImageDisplayerRoot()
+	img_disp_root.start()
+	time.sleep(0.5) # Race condition
+
+	tid_hud_seg=tk_display.ImageDisplayWindow(img_disp_root,"Segmentation")
+	tid_camraw=tk_display.ImageDisplayWindow(img_disp_root,"Source Image")
+	#tid_depth=tk_display.ImageDisplayWindow(img_disp_root,"Depth Estimation")
+	tid_combined=tk_display.ImageDisplayWindow(img_disp_root,"Combined")
+	tid_depthAI=tk_display.ImageDisplayWindow(img_disp_root,"AI Depth")
+	tid_depthIR=tk_display.ImageDisplayWindow(img_disp_root,"IR Depth")
+	tid_depthCompare=tk_display.ImageDisplayWindow(img_disp_root,"Depth Compare")
+
+# Web Server setup
+if arguments.output=="web":
+	server_port=28301
+	st=web.ServerThread(server_port)
+	st.start()
+	cleanup_functions.append(lambda:st.die())
+	with open("webpage.html","rb") as f:
+		page=f.read()
+	st.put_data("/",page)
+	with open("webpage.js","rb") as f:
+		page=f.read()
+	st.put_data("/webpage.js",page,"text/javascript")
+	time.sleep(1.0)
+
 
 # Display function
 frmN=0
@@ -204,8 +210,13 @@ def capture_loop():
 			display(pim)
 			if arguments.singleframe: break
 	if arguments.source=="webcam_stereo":
-		cameraL=webcam.Webcam(arguments.wcL)
-		cameraR=webcam.Webcam(arguments.wcR)
+		cameraL=webcam.ThreadedWebcam(arguments.wcL)
+		cameraR=webcam.ThreadedWebcam(arguments.wcR)
+		cameraL.start()
+		cameraR.start()
+		cleanup_functions.append(lambda:cameraL.die())
+		cleanup_functions.append(lambda:cameraR.die())
+		time.sleep(0.5)
 		while True:
 			pimL=cameraL.grab()
 			pimR=cameraR.grab()
@@ -324,6 +335,7 @@ except KeyboardInterrupt:
 except:
 	traceback.print_exc()
 finally:
-	if arguments.output=="web":
-		st.die()
+	print("Cleanup...")
+	for i in cleanup_functions:
+		i()
 print("Main thread terminated.")

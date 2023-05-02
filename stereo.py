@@ -10,11 +10,12 @@ import webcam
 def pil2cv(pimg):
 	return cv2.cvtColor(numpy.array(pimg.convert("RGB")), cv2.COLOR_RGB2BGR)
 def stereo_calculate(*,left,right,depth_multiplier=1.0):
-	stereo = cv2.StereoBM_create(numDisparities=16, blockSize=15)
+	stereo = cv2.StereoBM_create(numDisparities=32, blockSize=15)
 	disparity = stereo.compute(
 		cv2.cvtColor(pil2cv(left), cv2.COLOR_BGR2GRAY),
 		cv2.cvtColor(pil2cv(right), cv2.COLOR_BGR2GRAY))
 	disparity_masked=numpy.ma.masked_less_equal(disparity,0)
+	#disparity_masked=disparity
 	disparity_float=disparity_masked.astype(float)
 	depth=1/disparity_float
 	return depth*depth_multiplier
