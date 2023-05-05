@@ -134,7 +134,7 @@ def display(img,*,alt_img=None,ir_depth=None):
 		compare_vis=visualizations.compare_depthmaps(
 			ai=ai_depth,ir=ir_depth)
 		#compared.show()
-		ir_vis=visualizations.visualize_matrix(ir_depth,"IR Depth")
+		ir_vis=visualizations.visualize_matrix(ir_depth,"IR Depth")#,clip_percentiles=(10,90))
 		if hasattr(ir_depth,"count"): # Only has it if MaskedArray
 			print("IR avail: {}/{}".format(ir_depth.count(),ir_depth.size))
 	else:
@@ -191,13 +191,13 @@ def display(img,*,alt_img=None,ir_depth=None):
 		st.put_image("/dir.jpg",ir_vis)
 		st.put_image("/dcm.jpg",compare_vis)
 	elif arguments.output=="file":
-		img.save("out_raw.jpg")
-		seg_vis.save("out_seg.jpg")
-		dvis.save("out_dep.jpg")
-		combined_vis.save("out_com.jpg")
-		compare_vis.save("out_compare.jpg")
-		ir_vis.save("out_IR.jpg")
-		ai_vis.save("out_AI.jpg")
+		img.save("out/raw.jpg")
+		seg_vis.save("out/seg.jpg")
+		alt_img.save("out/alt.jpg")
+		combined_vis.save("out/combined.jpg")
+		compare_vis.save("out/compare.jpg")
+		ir_vis.save("out/depthIR.jpg")
+		ai_vis.save("out/depthAI.jpg")
 	timer.start("Get Frame")
 
 
@@ -220,6 +220,12 @@ def capture_loop():
 		while True:
 			pimL=cameraL.grab()
 			pimR=cameraR.grab()
+			#print("R",pimR)
+			#print("L",pimL)
+			if (pimL is None) or (pimR is None):
+				print("Webcam image is null. Retry...")
+				time.sleep(0.1)
+				continue
 			disparity=stereo.stereo_calculate(
 				left=pimL,right=pimR,
 				depth_multiplier=100)
