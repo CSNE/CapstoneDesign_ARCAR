@@ -34,10 +34,6 @@ _ap.add_argument(
 _ap.add_argument(
 	"--input-right","-ir")
 _ap.add_argument(
-	"--stereo-solver","-ss",
-	choices=["opencv","psm"],
-	default="opencv")
-_ap.add_argument(
 	"--video-speed","-vs",
 	type=float,
 	default=1.0)
@@ -65,6 +61,10 @@ _ap.add_argument(
 	"--kinect-fps","-kf",
 	choices=["5","15","30"],
 	default="15")
+_ap.add_argument(
+	"--stereo-solver","-ss",
+	choices=["opencv","psm"],
+	default="opencv")
 
 # Optional
 _ap.add_argument(
