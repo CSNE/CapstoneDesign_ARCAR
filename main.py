@@ -37,6 +37,8 @@ import visualizations
 if arguments.source=="kinectcapture":
 	import kinect_record
 import stereo
+if arguments.stereo_solver=="psm":
+	import PSMNet.psm
 
 # Make YOLO quiet
 import ultralytics.yolo.utils
@@ -203,7 +205,18 @@ def display(img,*,alt_img=None,ir_depth=None):
 		ai_vis.save("out/depthAI.jpg")
 	timer.start("Get Frame")
 
-
+def stereo_solve(pimL,pimR):
+	if arguments.stereo_solver=="opencv":
+		return stereo.stereo_calculate(
+			left=pimL,right=pimR,
+			depth_multiplier=1000)
+	elif arguments.stereo_solver=="psm":
+		pimL=maths.resize_fit(pimL,(480,320))
+		pimR=maths.resize_fit(pimR,(480,320))
+		return PSMNet.psm.calculate(pimL,pimR)
+	else:
+		0/0
+		
 # Main capture loop
 def capture_loop():
 	if arguments.source=="webcam":
@@ -229,9 +242,7 @@ def capture_loop():
 				print("Webcam image is null. Retry...")
 				time.sleep(0.1)
 				continue
-			disparity=stereo.stereo_calculate(
-				left=pimL,right=pimR,
-				depth_multiplier=1000)
+			disparity=stereo_solve(pimL,pimR)
 			display(pimL,alt_img=pimR,ir_depth=disparity)
 			if arguments.singleframe: break
 	elif arguments.source=="kinect":
@@ -252,9 +263,7 @@ def capture_loop():
 		while True:
 			iL=PIL.Image.open(arguments.infileL).convert("RGB")
 			iR=PIL.Image.open(arguments.infileR).convert("RGB")
-			disparity=stereo.stereo_calculate(
-				left=iL,right=iR,
-				depth_multiplier=1000)
+			disparity=stereo_solve(iL,iR)
 			display(iL,alt_img=iR,ir_depth=disparity)
 			if arguments.singleframe: break
 	elif arguments.source=="video":

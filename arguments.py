@@ -34,6 +34,10 @@ _ap.add_argument(
 _ap.add_argument(
 	"--input-right","-ir")
 _ap.add_argument(
+	"--stereo-solver","-ss",
+	choices=["opencv","psm"],
+	default="opencv")
+_ap.add_argument(
 	"--video-speed","-vs",
 	type=float,
 	default=1.0)
@@ -80,6 +84,8 @@ output=_args.output
 
 wc=_args.webcam_number
 vs=_args.video_speed
+
+stereo_solver=_args.stereo_solver
 
 if source in ("image","video","kinectcapture"):
 	if _args.input_file is None:

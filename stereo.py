@@ -6,6 +6,7 @@ import numpy
 import tk_display
 import visualizations
 import webcam
+import maths
 
 def pil2cv(pimg):
 	return cv2.cvtColor(numpy.array(pimg.convert("RGB")), cv2.COLOR_RGB2BGR)
@@ -14,15 +15,7 @@ def cvG2pil(cv_gray):
 def cv2pil(cvi):
 	return PIL.Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
 
-def fit(box,bound):
-	box=list(box)
-	if box[0]>bound[0]:
-		box[1]=box[1]*(bound[0]/box[0])
-		box[0]=bound[0]
-	if box[1]>bound[1]:
-		box[0]=box[0]*(bound[1]/box[1])
-		box[1]=bound[1]
-	return (round(box[0]),round(box[1]))
+
 '''
 print(fit((400,300),(500,500)))
 print(fit((400,300),(200,200)))
@@ -30,11 +23,8 @@ print(fit((400,300),(200,100)))
 0/0'''
 def stereo_calculate(*,left,right,depth_multiplier=1.0):
 	assert left.size == right.size
-	target_size=fit(left.size,(480,320))
-	if target_size != left.size:
-		print(F"Resize stereo pair from {left.size} to {target_size}")
-		left=left.resize(target_size)
-		right=right.resize(target_size)
+	left=maths.resize_fit(left,(480,320))
+	right=maths.resize_fit(right,(480,320))
 		
 	
 		
