@@ -134,7 +134,7 @@ def display(img,*,alt_img=None,ir_depth=None):
 		compare_vis=visualizations.compare_depthmaps(
 			ai=ai_depth,ir=ir_depth)
 		#compared.show()
-		ir_vis=visualizations.visualize_matrix(ir_depth,"IR Depth")#,clip_percentiles=(10,90))
+		ir_vis=visualizations.visualize_matrix(ir_depth,"IR Depth",clip_percentiles=(5,95))
 		if hasattr(ir_depth,"count"): # Only has it if MaskedArray
 			print("IR avail: {}/{}".format(ir_depth.count(),ir_depth.size))
 	else:
@@ -183,6 +183,7 @@ def display(img,*,alt_img=None,ir_depth=None):
 		st.put_image("/seg.jpg",seg_vis)
 		if alt_img is not None:
 			st.put_image("/str.jpg",alt_img)
+			st.put_image("/dif.jpg",PIL.ImageChops.difference(img,alt_img))
 		st.put_image("/com.jpg",combined_vis)
 		st.put_string("/information",str(frmN))
 		objects_json=combined.segdepths_to_json(segdepths_valid,img)
@@ -193,7 +194,9 @@ def display(img,*,alt_img=None,ir_depth=None):
 	elif arguments.output=="file":
 		img.save("out/raw.jpg")
 		seg_vis.save("out/seg.jpg")
-		alt_img.save("out/alt.jpg")
+		if alt_img is not None:
+			alt_img.save("out/alt.jpg")
+			PIL.ImageChops.difference(img,alt_img).save("out/dif.jpg")
 		combined_vis.save("out/combined.jpg")
 		compare_vis.save("out/compare.jpg")
 		ir_vis.save("out/depthIR.jpg")
@@ -228,7 +231,7 @@ def capture_loop():
 				continue
 			disparity=stereo.stereo_calculate(
 				left=pimL,right=pimR,
-				depth_multiplier=100)
+				depth_multiplier=1000)
 			display(pimL,alt_img=pimR,ir_depth=disparity)
 			if arguments.singleframe: break
 	elif arguments.source=="kinect":
@@ -251,7 +254,7 @@ def capture_loop():
 			iR=PIL.Image.open(arguments.infileR).convert("RGB")
 			disparity=stereo.stereo_calculate(
 				left=iL,right=iR,
-				depth_multiplier=100)
+				depth_multiplier=1000)
 			display(iL,alt_img=iR,ir_depth=disparity)
 			if arguments.singleframe: break
 	elif arguments.source=="video":

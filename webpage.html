@@ -3,6 +3,12 @@
 <head>
 	<title>ARCAR Web Renderer</title>
 	<script type="module" src="./webpage.js"></script>
+	<style>
+	@keyframes flash {
+		from {background-color: #A0FFA0;}
+		to {background-color: #FFFFFF;}
+	}
+	</style>
 </head>
 <body>
 	<div id="buttonContainer">
@@ -17,25 +23,51 @@
 	<button onclick='playbackControl("rand");'>Random</button>
 	</div>
 	<div id="information"></div>
-	<img id="raw" style="width:480px;height:270px;"></img>
-	<img id="seg" style="width:480px;height:270px;"></img>
-	<img id="str" style="width:480px;height:270px;"></img>
-	<img id="com" style="width:720px;height:405px;"></img>
+	<div id="imgsContainer" style="display:flex;flex-direction:row;flex-wrap:wrap;"></div>
 	<canvas id="cvs"></canvas>
-	<img id="dai" style="width:480px;height:270px;"></img>
-	<img id="dir" style="width:480px;height:270px;"></img>
-	<img id="dcm" style="width:480px;height:270px;"></img>
+	
 	
 	<script>
 		// Periodically fetch data form server
 		var infoDiv=document.getElementById("information");
-		var rawImg=document.getElementById("raw");
-		var segImg=document.getElementById("seg");
-		var strImg=document.getElementById("str");
-		var comImg=document.getElementById("com");
-		var daiImg=document.getElementById("dai");
-		var dirImg=document.getElementById("dir");
-		var dcmImg=document.getElementById("dcm");
+		
+		var imgsContainerDiv=document.getElementById("imgsContainer");
+		var targets={
+			"raw":"Raw Image (L)",
+			"dif":"Stereo Difference",
+			"str":"Stereo Image (R)",
+			
+			"dai":"AI Depth",
+			"dir":"IR/Stereo Depth",
+			"dcm":"Depth correlation",
+			
+			"seg":"Segmentation",
+			"com":"Seg+Depth",
+			
+			"cvs":"3D Visualization"}
+		var imgDOMs={};
+		var textDOMs={}
+		for (k in targets){
+			var outerDiv=document.createElement("div");
+			outerDiv.style="width:fit-content;display:flex; flex-direction: column; border:1px solid;"
+			imgsContainer.appendChild(outerDiv);
+			
+			var span=document.createElement("span");
+			var tn=document.createTextNode(targets[k]);
+			span.appendChild(tn);
+			outerDiv.appendChild(span);
+			textDOMs[k]=img;
+			
+			if (k=="cvs"){
+				outerDiv.appendChild(document.getElementById("cvs"));
+			}else{
+				var img=document.createElement("img");
+				img.style="width:480px;height:270px;";
+				outerDiv.appendChild(img);
+				imgDOMs[k]=img;
+			}
+		}
+		
 		
 		function periodic(){
 			var xhr=new XMLHttpRequest();
@@ -44,18 +76,21 @@
 				if (xhr.status==200) infoDiv.innerHTML=xhr.responseText;
 			});
 			xhr.addEventListener("error",function(e){
-				console.log("Request errored.");
+				//console.log("Request errored.");
 			});
 			xhr.overrideMimeType("text/plain");
 			xhr.send();
 			
-			rawImg.src="raw.jpg?forcereload="+(new Date()).getTime();
-			segImg.src="seg.jpg?forcereload="+(new Date()).getTime();
-			strImg.src="str.jpg?forcereload="+(new Date()).getTime();
-			comImg.src="com.jpg?forcereload="+(new Date()).getTime();
-			daiImg.src="dai.jpg?forcereload="+(new Date()).getTime();
-			dirImg.src="dir.jpg?forcereload="+(new Date()).getTime();
-			dcmImg.src="dcm.jpg?forcereload="+(new Date()).getTime();
+			for (k in targets){
+				/*
+				//imgDOMs[k].onload=function(){console.log("Img"+k+"Loaded");};
+				imgDOMs[k].onload=function(){
+					textDOMs[k].style.animation ="flash 0.5s ease-in";
+				};*/
+				imgDOMs[k].src=k+".jpg?forcereload="+(new Date()).getTime();
+				
+				
+			}
 		}
 		setInterval(periodic,200);
 

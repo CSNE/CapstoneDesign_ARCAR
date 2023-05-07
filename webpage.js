@@ -49,8 +49,8 @@ scene.add(viewerBox);
 
 
 // Renderer
-const w=720;
-const h=405;
+const w=480;
+const h=270;
 const renderer = new THREE.WebGLRenderer( { antialias: true, canvas:cvs} );
 renderer.setSize(w,h);
 renderer.setAnimationLoop( animation );
@@ -111,7 +111,7 @@ function getObjData(){
 		}
 	});
 	xhr.addEventListener("error",function(e){
-		console.log("Request errored.");
+		//console.log("Request errored.");
 	});
 	xhr.send();
 }

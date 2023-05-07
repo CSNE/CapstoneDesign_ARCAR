@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 mpl.use('Agg')
 
 import numpy
+import numpy.ma
 import random
 import io
 
@@ -42,7 +43,8 @@ def visualize_matrix(arr,title=None,target_aspect=(9/16),clip_percentiles=None):
 	if clip_percentiles:
 		assert len(clip_percentiles)==2 #min,max
 		assert clip_percentiles[0]<clip_percentiles[1]
-		pv=numpy.percentile(arr,clip_percentiles)
+		naned = numpy.ma.filled(arr, numpy.nan)
+		pv=numpy.nanpercentile(naned,clip_percentiles)
 		arr=numpy.clip(arr,pv[0],pv[1])
 		
 	array_aspect=arr.shape[0]/arr.shape[1]
