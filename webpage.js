@@ -137,7 +137,7 @@ function setPointCloud(pointList){
 		const objMesh = new THREE.Mesh(objGeom,objMat);
 		objMat.color.setRGB(pnt["r"],pnt["g"],pnt["b"]);
 		objMesh.position.x=pnt["x"];
-		objMesh.position.y=pnt["y"];
+		objMesh.position.y=-pnt["y"];
 		objMesh.position.z=-pnt["z"];
 
 		scene.add(objMesh);

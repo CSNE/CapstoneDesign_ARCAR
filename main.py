@@ -191,7 +191,10 @@ def display(img,*,alt_img=None,ir_depth=None):
 		st.put_string("/information",str(frmN))
 		objects_json=combined.segdepths_to_json(segdepths_valid,img)
 		st.put_json("/objects",objects_json)
-		pointcloud_json=webdata.depthmap_to_pointcloud_json(depth,1000)
+		pointcloud_json=webdata.depthmap_to_pointcloud_json(
+			depth_map=ai_depth,
+			color_image=img,
+			sampleN=300)
 		st.put_json("/pointcloud.json",pointcloud_json)
 		st.put_image("/dai.jpg",ai_vis)
 		st.put_image("/dir.jpg",ir_vis)
@@ -212,7 +215,7 @@ def stereo_solve(pimL,pimR):
 	if arguments.stereo_solver=="opencv":
 		return stereo.stereo_calculate(
 			left=pimL,right=pimR,
-			depth_multiplier=200) #MAGIC: Depth correction factor
+			depth_multiplier=1000) #MAGIC: Depth correction factor
 	elif arguments.stereo_solver=="psm":
 		pimL=maths.resize_fit(pimL,(480,320))
 		pimR=maths.resize_fit(pimR,(480,320))

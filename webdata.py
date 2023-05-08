@@ -1,18 +1,31 @@
 import web
 import maths
+import random
 
-def depthmap_to_pointcloud_json(dm,sample=1000,regular_sampling=False):
+def depthmap_to_pointcloud_json(*,
+	depth_map,color_image,
+	sampleN=1000,regular_sampling=False):
 	res=[]
-	samples=maths.sample_npa(dm,sample)
+	samples=maths.sample_npa(depth_map,sampleN)
 	if regular_sampling:
 		pass #TODO implement
-	for y,x in samples:
-		d=dm[y][x]
-		ssc=maths.screenspace_to_camspace((x,y),(dm.shape[1],dm.shape[0]),d)
+		
+	dm_sizeX=depth_map.shape[1]
+	dm_sizeY=depth_map.shape[0]
+	for dmY,dmX in samples:
+		relX=dmX/dm_sizeX
+		relY=dmY/dm_sizeY
+		d=depth_map[dmY][dmX]
+		clrX=round(color_image.width*relX)
+		clrY=round(color_image.height*relY)
+		clr=color_image.getpixel((clrX,clrY))
+		
+		#Cam-space coordinates
+		csc=maths.screenspace_to_camspace((dmX,dmY),(dm_sizeX,dm_sizeY),d)
 		#print(x,y,d,"-->",ssc)
 		res.append( {
-			"x":ssc[0],
-			"y":ssc[1],
-			"z":ssc[2],
-			"r":1.0,"g":1.0,"b":1.0})
+			"x":csc[0],
+			"y":csc[1],
+			"z":csc[2],
+			"r":clr[0]/255,"g":clr[1]/255,"b":clr[2]/255})
 	return res

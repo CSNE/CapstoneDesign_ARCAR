@@ -63,7 +63,7 @@ def screenspace_to_camspace(cxy,sxy,d):
 	rel_coords_Y=(bbox_center_Y-(orig_img_size[1]/2))/orig_img_size[1]
 	actual_coords_Y=rel_coords_Y*screen_dim_Y*distance_scaling_factor
 	#actual_size_Y=bbox_size_Y/orig_img_size[1]*screen_dim_Y*distance_scaling_factor
-	return actual_coords_X,actual_coords_Y,d
+	return float(actual_coords_X),float(actual_coords_Y),float(d)
 
 def sample_npa(npa,sample=100):
 	# Sample a 2D numpy array. May be masked.
