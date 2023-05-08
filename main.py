@@ -38,8 +38,7 @@ import visualizations
 if arguments.source=="kinectcapture":
 	import kinect_record
 import stereo
-if arguments.stereo_solver=="psm":
-	import PSMNet.psm
+import PSMNet.psm
 
 # Make YOLO quiet
 import ultralytics.yolo.utils
@@ -88,13 +87,15 @@ if arguments.output=="tk":
 	img_disp_root.start()
 	time.sleep(0.5) # Race condition
 
-	tid_hud_seg=tk_display.ImageDisplayWindow(img_disp_root,"Segmentation")
-	tid_camraw=tk_display.ImageDisplayWindow(img_disp_root,"Source Image")
-	#tid_depth=tk_display.ImageDisplayWindow(img_disp_root,"Depth Estimation")
-	tid_combined=tk_display.ImageDisplayWindow(img_disp_root,"Combined")
-	tid_depthAI=tk_display.ImageDisplayWindow(img_disp_root,"AI Depth")
-	tid_depthIR=tk_display.ImageDisplayWindow(img_disp_root,"IR Depth")
-	tid_depthCompare=tk_display.ImageDisplayWindow(img_disp_root,"Depth Compare")
+	tid_raw=tk_display.ImageDisplayWindow(img_disp_root,"Source Image")
+	tid_str=tk_display.ImageDisplayWindow(img_disp_root,"Stereo Right")
+	tid_dif=tk_display.ImageDisplayWindow(img_disp_root,"Stereo Difference")
+	tid_seg=tk_display.ImageDisplayWindow(img_disp_root,"Segmentation")
+	tid_com=tk_display.ImageDisplayWindow(img_disp_root,"Combined")
+	tid_dmd=tk_display.ImageDisplayWindow(img_disp_root,"Depth/MD")
+	tid_dcv=tk_display.ImageDisplayWindow(img_disp_root,"Depth/CV")
+	tid_dpsm=tk_display.ImageDisplayWindow(img_disp_root,"Depth/PSM")
+
 
 # Web Server setup
 if arguments.output=="web":
@@ -113,7 +114,7 @@ if arguments.output=="web":
 
 # Display function
 frmN=0
-def display(img,*,alt_img=None,ir_depth=None):
+def display(img,*,stereo_right=None):
 	global frmN
 	frmN+=1
 	print(F"\nFrame {frmN}")
@@ -126,35 +127,29 @@ def display(img,*,alt_img=None,ir_depth=None):
 	timer.start("Segmentation")
 	# Segmentation
 	segs=yolodriver.segment(img)
-	seg_vis=visualizations.visualize_segmentations(segs,img.size)
 	
-
-	timer.start("Depth")
 	# Depth estimation
-	ai_depth=monodepth_driver.estimate_depth(img,depth_multiplier=0.3)
-
-	if ir_depth is not None:
-		compare_vis=visualizations.compare_depthmaps(
-			ai=ai_depth,ir=ir_depth)
-		#compared.show()
-		ir_vis=visualizations.visualize_matrix(ir_depth,"IR Depth",clip_percentiles=(5,95))
-		if hasattr(ir_depth,"count"): # Only has it if MaskedArray
-			print("IR avail: {}/{}".format(ir_depth.count(),ir_depth.size))
-	else:
-		compare_vis=PIL.Image.new("RGB",(16,16))
-		ir_vis=PIL.Image.new("RGB",(16,16))
-	ai_vis=visualizations.visualize_matrix(ai_depth,"AI Depth")
-
-	if ir_depth is None:
-		depth=ai_depth
-	else:
-		depth=ir_depth
-
-	dvis=visualizations.visualize_matrix(depth)
+	timer.start("MonoDepth")
+	depth_monodepth=monodepth_driver.estimate_depth(img,depth_multiplier=0.3)
+	
+	if stereo_right is not None:
+		timer.start("OpenCV")
+		stereo_left=img
+		depth_opencv=stereo.stereo_calculate(
+			left=stereo_left,right=stereo_right,
+			depth_multiplier=1000) #MAGIC: Depth correction factor
+		if hasattr(depth_opencv,"count"): # Only has it if MaskedArray
+			print("OpenCV valid pixels: {}/{}".format(depth_opencv.count(),depth_opencv.size))
+		
+		timer.start("PSMNet")
+		stereo_left_rsz=maths.resize_fit(stereo_left,(480,320))
+		stereo_right_rsz=maths.resize_fit(stereo_right,(480,320))
+		depth_psm = PSMNet.psm.calculate(stereo_left_rsz,stereo_right_rsz)*(0.1) #MAGIC: Depth correction factor
 	
 
-	timer.start("Combining")
+	timer.start("SegDepth Calculate")
 	# Combine
+	depth=depth_monodepth #TODO intelligent depth combining
 	segdepths_raw=combined.calculate_segdepth(segs,depth)
 
 	# Filter out SegDepths with too little depth data
@@ -166,62 +161,81 @@ def display(img,*,alt_img=None,ir_depth=None):
 	diff=len(segdepths_raw)-len(segdepths_valid)
 	if diff != 0:
 		print(F"Removed {diff} SegDepths out of {len(segdepths_raw)} because of insufficient depth data")
-
-	# Visualize Segdepths
-	combined_vis=visualizations.visualize_segdepth(segdepths_valid,img.size,img)
 	
+	timer.start("Visualize")
+	# Visualize Segdepths
+	seg_vis=visualizations.visualize_segmentations(segs,img.size)
+	combined_vis=visualizations.visualize_segdepth(segdepths_valid,img.size,img)
+	dvis_md=visualizations.visualize_matrix(
+		depth_monodepth,"MonoDepth")
+	dvis_cv=visualizations.visualize_matrix(
+		depth_opencv,"OpenCV",clip_percentiles=(5,95))
+	dvis_psm=visualizations.visualize_matrix(
+		depth_psm,"PSMNet")
+	if stereo_right is not None:
+		str_dif=PIL.ImageChops.difference(img,stereo_right)
 
 	timer.start("Output")
 	# Output
 	if arguments.output=="tk":
-		tid_camraw.set_image(img)
-		tid_hud_seg.set_image(seg_vis)
-		#tid_depth.set_image(dvis)
-		tid_combined.set_image(combined_vis)
-		tid_depthAI.set_image(ai_vis)
-		tid_depthIR.set_image(ir_vis)
-		tid_depthCompare.set_image(compare_vis)
+		tid_raw.set_image(img)
+		if stereo_right is not None:
+			tid_str.set_image(stereo_right)
+			tid_dif.set_image(str_dif)
+		tid_seg.set_image(seg_vis)
+		tid_com.set_image(combined_vis)
+		tid_dmd.set_image(dvis_md)
+		tid_dcv.set_image(dvis_cv)
+		tid_dpsm.set_image(dvis_psm)
+		
 	elif arguments.output=="web":
+		# Raw frames
 		st.put_image("/raw.jpg",img)
+		if stereo_right is not None:
+			st.put_image("/str.jpg",stereo_right)
+			st.put_image("/dif.jpg",str_dif)
+			
+		# Segmentations
 		st.put_image("/seg.jpg",seg_vis)
-		if alt_img is not None:
-			st.put_image("/str.jpg",alt_img)
-			st.put_image("/dif.jpg",PIL.ImageChops.difference(img,alt_img))
 		st.put_image("/com.jpg",combined_vis)
 		st.put_string("/information",str(frmN))
 		objects_json=combined.segdepths_to_json(segdepths_valid,img)
 		st.put_json("/objects",objects_json)
-		pointcloud_json=webdata.depthmap_to_pointcloud_json(
-			depth_map=ai_depth,
-			color_image=img,
-			sampleN=3000)
-		st.put_json("/pointcloud.json",pointcloud_json)
-		st.put_image("/dai.jpg",ai_vis)
-		st.put_image("/dir.jpg",ir_vis)
-		st.put_image("/dcm.jpg",compare_vis)
+		
+		# Depths
+		st.put_json("/pc_monodepth.json",
+			webdata.depthmap_to_pointcloud_json(
+				depth_map=depth_monodepth,
+				color_image=img,
+				sampleN=300))
+		st.put_image("/dmd.jpg",dvis_md)
+		
+		st.put_json("/pc_opencv.json",
+			webdata.depthmap_to_pointcloud_json(
+				depth_map=depth_opencv,
+				color_image=img,
+				sampleN=300))
+		st.put_image("/dcv.jpg",dvis_cv)
+		
+		st.put_json("/pc_psmnet.json",
+			webdata.depthmap_to_pointcloud_json(
+				depth_map=depth_psm,
+				color_image=img,
+				sampleN=300))
+		st.put_image("/dpsm.jpg",dvis_psm)
+		
+		#st.put_image("/dcm.jpg",compare_vis)
 	elif arguments.output=="file":
-		img.save("out/raw.jpg")
-		seg_vis.save("out/seg.jpg")
-		if alt_img is not None:
-			alt_img.save("out/alt.jpg")
-			PIL.ImageChops.difference(img,alt_img).save("out/dif.jpg")
-		combined_vis.save("out/combined.jpg")
-		compare_vis.save("out/compare.jpg")
-		ir_vis.save("out/depthIR.jpg")
-		ai_vis.save("out/depthAI.jpg")
+		img.save("out/img.jpg")
+		if stereo_right is not None:
+			stereo_right.save("out/stereo_right.jpg")
+			str_dif.save("out/str_dif.jpg")
+		seg_vis.save("out/seg_vis.jpg")
+		combined_vis.save("out/combined_vis.jpg")
+		dvis_md.save("out/dvis_md.jpg")
+		dvis_cv.save("out/dvis_cv.jpg")
+		dvis_psm.save("out/dvis_psm.jpg")
 	timer.start("Get Frame")
-
-def stereo_solve(pimL,pimR):
-	if arguments.stereo_solver=="opencv":
-		return stereo.stereo_calculate(
-			left=pimL,right=pimR,
-			depth_multiplier=1000) #MAGIC: Depth correction factor
-	elif arguments.stereo_solver=="psm":
-		pimL=maths.resize_fit(pimL,(480,320))
-		pimR=maths.resize_fit(pimR,(480,320))
-		return PSMNet.psm.calculate(pimL,pimR)*(0.1) #MAGIC: Depth correction factor
-	else:
-		0/0
 		
 # Main capture loop
 def capture_loop():
@@ -248,8 +262,7 @@ def capture_loop():
 				print("Webcam image is null. Retry...")
 				time.sleep(0.1)
 				continue
-			disparity=stereo_solve(pimL,pimR)
-			display(pimL,alt_img=pimR,ir_depth=disparity)
+			display(pimL,stereo_right=pimR)
 			if arguments.singleframe: break
 	elif arguments.source=="kinect":
 		k4a=kinect_hardware.getK4A(
@@ -269,8 +282,7 @@ def capture_loop():
 		while True:
 			iL=PIL.Image.open(arguments.infileL).convert("RGB")
 			iR=PIL.Image.open(arguments.infileR).convert("RGB")
-			disparity=stereo_solve(iL,iR)
-			display(iL,alt_img=iR,ir_depth=disparity)
+			display(iL,stereo_right=iR)
 			if arguments.singleframe: break
 	elif arguments.source=="video":
 		startT=time.time()

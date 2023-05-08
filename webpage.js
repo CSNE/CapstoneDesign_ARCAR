@@ -3,7 +3,8 @@ import * as THREE from "https://cdn.skypack.dev/three@0.132.2";
 import { OrbitControls } from "https://cdn.skypack.dev/three@0.132.2/examples/jsm/controls/OrbitControls.js";
 
 
-
+function setupPointCloudRenderer(canvasDOM,jsonPath,updateInterval){
+	
 
 const scene = new THREE.Scene();
 
@@ -38,20 +39,11 @@ var baseLineZ = new THREE.Mesh(lineGeomZ,lineMat);
 baseLineZ.position.z=-baselineZ_length/2;
 scene.add(baseLineZ);
 
-/*
-// Origin cube (represents viewer/camera)
-const viewerGeometry = new THREE.BoxGeometry( 0.5, 0.5, 0.5 );
-const viewerMat= new THREE.MeshPhongMaterial()
-viewerMat.color.setRGB(1,0.5,0)
-const viewerBox = new THREE.Mesh(viewerGeometry,viewerMat)
-scene.add(viewerBox);
-*/
-
 
 // Renderer
 const w=480;
 const h=270;
-const renderer = new THREE.WebGLRenderer( { antialias: true, canvas:cvs} );
+const renderer = new THREE.WebGLRenderer( { antialias: true, canvas:canvasDOM} );
 renderer.setSize(w,h);
 renderer.setAnimationLoop( animation );
 
@@ -66,7 +58,7 @@ function animation( time ) {
 	controls.update();
 	renderer.render( scene, camera );
 }
-
+/*
 // Function for creating objects from the python server
 const loader = new THREE.TextureLoader();
 var object_meshes=[];
@@ -114,7 +106,7 @@ function getObjData(){
 		//console.log("Request errored.");
 	});
 	xhr.send();
-}
+}*/
 
 var object_points=[];
 var pointCubeSize=0.10;
@@ -123,7 +115,7 @@ function setPointCloud(pointList){
 		scene.remove(object_points[i])
 	}
 	object_points=[];
-	console.log(pointList);
+	//console.log(pointList);
 	// Add objects
 	for (var i=0;i<pointList.length;i++){
 		var pnt=pointList[i];
@@ -149,7 +141,7 @@ function setPointCloud(pointList){
 // Periodically fetch objects from python server
 function getPointData(){
 	var xhr=new XMLHttpRequest();
-	xhr.open("GET","/pointcloud.json");
+	xhr.open("GET",jsonPath);
 	xhr.addEventListener("load",function(e){
 		if (xhr.status==200){
 			var objson=JSON.parse(xhr.responseText);
@@ -164,4 +156,10 @@ function getPointData(){
 }
 
 //setInterval(getObjData,200);
-setInterval(getPointData,500);
+setInterval(getPointData,updateInterval);
+
+}
+
+setupPointCloudRenderer(pc_monodepth,"/pc_monodepth.json",5000);
+setupPointCloudRenderer(pc_opencv,"/pc_opencv.json",5000);
+setupPointCloudRenderer(pc_psmnet,"/pc_psmnet.json",5000);

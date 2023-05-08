@@ -24,48 +24,54 @@
 	</div>
 	<div id="information"></div>
 	<div id="imgsContainer" style="display:flex;flex-direction:row;flex-wrap:wrap;"></div>
-	<canvas id="cvs"></canvas>
-	
+	<canvas id="pc_monodepth"> </canvas>
+	<canvas id="pc_opencv"> </canvas>
+	<canvas id="pc_psmnet"> </canvas>
 	
 	<script>
 		// Periodically fetch data form server
 		var infoDiv=document.getElementById("information");
 		
 		var imgsContainerDiv=document.getElementById("imgsContainer");
-		var targets={
+		var image_targets={
 			"raw":"Raw Image (L)",
 			"dif":"Stereo Difference",
 			"str":"Stereo Image (R)",
 			
-			"dai":"AI Depth",
-			"dir":"IR/Stereo Depth",
-			"dcm":"Depth correlation",
+			"dmd":"MonoDepth Monocular Depth",
+			"dcv":"OpenCV Stereo Depth",
+			"dpsm":"PSMNet Stereo Depth",
 			
 			"seg":"Segmentation",
 			"com":"Seg+Depth",
 			
-			"cvs":"3D Visualization"}
+			}
+		var canvas_targets={
+			"pc_monodepth":"Point Cloud (MonoDepth)",
+			"pc_opencv":"Point Cloud (OpenCV)",
+			"pc_psmnet":"Point Cloud (PSMNet)"
+		}
 		var imgDOMs={};
-		var textDOMs={}
-		for (k in targets){
+		function addCell(e,s){
 			var outerDiv=document.createElement("div");
 			outerDiv.style="width:fit-content;display:flex; flex-direction: column; border:1px solid;"
 			imgsContainer.appendChild(outerDiv);
 			
 			var span=document.createElement("span");
-			var tn=document.createTextNode(targets[k]);
+			var tn=document.createTextNode(s);
 			span.appendChild(tn);
 			outerDiv.appendChild(span);
-			textDOMs[k]=img;
-			
-			if (k=="cvs"){
-				outerDiv.appendChild(document.getElementById("cvs"));
-			}else{
-				var img=document.createElement("img");
-				img.style="width:480px;height:270px;";
-				outerDiv.appendChild(img);
-				imgDOMs[k]=img;
-			}
+			outerDiv.appendChild(e);
+		}
+		
+		for (k in image_targets){
+			var img=document.createElement("img");
+			img.style="width:480px;height:270px;";
+			addCell(img,image_targets[k])
+			imgDOMs[k]=img;
+		}
+		for (k in canvas_targets){
+			addCell(document.getElementById(k),canvas_targets[k]);
 		}
 		
 		
@@ -101,5 +107,7 @@
 			xhr.send();
 		}
 	</script>
+	
+	
 	</body>
 </html>
