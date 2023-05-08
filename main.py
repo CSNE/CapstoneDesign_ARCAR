@@ -194,7 +194,7 @@ def display(img,*,alt_img=None,ir_depth=None):
 		pointcloud_json=webdata.depthmap_to_pointcloud_json(
 			depth_map=ai_depth,
 			color_image=img,
-			sampleN=300)
+			sampleN=3000)
 		st.put_json("/pointcloud.json",pointcloud_json)
 		st.put_image("/dai.jpg",ai_vis)
 		st.put_image("/dir.jpg",ir_vis)
@@ -354,6 +354,7 @@ def capture_loop():
 
 try:
 	capture_loop()
+	input("Press Enter to exit.")
 except KeyboardInterrupt:
 	print("^C Received. Exiting...")
 except:
