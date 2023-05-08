@@ -199,6 +199,7 @@ def display(img,*,stereo_right=None):
 		st.put_image("/seg.jpg",seg_vis)
 		st.put_image("/com.jpg",combined_vis)
 		st.put_string("/information",str(frmN))
+		
 		objects_json=combined.segdepths_to_json(segdepths_valid,img)
 		st.put_json("/objects",objects_json)
 		
@@ -207,24 +208,27 @@ def display(img,*,stereo_right=None):
 			webdata.depthmap_to_pointcloud_json(
 				depth_map=depth_monodepth,
 				color_image=img,
-				sampleN=300))
+				sampleN=3000))
 		st.put_image("/dmd.jpg",dvis_md)
 		
 		st.put_json("/pc_opencv.json",
 			webdata.depthmap_to_pointcloud_json(
 				depth_map=depth_opencv,
 				color_image=img,
-				sampleN=300))
+				sampleN=3000))
 		st.put_image("/dcv.jpg",dvis_cv)
 		
 		st.put_json("/pc_psmnet.json",
 			webdata.depthmap_to_pointcloud_json(
 				depth_map=depth_psm,
 				color_image=img,
-				sampleN=300))
+				sampleN=3000))
 		st.put_image("/dpsm.jpg",dvis_psm)
 		
 		#st.put_image("/dcm.jpg",compare_vis)
+		
+		st.put_string("/update_flag",str(random.random()))
+		
 	elif arguments.output=="file":
 		img.save("out/img.jpg")
 		if stereo_right is not None:

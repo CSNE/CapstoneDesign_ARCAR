@@ -156,10 +156,33 @@ function getPointData(){
 }
 
 //setInterval(getObjData,200);
-setInterval(getPointData,updateInterval);
-
+//setInterval(getPointData,updateInterval);
+return getPointData;
 }
 
-setupPointCloudRenderer(pc_monodepth,"/pc_monodepth.json",5000);
-setupPointCloudRenderer(pc_opencv,"/pc_opencv.json",5000);
-setupPointCloudRenderer(pc_psmnet,"/pc_psmnet.json",5000);
+var upFunc1=setupPointCloudRenderer(pc_monodepth,"/pc_monodepth.json",50);
+var upFunc2=setupPointCloudRenderer(pc_opencv,"/pc_opencv.json",50);
+var upFunc3=setupPointCloudRenderer(pc_psmnet,"/pc_psmnet.json",50);
+
+var last_update_flag;
+function checkUpdate(){
+	var xhr=new XMLHttpRequest();
+	xhr.open("GET","/update_flag");
+	xhr.addEventListener("load",function(e){
+		if (xhr.status==200){
+			if (xhr.responseText != last_update_flag){
+				console.log("Updating 3D");
+				last_update_flag=xhr.responseText;
+				upFunc1();
+				upFunc2();
+				upFunc3();
+			}
+			
+		}
+	});
+	xhr.addEventListener("error",function(e){
+		console.log("Request errored.");
+	});
+	xhr.send();
+}
+setInterval(checkUpdate,50);

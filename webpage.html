@@ -75,7 +75,7 @@
 		}
 		
 		
-		function periodic(){
+		function update_all(){
 			var xhr=new XMLHttpRequest();
 			xhr.open("GET","/information");
 			xhr.addEventListener("load",function(e){
@@ -99,7 +99,27 @@
 				
 			}
 		}
-		setInterval(periodic,200);
+		
+		var last_update_flag;
+		function updateCheck(){
+			var xhr=new XMLHttpRequest();
+			xhr.open("GET","/update_flag");
+			xhr.addEventListener("load",function(e){
+				if (xhr.status==200){
+					if (xhr.responseText != last_update_flag){
+						console.log("Updating images");
+						last_update_flag=xhr.responseText;
+						update_all();
+					}
+					
+				}
+			});
+			xhr.addEventListener("error",function(e){
+				console.log("Request errored.");
+			});
+			xhr.send();
+		}
+		setInterval(updateCheck,50);
 
 		function playbackControl(type){
 			var xhr=new XMLHttpRequest();
