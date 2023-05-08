@@ -81,15 +81,15 @@ def test(imgL,imgR):
         return pred_disp
 
 
-def calculate(pimL,pimR):
+def calculate(*,left,right,depth_multiplier=100):
 
         normal_mean_var = {'mean': [0.485, 0.456, 0.406],
                             'std': [0.229, 0.224, 0.225]}
         infer_transform = transforms.Compose([transforms.ToTensor(),
                                               transforms.Normalize(**normal_mean_var)])    
 
-        imgL_o = pimL.convert('RGB')
-        imgR_o = pimR.convert('RGB')
+        imgL_o = left.convert('RGB')
+        imgR_o = right.convert('RGB')
 
         imgL = infer_transform(imgL_o)
         imgR = infer_transform(imgR_o) 
@@ -127,7 +127,7 @@ def calculate(pimL,pimR):
         
         #img = (img*256).astype('uint16')
         #img = Image.fromarray(img)
-        return img#.astype(float)
+        return 1/img*depth_multiplier#.astype(float)
         #img.save('Test_disparity.png')
 
 if __name__ == '__main__':

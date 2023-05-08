@@ -144,7 +144,10 @@ def display(img,*,stereo_right=None):
 		timer.start("PSMNet")
 		stereo_left_rsz=maths.resize_fit(stereo_left,(480,320))
 		stereo_right_rsz=maths.resize_fit(stereo_right,(480,320))
-		depth_psm = PSMNet.psm.calculate(stereo_left_rsz,stereo_right_rsz)*(0.1) #MAGIC: Depth correction factor
+		depth_psm = PSMNet.psm.calculate(
+			left=stereo_left_rsz,
+			right=stereo_right_rsz,
+			depth_multiplier=40) #MAGIC: Depth correction factor
 	
 
 	timer.start("SegDepth Calculate")
