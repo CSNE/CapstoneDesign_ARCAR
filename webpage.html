@@ -32,25 +32,7 @@
 		// Periodically fetch data form server
 		var infoDiv=document.getElementById("information");
 		
-		var imgsContainerDiv=document.getElementById("imgsContainer");
-		var image_targets={
-			"raw":"Raw Image (L)",
-			"dif":"Stereo Difference",
-			"str":"Stereo Image (R)",
-			
-			"dmd":"MonoDepth Monocular Depth",
-			"dcv":"OpenCV Stereo Depth",
-			"dpsm":"PSMNet Stereo Depth",
-			
-			"seg":"Segmentation",
-			"com":"Seg+Depth",
-			
-			}
-		var canvas_targets={
-			"pc_monodepth":"Point Cloud (MonoDepth)",
-			"pc_opencv":"Point Cloud (OpenCV)",
-			"pc_psmnet":"Point Cloud (PSMNet)"
-		}
+
 		var imgDOMs={};
 		function addCell(e,s){
 			var outerDiv=document.createElement("div");
@@ -63,16 +45,24 @@
 			outerDiv.appendChild(span);
 			outerDiv.appendChild(e);
 		}
-		
-		for (k in image_targets){
+		function addImage(key,desc){
 			var img=document.createElement("img");
 			img.style="width:480px;height:270px;";
-			addCell(img,image_targets[k])
-			imgDOMs[k]=img;
+			addCell(img,desc)
+			imgDOMs[key]=img;
 		}
-		for (k in canvas_targets){
-			addCell(document.getElementById(k),canvas_targets[k]);
-		}
+		
+		addImage("raw","Raw Image (L)");
+		addImage("dif","Stereo Difference");
+		addImage("str","Stereo Image (R)");
+		addImage("dmd","MonoDepth Monocular Depth");
+		addImage("dcv","OpenCV Stereo Depth");
+		addImage("dpsm","PSMNet Stereo Depth");
+		addCell(document.getElementById("pc_monodepth"),"Point Cloud (MonoDepth)");
+		addCell(document.getElementById("pc_opencv"),"Point Cloud (OpenCV)");
+		addCell(document.getElementById("pc_psmnet"),"Point Cloud (PSMNet)");
+		addImage("seg","Segmentation");
+		addImage("com","Seg+Depth");
 		
 		
 		function update_all(){
