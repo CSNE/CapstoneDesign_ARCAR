@@ -88,7 +88,7 @@ function setObjects(objs){
 		objMat.color.setRGB(1,1,1);
 		objMat.map=loader.load(obj["texture"]);
 		
-		const objMesh = new THREE.Mesh(objGeom,objMat)
+		const objMesh = new THREE.Mesh(objGeom,objMat);
 		objMesh.position.x=obj["coordX"];
 		objMesh.position.y=obj["coordY"];
 		objMesh.position.z=-obj["coordZ"];
@@ -106,7 +106,7 @@ function getObjData(){
 	xhr.addEventListener("load",function(e){
 		if (xhr.status==200){
 			var objson=JSON.parse(xhr.responseText);
-			
+
 			setObjects(objson);
 		}
 	});
@@ -115,4 +115,53 @@ function getObjData(){
 	});
 	xhr.send();
 }
-setInterval(getObjData,200);
+
+var object_points=[];
+var pointCubeSize=0.10;
+function setPointCloud(pointList){
+	for (var i=0;i<object_points.length;i++){
+		scene.remove(object_points[i])
+	}
+	object_points=[];
+	console.log(pointList);
+	// Add objects
+	for (var i=0;i<pointList.length;i++){
+		var pnt=pointList[i];
+
+		//console.log(pnt);
+
+		const objGeom = new THREE.BoxGeometry(pointCubeSize,pointCubeSize,pointCubeSize);
+
+		const objMat= new THREE.MeshBasicMaterial();
+		//objMat.side=THREE.DoubleSide;
+		const objMesh = new THREE.Mesh(objGeom,objMat);
+		objMat.color.setRGB(pnt["r"],pnt["g"],pnt["b"]);
+		objMesh.position.x=pnt["x"];
+		objMesh.position.y=pnt["y"];
+		objMesh.position.z=-pnt["z"];
+
+		scene.add(objMesh);
+		object_points.push(objMesh)
+	}
+
+}
+
+// Periodically fetch objects from python server
+function getPointData(){
+	var xhr=new XMLHttpRequest();
+	xhr.open("GET","/pointcloud.json");
+	xhr.addEventListener("load",function(e){
+		if (xhr.status==200){
+			var objson=JSON.parse(xhr.responseText);
+			
+			setPointCloud(objson);
+		}
+	});
+	xhr.addEventListener("error",function(e){
+		console.log("Request errored.");
+	});
+	xhr.send();
+}
+
+//setInterval(getObjData,200);
+setInterval(getPointData,500);

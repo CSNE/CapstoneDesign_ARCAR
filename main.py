@@ -29,6 +29,7 @@ if arguments.source=="video":
 	import video
 if arguments.output=="web":
 	import web
+	import webdata
 import maths
 import combined
 if arguments.source=="kinect":
@@ -190,6 +191,8 @@ def display(img,*,alt_img=None,ir_depth=None):
 		st.put_string("/information",str(frmN))
 		objects_json=combined.segdepths_to_json(segdepths_valid,img)
 		st.put_json("/objects",objects_json)
+		pointcloud_json=webdata.depthmap_to_pointcloud_json(depth,1000)
+		st.put_json("/pointcloud.json",pointcloud_json)
 		st.put_image("/dai.jpg",ai_vis)
 		st.put_image("/dir.jpg",ir_vis)
 		st.put_image("/dcm.jpg",compare_vis)
@@ -209,11 +212,11 @@ def stereo_solve(pimL,pimR):
 	if arguments.stereo_solver=="opencv":
 		return stereo.stereo_calculate(
 			left=pimL,right=pimR,
-			depth_multiplier=1000)
+			depth_multiplier=200) #MAGIC: Depth correction factor
 	elif arguments.stereo_solver=="psm":
 		pimL=maths.resize_fit(pimL,(480,320))
 		pimR=maths.resize_fit(pimR,(480,320))
-		return PSMNet.psm.calculate(pimL,pimR)
+		return PSMNet.psm.calculate(pimL,pimR)*(0.1) #MAGIC: Depth correction factor
 	else:
 		0/0
 		

@@ -81,12 +81,13 @@
 			xhr.overrideMimeType("text/plain");
 			xhr.send();
 			
-			for (k in targets){
+			for (k in imgDOMs){
 				/*
 				//imgDOMs[k].onload=function(){console.log("Img"+k+"Loaded");};
 				imgDOMs[k].onload=function(){
 					textDOMs[k].style.animation ="flash 0.5s ease-in";
 				};*/
+				//console.log(imgDOMs[k]);
 				imgDOMs[k].src=k+".jpg?forcereload="+(new Date()).getTime();
 				
 				

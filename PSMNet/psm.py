@@ -127,7 +127,7 @@ def calculate(pimL,pimR):
         
         #img = (img*256).astype('uint16')
         #img = Image.fromarray(img)
-        return img
+        return img.astype(float)
         #img.save('Test_disparity.png')
 
 if __name__ == '__main__':

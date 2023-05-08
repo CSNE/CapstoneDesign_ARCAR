@@ -61,6 +61,7 @@ def calculate_segdepth(segments,depthmap):
 	return result
 
 
+	
 
 def segdepths_to_json(segdepths,orig_img):
 	'''
@@ -79,20 +80,20 @@ def segdepths_to_json(segdepths,orig_img):
 		bbox_center_Y=(seg.ymin+seg.ymax)/2
 		bbox_size_Y=seg.ymax-seg.ymin
 		
-		# Map screen-space coordinates to real-world relative coordinates
-		# this is a very crude conversion - should probably refine later.
-		# 5 meters is the reference point - calibrate later
-		distance_scaling_factor=dep/5
-		# at reference distance, how large is the screen? - again, calibrate later
-		screen_dim_X=7
-		screen_dim_Y=screen_dim_X/orig_img_size[0]*orig_img_size[1]
-		rel_coords_X=(bbox_center_X-(orig_img_size[0]/2))/orig_img_size[0]
-		actual_coords_X=rel_coords_X*screen_dim_X*distance_scaling_factor
-		actual_size_X=bbox_size_X/orig_img_size[0]*screen_dim_X*distance_scaling_factor
-		rel_coords_Y=(bbox_center_Y-(orig_img_size[1]/2))/orig_img_size[1]
-		actual_coords_Y=rel_coords_Y*screen_dim_Y*distance_scaling_factor
-		actual_size_Y=bbox_size_Y/orig_img_size[1]*screen_dim_Y*distance_scaling_factor
 		
+		acXmin, acYmin, _ = maths.screenspace_to_camspace(
+			(seg.xmin,seg.ymin),
+			orig_img_size,
+			dep)
+		acXmax, acYmax, _ = maths.screenspace_to_camspace(
+			(seg.xmax,seg.ymax),
+			orig_img_size,
+			dep)
+		
+		actual_coords_X=(acXmax+acXmin)/2
+		actual_coords_Y=(acYmax+acYmin)/2
+		actual_size_X=(acXmax-acXmin)
+		actual_size_Y=(acYmax-acYmin)
 		
 		# Get texture, a 100x100(max) JPG in b64 format
 		tex=orig_img.crop((seg.xmin,seg.ymin,seg.xmax,seg.ymax))
