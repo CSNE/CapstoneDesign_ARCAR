@@ -23,7 +23,7 @@ tidD=tk_display.ImageDisplayWindow(img_disp_root,"Diff")
 
 
 try:
-	while True:
+	while img_disp_root.is_alive():
 
 		pimL=camL.grab()
 		pimR=camR.grab()

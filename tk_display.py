@@ -13,7 +13,11 @@ class ImageDisplayerRoot(threading.Thread):
 	def __init__(self,*args,**kwargs):
 		super().__init__(*args,**kwargs)
 		self._alive=True
+	def is_alive(self):
+		return self._alive
 	def die(self):
+		if not self._alive:
+			return #don't die twice'
 		self._alive=False
 		self.run_in_tk_thread(lambda:self._tkroot.destroy())
 	def run_in_tk_thread(self,func):
