@@ -55,7 +55,7 @@ def screenspace_to_camspace(cxy,sxy,d):
 	# 5 meters is the reference point - calibrate later
 	distance_scaling_factor=d/5 #MAGIC
 	# at reference distance, how large is the screen? - again, calibrate later
-	screen_dim_X=7 #MAGIC
+	screen_dim_X=8 #MAGIC
 	screen_dim_Y=screen_dim_X/orig_img_size[0]*orig_img_size[1]
 	rel_coords_X=(bbox_center_X-(orig_img_size[0]/2))/orig_img_size[0]
 	actual_coords_X=rel_coords_X*screen_dim_X*distance_scaling_factor

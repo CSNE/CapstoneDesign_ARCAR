@@ -130,14 +130,18 @@ def display(img,*,stereo_right=None):
 	
 	# Depth estimation
 	timer.start("MonoDepth")
-	depth_monodepth=monodepth_driver.estimate_depth(img,depth_multiplier=0.3)
+	md_raw=monodepth_driver.estimate_depth(img,depth_multiplier=0.3)
+	# Restore aspect ratio
+	img_smallsize=maths.fit(img.size,(480,320))
+	depth_monodepth=maths.resize_matrix(md_raw,(img_smallsize[1],img_smallsize[0]))
+
 	
 	if stereo_right is not None:
 		timer.start("OpenCV")
 		stereo_left=img
 		depth_opencv=stereo.stereo_calculate(
 			left=stereo_left,right=stereo_right,
-			depth_multiplier=1000) #MAGIC: Depth correction factor
+			depth_multiplier=700) #MAGIC: Depth correction factor
 		if hasattr(depth_opencv,"count"): # Only has it if MaskedArray
 			print("OpenCV valid pixels: {}/{}".format(depth_opencv.count(),depth_opencv.size))
 		
@@ -174,7 +178,7 @@ def display(img,*,stereo_right=None):
 	dvis_cv=visualizations.visualize_matrix(
 		depth_opencv,"OpenCV",clip_percentiles=(5,95))
 	dvis_psm=visualizations.visualize_matrix(
-		depth_psm,"PSMNet")
+		depth_psm,"PSMNet",clip_percentiles=(5,95))
 	if stereo_right is not None:
 		str_dif=PIL.ImageChops.difference(img,stereo_right)
 
@@ -211,21 +215,21 @@ def display(img,*,stereo_right=None):
 			webdata.depthmap_to_pointcloud_json(
 				depth_map=depth_monodepth,
 				color_image=img,
-				sampleN=3000))
+				sampleN=5000))
 		st.put_image("/dmd.jpg",dvis_md)
 		
 		st.put_json("/pc_opencv.json",
 			webdata.depthmap_to_pointcloud_json(
 				depth_map=depth_opencv,
 				color_image=img,
-				sampleN=3000))
+				sampleN=5000))
 		st.put_image("/dcv.jpg",dvis_cv)
 		
 		st.put_json("/pc_psmnet.json",
 			webdata.depthmap_to_pointcloud_json(
 				depth_map=depth_psm,
 				color_image=img,
-				sampleN=3000))
+				sampleN=5000))
 		st.put_image("/dpsm.jpg",dvis_psm)
 		
 		#st.put_image("/dcm.jpg",compare_vis)

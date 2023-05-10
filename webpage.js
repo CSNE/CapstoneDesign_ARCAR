@@ -50,7 +50,8 @@ renderer.setAnimationLoop( animation );
 // Camera controls
 const camera = new THREE.PerspectiveCamera( 60, w/h, 0.001, 1000 );
 const controls = new OrbitControls( camera, renderer.domElement );
-camera.position.set( 0, 1, 3 );
+controls.target=new THREE.Vector3( 0, 0, -3 );
+camera.position.set( 0, 0, 0 );
 controls.update();
 
 // Anim Loop
