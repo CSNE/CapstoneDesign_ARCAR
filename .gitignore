@@ -1,6 +1,6 @@
 *.pt
 __pycache__/
-models/
+/models/
 kinect_captures/
 out/
 img/
