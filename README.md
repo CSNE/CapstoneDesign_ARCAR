@@ -2,24 +2,25 @@
 
 ## Installation
 #### Python
-Tested on Python `3.10`. Some required packages below are not available on `3.11`.  
-You can install all dependencies directly to system python, but using `conda` might be a good idea.
+Tested on Python `3.10` - some required packages are not yet available on `3.11`.  
+Using `conda` is recommended:  
+`conda create -n arcar python=3.10`  
+`conda activate arcar`  
 #### PyTorch
+Please follow the instructions on the PyTorch website.
 https://pytorch.org/get-started/locally  
-CPU: `pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cpu`  
-CUDA: `pip3 install torch torchvision`  
-Conda: `conda install pytorch torchvision`
-#### Other dependencies
-PIP: `pip3 install matplotlib opencv-python scikit-image tensorboardX`  
+#### Other dependencies (Conda or PIP)
 Conda: `conda install matplotlib opencv scikit-image tensorboardX`  
-#### YOLOv8
-`pip3 install ultralytics`
+PIP: `pip3 install matplotlib opencv-python scikit-image tensorboardX`  
+#### Other dependencies (PIP only)
+`pip install ultralytics timm==0.5.4`
 #### FFMPEG
 Only required for video input.  
 `apt install ffmpeg`  
 On Windows, download a precompiled `ffmpeg` binary and put it in `PATH` somewhere.
 #### Get code
-`git clone --recurse-submodules https://github.com/CSNE/CapstoneDesign_ARCAR.git`
+`git clone --recurse-submodules https://github.com/CSNE/CapstoneDesign_ARCAR.git`  
+Note: `--recurse-submodules` is required, or it won't pull in the MonoDepth submodule.
 
 ## Run
 `python3 main.py [args]`  
