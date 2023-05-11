@@ -1,10 +1,21 @@
-
 # Arguments parse
 import arguments
+
+# Supress warnings
+import warnings
+if arguments.verblevel<2:
+	print("Supressing all warnings!")
+	warnings.filterwarnings("ignore")
+
+
+# Timer
+import sequence_timer
+import_timer=sequence_timer.SequenceTimer(prefix="Import")
 
 
 # Imports
 # Standard Library
+import_timer.split(starting="Standard Library")
 import time
 import os.path
 import os
@@ -12,71 +23,79 @@ import random
 import traceback
 import sys
 
+
 # 3rd party
+import_timer.split(starting="PIL")
 import PIL.Image
 import PIL.ImageGrab
+
+import_timer.split(starting="OpenCV")
 import cv2
-import numpy as np
+
+import_timer.split(starting="Numpy")
+import numpy
 import numpy.ma
+
+import_timer.split(starting="PyTorch")
 import torch
 
-# ANSI Console Colors
-CC_RESET = '\033[0m'
-CC_BOLD  = '\033[1m'
-CC_BLINK = '\033[5m'
-CC_FAINT = '\033[2m'
 
-CC_BLACK   = '\033[30m'
-CC_RED     = '\033[31m'
-CC_GREEN   = '\033[32m'
-CC_YELLOW  = '\033[33m'
-CC_BLUE    = '\033[34m'
-CC_MAGENTA = '\033[35m'
-CC_CYAN    = '\033[36m'
-CC_WHITE   = '\033[37m'
-
-CC_BLACK_B   = '\033[90m'
-CC_RED_B     = '\033[91m'
-CC_GREEN_B   = '\033[92m'
-CC_YELLOW_B  = '\033[93m'
-CC_BLUE_B    = '\033[94m'
-CC_MAGENTA_B = '\033[95m'
-CC_CYAN_B    = '\033[96m'
-CC_WHITE_B   = '\033[97m'
-
+# Local modules
 if arguments.cuda:
 	if not torch.cuda.is_available():
 		print("CUDA option was set but torch.cuda.is_available() is False")
 		sys.exit(1)
-print(CC_YELLOW+"Using compute device: "+CC_BOLD+["CPU","CUDA"][arguments.cuda]+CC_RESET)
 
-# Local modules
 if arguments.output=="tk":
+	import_timer.split(starting="TkDisplay")
 	import tk_display
+
+import_timer.split(starting="YOLO")
 import yolodriver
 
 if arguments.source in ("webcam","webcam_stereo"):
+	import_timer.split(starting="Webcam")
 	import webcam
+	
 if arguments.source=="video":
+	import_timer.split(starting="Video")
 	import video
+	
 if arguments.output=="web":
+	import_timer.split(starting="Web")
 	import web
 	import webdata
+
+import_timer.split(starting="misc")
 import maths
+import ansi
+
+import_timer.split(starting="combine")
 import combined
+
+import_timer.split(starting="visualizations")
 import visualizations
+
 if arguments.stereo_solvers["opencv"]:
-	print(CC_YELLOW+"Using stereo solver: "+CC_BOLD+"OpenCV"+CC_RESET)
+	import_timer.split(starting="Stereo")
 	import stereo
+	
 if arguments.stereo_solvers["monodepth"]:
-	print(CC_YELLOW+"Using stereo solver: "+CC_BOLD+"MonoDepth2"+CC_RESET)
+	import_timer.split(starting="MonoDepth")
 	import monodepth_driver
+	
 if arguments.stereo_solvers["psm"]:
-	print(CC_YELLOW+"Using stereo solver: "+CC_BOLD+"PSMNet"+CC_RESET)
+	import_timer.split(starting="PSMNet")
 	import PSMNet.psm
+	
 if arguments.stereo_solvers["igev"]:
-	print(CC_YELLOW+"Using stereo solver: "+CC_BOLD+"IGEV"+CC_RESET)
+	import_timer.split(starting="IGEV")
 	import IGEV_Stereo.igev
+
+
+## Setup
+setup_timer=sequence_timer.SequenceTimer(prefix="Setup")
+setup_timer.split(starting="YOLO")
 
 # Make YOLO quiet
 import ultralytics.yolo.utils
@@ -86,60 +105,41 @@ if arguments.verblevel>2:
 	ultralytics.yolo.utils.LOGGER.setLevel(logging.INFO)
 if arguments.verblevel>3:
 	ultralytics.yolo.utils.LOGGER.setLevel(logging.DEBUG)
+	
+# Force-load YOLO model by predicting on a dummy image
+segs=yolodriver.segment(PIL.Image.new("RGB",(64,64)),use_cuda=arguments.cuda)
 
 if arguments.stereo_solvers["igev"]:
+	setup_timer.split(starting="IGEV")
 	# Setup IGEV
 	igev=IGEV_Stereo.igev.IGEVDriver(
 		"IGEV_Stereo/pretrained_sceneflow.pth",
 		use_cuda=arguments.cuda)
+	
 if arguments.stereo_solvers["psm"]:
+	setup_timer.split(starting="PSM")
 	# Setup PSMNet
 	psmnet=PSMNet.psm.PSMDriver(
 		"PSMNet/pretrained_sceneflow_new.tar",
 		use_cuda=arguments.cuda)
+	
 if arguments.stereo_solvers["monodepth"]:
+	setup_timer.split(starting="MonoDepth")
 	# Setup MonoDepth2
 	md_de=monodepth_driver.DepthEstimator(
 		use_cuda=arguments.cuda)
 
-# Simple timer
-class SequenceTimer:
-	def __init__(self):
-		self._current_segment_name=None
-		self._current_segment_start=None
-	def _start_segment(self,name,t):
-		self._current_segment_name=name
-		self._current_segment_start=t
-	def _end_segment(self,t):
-		if self._current_segment_name is None:
-			return
-		n=self._current_segment_name
-		delta=t-self._current_segment_start
-		print(CC_BLUE+CC_BOLD+F"{n:>24s}: "+CC_RESET,end='')
-		if delta<0.2:
-			clr=CC_GREEN
-		elif delta<1.0:
-			clr=CC_YELLOW
-		else:
-			clr=CC_RED
-		print(clr+F"{delta*1000:>6.1f}ms"+CC_RESET)
-		self._current_segment_name=None
-		self._current_segment_start=None
-	def start(self,name):
-		t=time.time()
-		self._end_segment(t)
-		self._start_segment(name,t)
-	def end(self):
-		self._end_segment(time.time())
+
 
 
 # Global variables
-timer=SequenceTimer()
+
 cleanup_functions=[]
 
 
 ## GUI Setup
 if arguments.output=="tk":
+	setup_timer.split(starting="Tk")
 	img_disp_root=tk_display.ImageDisplayerRoot()
 	img_disp_root.start()
 	time.sleep(0.5) # Race condition
@@ -157,6 +157,7 @@ if arguments.output=="tk":
 
 # Web Server setup
 if arguments.output=="web":
+	setup_timer.split(starting="Webserver")
 	server_port=28301
 	st=web.ServerThread(server_port)
 	st.start()
@@ -168,27 +169,35 @@ if arguments.output=="web":
 		page=f.read()
 	st.put_data("/webpage.js",page,"text/javascript")
 	time.sleep(1.0)
+setup_timer.split()
 
-null_dm=numpy.ma.masked_equal(np.zeros((320,480),float),0)
+
+null_dm=numpy.ma.masked_equal(numpy.zeros((320,480),float),0)
 # Display function
 frmN=0
+loop_timer=sequence_timer.SequenceTimer(
+	prefix="Frameloop",
+	orange_thresh=0.1,red_thresh=0.3)
+frame_timer=sequence_timer.SequenceTimer(
+	orange_thresh=0.3,red_thresh=1.0)
 def display(img,*,stereo_right=None):
 	global frmN
 	frmN+=1
-	print(CC_BOLD+CC_GREEN+F"\n### Frame {frmN} ###"+CC_RESET)
-	
+	print(ansi.BOLD+ansi.GREEN+F"\n### Frame {frmN} ###"+ansi.RESET)
+	frame_timer.split()
+	loop_timer.split(ending="Frame Acquisition")
 	if arguments.output=="tk":
 		if img_disp_root.opt_mirror:
 			img=img.transpose(PIL.Image.FLIP_LEFT_RIGHT)
 	
 
-	timer.start("Segmentation")
+	loop_timer.split(starting="Segmentation")
 	# Segmentation
 	segs=yolodriver.segment(img,use_cuda=arguments.cuda)
 	
 	# Depth estimation
 	if arguments.stereo_solvers["monodepth"]:
-		timer.start("MonoDepth")
+		loop_timer.split(starting="MonoDepth")
 		md_raw=md_de.estimate(img,depth_multiplier=0.3)
 		# Restore aspect ratio
 		img_smallsize=maths.fit(img.size,(480,320))
@@ -198,13 +207,13 @@ def display(img,*,stereo_right=None):
 	
 	if stereo_right is not None:
 		if arguments.stereo_solvers["opencv"]:
-			timer.start("OpenCV")
+			loop_timer.split(starting="OpenCV")
 			stereo_left=img
 			depth_opencv=stereo.stereo_calculate(
 				left=stereo_left,right=stereo_right,
 				depth_multiplier=700) #MAGIC: Depth correction factor
 			if hasattr(depth_opencv,"count"): # Only has it if MaskedArray
-				print("OpenCV valid pixels: {}/{}".format(depth_opencv.count(),depth_opencv.size))
+				pass#print("OpenCV valid pixels: {}/{}".format(depth_opencv.count(),depth_opencv.size))
 		else:
 			depth_opencv=null_dm
 
@@ -212,7 +221,7 @@ def display(img,*,stereo_right=None):
 		stereo_right_rsz=maths.resize_fit(stereo_right,(480,320))
 
 		if arguments.stereo_solvers["psm"]:
-			timer.start("PSMNet")
+			loop_timer.split(starting="PSMNet")
 
 			depth_psm = psmnet.calculate(
 				left=stereo_left_rsz,
@@ -222,7 +231,7 @@ def display(img,*,stereo_right=None):
 			depth_psm=null_dm
 
 		if arguments.stereo_solvers["igev"]:
-			timer.start("IGEV")
+			loop_timer.split(starting="IGEV")
 			depth_igev = igev.calculate(
 				left=stereo_left_rsz,
 				right=stereo_right_rsz,
@@ -231,7 +240,7 @@ def display(img,*,stereo_right=None):
 			depth_igev=null_dm
 	
 
-	timer.start("SegDepth Calculate")
+	loop_timer.split(starting="SegDepth")
 	# Combine
 	depth=depth_monodepth #TODO intelligent depth combining
 	if depth_opencv is not None:
@@ -246,9 +255,9 @@ def display(img,*,stereo_right=None):
 		segdepths_valid.append(sd)
 	diff=len(segdepths_raw)-len(segdepths_valid)
 	if diff != 0:
-		print(F"Removed {diff} SegDepths out of {len(segdepths_raw)} because of insufficient depth data")
+		pass#print(F"Removed {diff} SegDepths out of {len(segdepths_raw)} because of insufficient depth data")
 	
-	timer.start("Visualize")
+	loop_timer.split(starting="Visualize")
 	# Visualize Segdepths
 	seg_vis=visualizations.visualize_segmentations(segs,img.size)
 	combined_vis=visualizations.visualize_segdepth(segdepths_valid,img.size,img)
@@ -263,7 +272,7 @@ def display(img,*,stereo_right=None):
 	if stereo_right is not None:
 		str_dif=PIL.ImageChops.difference(img,stereo_right)
 
-	timer.start("Output")
+	loop_timer.split(starting="Output")
 	# Output
 	if arguments.output=="tk":
 		tid_raw.set_image(img)
@@ -335,10 +344,12 @@ def display(img,*,stereo_right=None):
 		dvis_cv.save("out/dvis_cv.jpg")
 		dvis_psm.save("out/dvis_psm.jpg")
 		dvis_igev.save("out/dvis_igev.jpg")
-	timer.start("Get Frame")
+	loop_timer.split()
+	frame_timer.split(ending=F"Frame {frmN}")
 		
 # Main capture loop
 def capture_loop():
+	loop_timer.split()
 	if arguments.source=="webcam":
 		camera=webcam.Webcam(arguments.wc)
 		while True:
@@ -395,7 +406,7 @@ try:
 	capture_loop()
 	input("Press Enter to exit.")
 except KeyboardInterrupt:
-	print("^C Received. Exiting...")
+	print("^C Received. Exiting...              ")
 except:
 	traceback.print_exc()
 finally:

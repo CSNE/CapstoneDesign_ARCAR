@@ -102,10 +102,10 @@ class ServerThread(threading.Thread):
 		self._handlers[path]=f
 		
 	def run(self):
-		print("Server thread started")
+		#print("Server thread started")
 		self._serv=ErrorSupressedServer(('',self._port),self._reqhandler)
 		self._serv.serve_forever()
-		print("Server thread stopped")
+		#print("Server thread stopped")
 	def die(self):
 		if self._serv is not None:
 			print("Killing server...")

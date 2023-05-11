@@ -128,7 +128,7 @@ class PSMDriver:
 
         start_time = time.time()
         pred_disp = self.test(imgL,imgR)
-        print('time = %.2f' %(time.time() - start_time))
+        #print('time = %.2f' %(time.time() - start_time))
 
         
         if top_pad !=0 and right_pad != 0:
