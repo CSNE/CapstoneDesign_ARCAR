@@ -1,5 +1,6 @@
 import argparse
 import sys
+import os.path
 
 # Arguments Definition
 _ap=argparse.ArgumentParser(description="ARCAR Python Program")
@@ -104,11 +105,46 @@ if source in ("webcam_stereo",):
 		wcL=_args.webcam_left
 		wcR=_args.webcam_right
 
+def l2r(filepath,r2l=False):
+	fp,ex=os.path.splitext(filepath)
+
+
+	if r2l:
+		postfix_from,postfix_to,conversion="_R","_L","R->L"
+	else:
+		postfix_from,postfix_to,conversion="_L","_R","L->R"
+	print("Only one stereo image provided.")
+	print(F"Inferring stereo image pair of {filepath} ({conversion})")
+	if fp.endswith(postfix_from):
+		fp=fp[:-2]+postfix_to
+	else:
+		print(F"  Filename does not end with {postfix_from}!")
+		return None
+
+	res=fp+ex
+
+	if not os.path.exists(res):
+		print(F"Inferred stereo image ({res}) not present!")
+
+	print(F"Inferred & found stereo image {res}")
+	return res
+
+
 if source in ("image_stereo",):
-	if (_args.input_left is None) or (_args.input_right is None):
+	if (_args.input_left is None) and (_args.input_right is None):
 		print("For image_stereo source, you need to supply both files.")
 		print("( --input-left FILE --input-right FILE )")
 		sys.exit(1)
+	elif _args.input_left is None:
+		infileR=_args.input_right
+		infileL=l2r(infileR,r2l=True)
+		if infileL is None:
+			sys.exit(1)
+	elif _args.input_right is None:
+		infileL=_args.input_left
+		infileR=l2r(infileL,r2l=False)
+		if infileR is None:
+			sys.exit(1)
 	else:
 		infileL=_args.input_left
 		infileR=_args.input_right
