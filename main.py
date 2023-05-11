@@ -49,8 +49,29 @@ if arguments.verblevel>2:
 if arguments.verblevel>3:
 	ultralytics.yolo.utils.LOGGER.setLevel(logging.DEBUG)
 
+# ANSI Console Colors
+CC_RESET = '\033[0m'
+CC_BOLD  = '\033[1m'
+CC_BLINK = '\033[5m'
+CC_FAINT = '\033[2m'
 
+CC_BLACK   = '\033[30m'
+CC_RED     = '\033[31m'
+CC_GREEN   = '\033[32m'
+CC_YELLOW  = '\033[33m'
+CC_BLUE    = '\033[34m'
+CC_MAGENTA = '\033[35m'
+CC_CYAN    = '\033[36m'
+CC_WHITE   = '\033[37m'
 
+CC_BLACK_B   = '\033[90m'
+CC_RED_B     = '\033[91m'
+CC_GREEN_B   = '\033[92m'
+CC_YELLOW_B  = '\033[93m'
+CC_BLUE_B    = '\033[94m'
+CC_MAGENTA_B = '\033[95m'
+CC_CYAN_B    = '\033[96m'
+CC_WHITE_B   = '\033[97m'
 
 # Simple timer
 class SequenceTimer:
@@ -65,7 +86,14 @@ class SequenceTimer:
 			return
 		n=self._current_segment_name
 		delta=t-self._current_segment_start
-		print("{:>16s}: {:>6.1f}ms".format(n,delta*1000))
+		print(CC_BLUE+CC_BOLD+F"{n:>24s}: "+CC_RESET,end='')
+		if delta<0.2:
+			clr=CC_GREEN
+		elif delta<1.0:
+			clr=CC_YELLOW
+		else:
+			clr=CC_RED
+		print(clr+F"{delta*1000:>6.1f}ms"+CC_RESET)
 		self._current_segment_name=None
 		self._current_segment_start=None
 	def start(self,name):
@@ -117,7 +145,7 @@ frmN=0
 def display(img,*,stereo_right=None):
 	global frmN
 	frmN+=1
-	print(F"\nFrame {frmN}")
+	print(CC_BOLD+CC_GREEN+F"\n### Frame {frmN} ###"+CC_RESET)
 	
 	if arguments.output=="tk":
 		if img_disp_root.opt_mirror:
@@ -157,6 +185,8 @@ def display(img,*,stereo_right=None):
 	timer.start("SegDepth Calculate")
 	# Combine
 	depth=depth_monodepth #TODO intelligent depth combining
+	if depth_opencv is not None:
+		depth=depth_opencv
 	segdepths_raw=combined.calculate_segdepth(segs,depth)
 
 	# Filter out SegDepths with too little depth data
