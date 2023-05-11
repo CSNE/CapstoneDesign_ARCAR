@@ -48,7 +48,11 @@ Install python wrapper: `pip install pyk4a`
 - `--video-speed` `-vs` : For `video` source, you can supply a video speed multiplier here. For example, `-vs 0.5` will play the video at half speed.
 - `--screenshot-region` `-sr` : For `screenshot` source, you can set the capture region. If not specified, captures the whole desktop.
 - `--kinect-depth` `-kd` / `--kinect-rgb` `-kr` / `--kinect-fps` `-kf` : For `kinect` source, configure Azure Kinect capture settings. View `--help` for possible values.
-- `--stereo-solver` `-ss` : For `_stereo` sources, choose how to calculate the disparity. `opencv`(OpenCV StereoBM, default) or `psm`(PSMNet).
+- `--stereo-solvers` `-ss` : Select (multiple) stereo solvers. Comma-separated. Default is `opencv,monodepth`.
+    - `monodepth`: MonoDepth2 (Monocular)
+    - `opencv`: OpenCV StereoBM (Stereo)
+    - `psm`: PSMNet (Stereo)
+    - `igev`: IGEV (Stereo)
 - `--single-frame` `-sf` : Exit after processing a single frame. Use in combination with `-o file` for debugging.
 - `--verbose` `-v` : Verbose logging. Repeat for even more verbosity. (`-vvv`)
 
@@ -56,6 +60,6 @@ Examples:
 `python3 main.py --source=image -i testimg.png --single-frame --output file`  
 `python3 main.py --source video --input-file video.mp4 --output tk`  
 `python3 main.py -src webcam -wc 2 -o web`  
-`python3 main.py --source=webcam_stereo --webcam-left 6 --webcam-right 8 --output web --stereo-solver=psm`  
+`python3 main.py --source=webcam_stereo --webcam-left 6 --webcam-right 8 --output web --stereo-solvers=psm,igev`
 `python3 main.py --source=screenshot --screenshot-region=1920,0,3840,1080 --output=web`  
 `python3 main.py --source=kinect --kinect-depth=NFOV_2X2BINNED --kinect-rgb 1080 -kf 5 --output=web`

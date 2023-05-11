@@ -63,9 +63,8 @@ _ap.add_argument(
 	choices=["5","15","30"],
 	default="15")
 _ap.add_argument(
-	"--stereo-solver","-ss",
-	choices=["opencv","psm"],
-	default="opencv")
+	"--stereo-solvers","-ss",
+	default="opencv,monodepth")
 
 # Optional
 _ap.add_argument(
@@ -86,7 +85,15 @@ output=_args.output
 wc=_args.webcam_number
 vs=_args.video_speed
 
-stereo_solver=_args.stereo_solver
+_valid_ss=["opencv","psm","monodepth","igev"]
+stereo_solvers={i:False for i in _valid_ss}
+for ss in _args.stereo_solvers.split(","):
+	ss=ss.strip().lower()
+	if ss not in _valid_ss:
+		print(F"{ss} not a valid stereo solver (must be one of {_valid_ss})")
+		sys.exit(1)
+	stereo_solvers[ss]=True
+
 
 if source in ("image","video","kinectcapture"):
 	if _args.input_file is None:

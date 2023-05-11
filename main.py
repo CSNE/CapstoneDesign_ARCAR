@@ -17,41 +17,7 @@ import PIL.Image
 import PIL.ImageGrab
 import cv2
 import numpy as np
-
-# Local modules
-if arguments.output=="tk":
-	import tk_display
-import yolodriver
-import monodepth_driver
-if arguments.source in ("webcam","webcam_stereo"):
-	import webcam
-if arguments.source=="video":
-	import video
-if arguments.output=="web":
-	import web
-	import webdata
-import maths
-import combined
-if arguments.source=="kinect":
-	import kinect_hardware
-import visualizations
-if arguments.source=="kinectcapture":
-	import kinect_record
-import stereo
-import PSMNet.psm
-import IGEV_Stereo.igev
-
-# Make YOLO quiet
-import ultralytics.yolo.utils
-import logging
-ultralytics.yolo.utils.LOGGER.setLevel(logging.WARNING)
-if arguments.verblevel>2:
-	ultralytics.yolo.utils.LOGGER.setLevel(logging.INFO)
-if arguments.verblevel>3:
-	ultralytics.yolo.utils.LOGGER.setLevel(logging.DEBUG)
-
-# Setup IGEV
-igev=IGEV_Stereo.igev.IGEVDriver("IGEV_Stereo/pretrained_sceneflow.pth")
+import numpy.ma
 
 # ANSI Console Colors
 CC_RESET = '\033[0m'
@@ -76,6 +42,53 @@ CC_BLUE_B    = '\033[94m'
 CC_MAGENTA_B = '\033[95m'
 CC_CYAN_B    = '\033[96m'
 CC_WHITE_B   = '\033[97m'
+
+# Local modules
+if arguments.output=="tk":
+	import tk_display
+import yolodriver
+
+if arguments.source in ("webcam","webcam_stereo"):
+	import webcam
+if arguments.source=="video":
+	import video
+if arguments.output=="web":
+	import web
+	import webdata
+import maths
+import combined
+if arguments.source=="kinect":
+	import kinect_hardware
+import visualizations
+if arguments.source=="kinectcapture":
+	import kinect_record
+if arguments.stereo_solvers["opencv"]:
+	print(CC_YELLOW+"Using stereo solver: "+CC_BOLD+"OpenCV"+CC_RESET)
+	import stereo
+if arguments.stereo_solvers["monodepth"]:
+	print(CC_YELLOW+"Using stereo solver: "+CC_BOLD+"MonoDepth2"+CC_RESET)
+	import monodepth_driver
+if arguments.stereo_solvers["psm"]:
+	print(CC_YELLOW+"Using stereo solver: "+CC_BOLD+"PSMNet"+CC_RESET)
+	import PSMNet.psm
+if arguments.stereo_solvers["igev"]:
+	print(CC_YELLOW+"Using stereo solver: "+CC_BOLD+"IGEV"+CC_RESET)
+	import IGEV_Stereo.igev
+
+# Make YOLO quiet
+import ultralytics.yolo.utils
+import logging
+ultralytics.yolo.utils.LOGGER.setLevel(logging.WARNING)
+if arguments.verblevel>2:
+	ultralytics.yolo.utils.LOGGER.setLevel(logging.INFO)
+if arguments.verblevel>3:
+	ultralytics.yolo.utils.LOGGER.setLevel(logging.DEBUG)
+
+if arguments.stereo_solvers["igev"]:
+	# Setup IGEV
+	igev=IGEV_Stereo.igev.IGEVDriver("IGEV_Stereo/pretrained_sceneflow.pth")
+
+
 
 # Simple timer
 class SequenceTimer:
@@ -144,7 +157,7 @@ if arguments.output=="web":
 	st.put_data("/webpage.js",page,"text/javascript")
 	time.sleep(1.0)
 
-
+null_dm=numpy.ma.masked_equal(np.zeros((320,480),float),0)
 # Display function
 frmN=0
 def display(img,*,stereo_right=None):
@@ -162,35 +175,48 @@ def display(img,*,stereo_right=None):
 	segs=yolodriver.segment(img)
 	
 	# Depth estimation
-	timer.start("MonoDepth")
-	md_raw=monodepth_driver.estimate_depth(img,depth_multiplier=0.3)
-	# Restore aspect ratio
-	img_smallsize=maths.fit(img.size,(480,320))
-	depth_monodepth=maths.resize_matrix(md_raw,(img_smallsize[1],img_smallsize[0]))
-
+	if arguments.stereo_solvers["monodepth"]:
+		timer.start("MonoDepth")
+		md_raw=monodepth_driver.estimate_depth(img,depth_multiplier=0.3)
+		# Restore aspect ratio
+		img_smallsize=maths.fit(img.size,(480,320))
+		depth_monodepth=maths.resize_matrix(md_raw,(img_smallsize[1],img_smallsize[0]))
+	else:
+		depth_monodepth=null_dm
 	
 	if stereo_right is not None:
-		timer.start("OpenCV")
-		stereo_left=img
-		depth_opencv=stereo.stereo_calculate(
-			left=stereo_left,right=stereo_right,
-			depth_multiplier=700) #MAGIC: Depth correction factor
-		if hasattr(depth_opencv,"count"): # Only has it if MaskedArray
-			print("OpenCV valid pixels: {}/{}".format(depth_opencv.count(),depth_opencv.size))
-		
-		timer.start("PSMNet")
+		if arguments.stereo_solvers["opencv"]:
+			timer.start("OpenCV")
+			stereo_left=img
+			depth_opencv=stereo.stereo_calculate(
+				left=stereo_left,right=stereo_right,
+				depth_multiplier=700) #MAGIC: Depth correction factor
+			if hasattr(depth_opencv,"count"): # Only has it if MaskedArray
+				print("OpenCV valid pixels: {}/{}".format(depth_opencv.count(),depth_opencv.size))
+		else:
+			depth_opencv=null_dm
+
 		stereo_left_rsz=maths.resize_fit(stereo_left,(480,320))
 		stereo_right_rsz=maths.resize_fit(stereo_right,(480,320))
-		depth_psm = PSMNet.psm.calculate(
-			left=stereo_left_rsz,
-			right=stereo_right_rsz,
-			depth_multiplier=40) #MAGIC: Depth correction factor
 
-		timer.start("IGEV")
-		depth_igev = igev.calculate(
-			left=stereo_left_rsz,
-			right=stereo_right_rsz,
-			depth_multiplier=50) #MAGIC: Depth correction factor
+		if arguments.stereo_solvers["psm"]:
+			timer.start("PSMNet")
+
+			depth_psm = PSMNet.psm.calculate(
+				left=stereo_left_rsz,
+				right=stereo_right_rsz,
+				depth_multiplier=40) #MAGIC: Depth correction factor
+		else:
+			depth_psm=null_dm
+
+		if arguments.stereo_solvers["igev"]:
+			timer.start("IGEV")
+			depth_igev = igev.calculate(
+				left=stereo_left_rsz,
+				right=stereo_right_rsz,
+				depth_multiplier=50) #MAGIC: Depth correction factor
+		else:
+			depth_igev=null_dm
 	
 
 	timer.start("SegDepth Calculate")
