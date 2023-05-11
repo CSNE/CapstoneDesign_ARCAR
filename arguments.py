@@ -5,6 +5,7 @@ import os.path
 # Arguments Definition
 _ap=argparse.ArgumentParser(description="ARCAR Python Program")
 
+
 # Required
 _ap.add_argument(
 	"--source","-src",
@@ -17,6 +18,7 @@ _ap.add_argument(
 	"--output","-o",
 	choices=["tk","web","file","nothing"],
 	required=True)
+
 
 # Per-Input
 _ap.add_argument(
@@ -45,18 +47,22 @@ _ap.add_argument(
 
 # Optional
 _ap.add_argument(
+	"--cuda","-cuda",
+	action="store_true")
+_ap.add_argument(
+	"--stereo-solvers","-ss",
+	default="opencv")
+_ap.add_argument(
+	"--solve-resize","-srz",
+	default="480x320")
+_ap.add_argument(
 	"--single-frame","-sf",
 	action="store_true")
 _ap.add_argument(
 	'--verbose', '-v',
 	action='count',
 	default=0)
-_ap.add_argument(
-	"--stereo-solvers","-ss",
-	default="opencv,monodepth")
-_ap.add_argument(
-	"--cuda","-cuda",
-	action="store_true")
+
 
 # Arguments Parsing
 _args=_ap.parse_args()
@@ -154,3 +160,11 @@ singleframe=_args.single_frame
 verblevel=_args.verbose
 
 cuda=_args.cuda
+
+try:
+	_w,_h=_args.solve_resize.lower().split("x")
+	solve_resize=(int(_w),int(_h))
+	#print(solve_resize)
+except ValueError:
+	print("--solve-resize must be WxH, both integers. ex) 640x480")
+	sys.exit(1)

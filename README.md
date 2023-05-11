@@ -25,36 +25,40 @@ Note: `--recurse-submodules` is required, or it won't pull in the MonoDepth subm
 ## Run
 `python3 main.py [args]`  
 - `--source` `-src` : Required. Select the frame source. 
-    - `webcam`: Capture webcam.
-    - `webcam_stereo`: Capture two webcams, for stereo depth.
-    - `image`: Read image file.
-    - `image_stereo`: Read two image files, for stereo depth.
-    - `video`: Read video file.
-    - `screenshot`: Capture desktop.
+    - `webcam` : Capture webcam.
+    - `webcam_stereo` : Capture two webcams, for stereo depth.
+    - `image` : Read image file.
+    - `image_stereo` : Read two image files, for stereo depth.
+    - `video` : Read video file.
+    - `screenshot` : Capture desktop.
 - `--output` `-o` : Required. Select how to visualize the program output.
-    - `tk`: Outputs to a `tkinter` GUI.
-    - `web`: Starts a web server. Go to `http://localhost:28301` to view results.
-    - `file`: Outputs to JPG files under `out/` directory.
-    - `nothing`: Don't output anything.
+    - `tk` : Outputs to a `tkinter` GUI.
+    - `web` : Starts a web server. Go to `http://localhost:28301` to view results.
+    - `file` : Outputs to JPG files under `out/` directory.
+    - `nothing` : Don't output anything.
 - `--webcam-number` `-wc` : For `webcam` source, you can set the webcam number here. If not, defaults to 0. (On linux, run `v4l2-ctl --list-devices` to get the device number.)
 - `--webcam-left` `-wl` / `--webcam-right` `-wr` : For `webcam_stereo` source. Self-explanatory.
 - `--input-file` `-i` : For `image`, `video`, and `kinectcapture` sources, you need to supply the file path here.
 - `--image-left` `-il` / `--image-right` `-ir` : For `image_stereo` source. Self-explanatory.
 - `--video-speed` `-vs` : For `video` source, you can supply a video speed multiplier here. For example, `-vs 0.5` will play the video at half speed.
 - `--screenshot-region` `-sr` : For `screenshot` source, you can set the capture region. If not specified, captures the whole desktop.
-- `--stereo-solvers` `-ss` : Select (multiple) stereo solvers. Comma-separated. Default is `opencv,monodepth`.
-    - `monodepth`: MonoDepth2 (Monocular)
-    - `opencv`: OpenCV StereoBM (Stereo)
-    - `psm`: PSMNet (Stereo)
-    - `igev`: IGEV (Stereo)
-- `--single-frame` `-sf` : Exit after processing a single frame. Use in combination with `-o file` for debugging.
+- `--cuda` `-cuda` : Use GPU acceleration.
+- `--stereo-solvers` `-ss` : Select (multiple) stereo solvers. Comma-separated. Default is `opencv`.
+    - `monodepth` : MonoDepth2 (Monocular)
+    - `opencv` : OpenCV StereoBM (Stereo)
+    - `psm` : PSMNet (Stereo)
+    - `igev` : IGEV (Stereo)
+- `--solve-resize` `-srz` : Stereo image dimension to resize before feeding it to the stereo solver algorithms(Except OpenCV). For example `-srz 640x480` will resize each stereo image pair to no bigger than 640x480 (preserving aspect ratio, and no upscaling) before being input to the algorithms. Smaller sizes are faster but less accurate. Default `480x320`. Note that PSMNet errors out if this is too small.  
+- `--single-frame` `-sf` : Exit after processing a single frame. Tip: use in combination with `-o file` for debugging.
 - `--verbose` `-v` : Verbose logging. Repeat for even more verbosity. (`-vvv`)
+
+
 
 Examples:  
 `python3 main.py --source=image -i testimg.png --single-frame --output file`  
 `python3 main.py --source video --input-file video.mp4 --output tk`  
 `python3 main.py -src webcam -wc 2 -o web`  
-`python3 main.py --source=webcam_stereo --webcam-left 6 --webcam-right 8 --output web --stereo-solvers=psm,igev`
+`python3 main.py --source=webcam_stereo --webcam-left 6 --webcam-right 8 --output web --stereo-solvers=psm,igev --solve-resize=640x480`
 `python3 main.py --source=screenshot --screenshot-region=1920,0,3840,1080 --output=web`  
 
 ## Structure

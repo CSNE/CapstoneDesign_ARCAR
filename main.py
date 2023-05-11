@@ -217,8 +217,8 @@ def display(img,*,stereo_right=None):
 		else:
 			depth_opencv=null_dm
 
-		stereo_left_rsz=maths.resize_fit(stereo_left,(480,320))
-		stereo_right_rsz=maths.resize_fit(stereo_right,(480,320))
+		stereo_left_rsz=maths.resize_fit(stereo_left,arguments.solve_resize)
+		stereo_right_rsz=maths.resize_fit(stereo_right,arguments.solve_resize)
 
 		if arguments.stereo_solvers["psm"]:
 			loop_timer.split(starting="PSMNet")
