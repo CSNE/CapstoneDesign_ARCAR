@@ -63,3 +63,10 @@ Examples:
 `python3 main.py --source=webcam_stereo --webcam-left 6 --webcam-right 8 --output web --stereo-solvers=psm,igev`
 `python3 main.py --source=screenshot --screenshot-region=1920,0,3840,1080 --output=web`  
 `python3 main.py --source=kinect --kinect-depth=NFOV_2X2BINNED --kinect-rgb 1080 -kf 5 --output=web`
+
+## Structure
+`captures/`: Manually captured stereo images, by us.  
+`IGEV_Stereo/`: IGEV code, copy of the [original git repo](https://github.com/gangweiX/IGEV). Some modifications made, to make it able to run on a CPU.  
+`monodepth2/`: MonoDepth2 code, submodule from the [original git repo](https://github.com/nianticlabs/monodepth2).  
+`PSMNet/`: PSMNet code, copy of the [original git repo](https://github.com/JiaRenChang/PSMNet). Some modifications made, to make it able to run on a CPU.  
+`test_images/`: Test stereo images, downloaded.  

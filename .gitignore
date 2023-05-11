@@ -1,7 +1,5 @@
-*.pt
+/*.pt
 __pycache__/
 /models/
-kinect_captures/
-out/
-img/
-captures/
+/kinect_captures/
+/out/
