@@ -1,6 +1,5 @@
 import sys
 #sys.path.append('IGEV_Stereo/core')
-DEVICE = 'cpu'
 import os
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 import argparse
@@ -17,15 +16,15 @@ from matplotlib import pyplot as plt
 import os
 import cv2
 
-def load_image(imfile):
+def load_image(imfile,device):
     img = np.array(Image.open(imfile)).astype(np.uint8)
     img = torch.from_numpy(img).permute(2, 0, 1).float()
-    return img[None].to(DEVICE)
+    return img[None].to(device)
 
-def pim_to_torch(pim):
+def pim_to_torch(pim,device):
     img = np.array(pim).astype(np.uint8)
     img = torch.from_numpy(img).permute(2, 0, 1).float()
-    return img[None].to(DEVICE)
+    return img[None].to(device)
 
 
 class ArgProvider:
@@ -47,17 +46,19 @@ default_args={
 args=ArgProvider()# So janky ...but it runs so ehhh
 
 class IGEVDriver:
-    def __init__(self,modelpath):
-
-
-
+    def __init__(self,modelpath,use_cuda=False):
+        
+        if use_cuda:
+            self._device="cuda"
+        else:
+            self._device="cpu"
 
         checkpoint=modelpath
         model = torch.nn.DataParallel(IGEVStereo(args), device_ids=[0])
         model.load_state_dict(torch.load(checkpoint,map_location=torch.device('cpu')))
 
         model = model.module
-        model.to(DEVICE)
+        model.to(self._device)
         model.eval()
 
         #output_directory = Path(args.output_directory)
@@ -70,8 +71,8 @@ class IGEVDriver:
         with torch.no_grad():
 
             #for (imfile1, imfile2) in tqdm(list(zip(left_images, right_images))):
-            image1 = pim_to_torch(left)
-            image2 = pim_to_torch(right)
+            image1 = pim_to_torch(left,self._device)
+            image2 = pim_to_torch(right,self._device)
 
             padder = InputPadder(image1.shape, divis_by=32)
             image1, image2 = padder.pad(image1, image2)

@@ -16,13 +16,16 @@ SegmentationResult=collections.namedtuple(
 	"SegmentationResult",
 	["points","area","confidence","name","xmin","xmax","ymin","ymax"])
 
-def segment(pim:PIL.Image) -> SegmentationResult:
+def segment(pim:PIL.Image,use_cuda=False) -> SegmentationResult:
 	'''
 	Run segmentation on YOLO, given a PIL image.
 	'''
 
 	# Run model
-	results_seg=model_seg(pim)
+	dev="cpu"
+	if use_cuda:
+		dev="0" #CUDA device 0
+	results_seg=model_seg(pim,device=dev)
 	assert len(results_seg)==1
 	result_seg=results_seg[0]
 
@@ -46,7 +49,7 @@ def segment(pim:PIL.Image) -> SegmentationResult:
 		n=result_seg.names[classes[i]]
 		b=boxes[i]
 		a=areas[i]
-		npa=a.numpy()
+		npa=a.cpu().numpy()
 		s=segs[i]
 
 		results.append(

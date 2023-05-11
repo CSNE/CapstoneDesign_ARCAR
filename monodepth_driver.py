@@ -22,34 +22,36 @@ from evaluate_depth import STEREO_SCALE_FACTOR
 
 
 
-class _DepthEstimator:
+class DepthEstimator:
 	'''
 	Class for running the monodepth2 code.
 	Will load & setup model on initialization.
 	and estimate() does the actual depth estimation.
 	'''
-	def __init__(self,model_name="mono+stereo_640x192"):
+	def __init__(self,model_name="mono+stereo_640x192",use_cuda=False):
 		self._model_name=model_name
+		self._cuda=use_cuda
 		self.net_setup()
+		
 	def net_setup(self):
 		'''
 		Setup network. Automatically run on initialization.
 		Code mostly from monodepth2/test_simple.py
 		'''
-		print("Setup DepthEstimator...")
-		if torch.cuda.is_available() and not args.no_cuda:
+		#print("Setup DepthEstimator...")
+		if self._cuda:
 			self.device = torch.device("cuda")
 		else:
 			self.device = torch.device("cpu")
 
 		download_model_if_doesnt_exist(self._model_name)
 		model_path = os.path.join("models", self._model_name)
-		print("-> Loading model from ", model_path)
+		#print("-> Loading model from ", model_path)
 		encoder_path = os.path.join(model_path, "encoder.pth")
 		depth_decoder_path = os.path.join(model_path, "depth.pth")
 
 		# LOADING PRETRAINED MODEL
-		print("   Loading pretrained encoder")
+		#print("   Loading pretrained encoder")
 		self.encoder = networks.ResnetEncoder(18, False)
 		loaded_dict_enc = torch.load(encoder_path, map_location=self.device)
 
@@ -61,7 +63,7 @@ class _DepthEstimator:
 		self.encoder.to(self.device)
 		self.encoder.eval()
 
-		print("   Loading pretrained decoder")
+		#print("   Loading pretrained decoder")
 		self.depth_decoder = networks.DepthDecoder(
 			num_ch_enc=self.encoder.num_ch_enc, scales=range(4))
 
@@ -111,10 +113,11 @@ class _DepthEstimator:
 		return depth_data
 
 # Just initialize a global one.
+'''
 _de=_DepthEstimator()
 def estimate_depth(img,depth_multiplier=1.0):
 	return _de.estimate(img,depth_multiplier=depth_multiplier)
-
+'''
 if __name__=="__main__":
 	# Testing code.
 	import visualizations

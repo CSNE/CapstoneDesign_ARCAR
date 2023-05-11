@@ -10,7 +10,7 @@ import os.path
 import os
 import random
 import traceback
-
+import sys
 
 # 3rd party
 import PIL.Image
@@ -18,6 +18,7 @@ import PIL.ImageGrab
 import cv2
 import numpy as np
 import numpy.ma
+import torch
 
 # ANSI Console Colors
 CC_RESET = '\033[0m'
@@ -43,6 +44,12 @@ CC_MAGENTA_B = '\033[95m'
 CC_CYAN_B    = '\033[96m'
 CC_WHITE_B   = '\033[97m'
 
+if arguments.cuda:
+	if not torch.cuda.is_available():
+		print("CUDA option was set but torch.cuda.is_available() is False")
+		sys.exit(1)
+print(CC_YELLOW+"Using compute device: "+CC_BOLD+["CPU","CUDA"][arguments.cuda]+CC_RESET)
+
 # Local modules
 if arguments.output=="tk":
 	import tk_display
@@ -58,8 +65,6 @@ if arguments.output=="web":
 import maths
 import combined
 import visualizations
-if arguments.source=="kinectcapture":
-	import kinect_record
 if arguments.stereo_solvers["opencv"]:
 	print(CC_YELLOW+"Using stereo solver: "+CC_BOLD+"OpenCV"+CC_RESET)
 	import stereo
@@ -84,9 +89,18 @@ if arguments.verblevel>3:
 
 if arguments.stereo_solvers["igev"]:
 	# Setup IGEV
-	igev=IGEV_Stereo.igev.IGEVDriver("IGEV_Stereo/pretrained_sceneflow.pth")
-
-
+	igev=IGEV_Stereo.igev.IGEVDriver(
+		"IGEV_Stereo/pretrained_sceneflow.pth",
+		use_cuda=arguments.cuda)
+if arguments.stereo_solvers["psm"]:
+	# Setup PSMNet
+	psmnet=PSMNet.psm.PSMDriver(
+		"PSMNet/pretrained_sceneflow_new.tar",
+		use_cuda=arguments.cuda)
+if arguments.stereo_solvers["monodepth"]:
+	# Setup MonoDepth2
+	md_de=monodepth_driver.DepthEstimator(
+		use_cuda=arguments.cuda)
 
 # Simple timer
 class SequenceTimer:
@@ -170,12 +184,12 @@ def display(img,*,stereo_right=None):
 
 	timer.start("Segmentation")
 	# Segmentation
-	segs=yolodriver.segment(img)
+	segs=yolodriver.segment(img,use_cuda=arguments.cuda)
 	
 	# Depth estimation
 	if arguments.stereo_solvers["monodepth"]:
 		timer.start("MonoDepth")
-		md_raw=monodepth_driver.estimate_depth(img,depth_multiplier=0.3)
+		md_raw=md_de.estimate(img,depth_multiplier=0.3)
 		# Restore aspect ratio
 		img_smallsize=maths.fit(img.size,(480,320))
 		depth_monodepth=maths.resize_matrix(md_raw,(img_smallsize[1],img_smallsize[0]))
@@ -200,7 +214,7 @@ def display(img,*,stereo_right=None):
 		if arguments.stereo_solvers["psm"]:
 			timer.start("PSMNet")
 
-			depth_psm = PSMNet.psm.calculate(
+			depth_psm = psmnet.calculate(
 				left=stereo_left_rsz,
 				right=stereo_right_rsz,
 				depth_multiplier=40) #MAGIC: Depth correction factor

@@ -38,42 +38,57 @@ parser.add_argument('--seed', type=int, default=1, metavar='S',
 args = parser.parse_args()
 '''
 class args:
-    loadmodel="PSMNet/pretrained_sceneflow_new.tar"
     model="stackhourglass"
     maxdisp=192
-    cuda = False
     seed=1
 
-torch.manual_seed(args.seed)
-if args.cuda:
-    torch.cuda.manual_seed(args.seed)
+class PSMDriver:
+    def __init__(self,model_path,use_cuda=False):
+        self._cuda=use_cuda
+        torch.manual_seed(args.seed)
+        if use_cuda:
+            torch.cuda.manual_seed(args.seed)
 
-if args.model == 'stackhourglass':
-    model = stackhourglass(args.maxdisp)
-elif args.model == 'basic':
-    model = basic(args.maxdisp)
-else:
-    print('no model')
+        if args.model == 'stackhourglass':
+            model = stackhourglass(args.maxdisp,use_cuda=use_cuda)
+        elif args.model == 'basic':
+            0/0#model = basic(args.maxdisp)
+        else:
+            print('no model')
+        
+        self._model = nn.DataParallel(model, device_ids=[0])
+        if use_cuda:
+            self._model.cuda()
+        else:
+            self._model.cpu()
 
-model = nn.DataParallel(model, device_ids=[0])
-#model.cuda()
+        #print('load PSMNet')
+        if use_cuda:
+            state_dict = torch.load(model_path,map_location=torch.device("cuda"))
+        else:
+            state_dict = torch.load(model_path,map_location=torch.device("cpu"))        
+        self._model.load_state_dict(state_dict['state_dict'])
+        
+        # When using CPU, unwrap from DataParallel immediately.
+        # Or this model will error out when evaluating.
+        # https://discuss.pytorch.org/t/solved-keyerror-unexpected-key-module-encoder-embedding-weight-in-state-dict/1686/2
+        if not use_cuda:
+            self._model=self._model.module
 
-if args.loadmodel is not None:
-    print('load PSMNet')
-    state_dict = torch.load(args.loadmodel,map_location=torch.device("cpu"))
-    model.load_state_dict(state_dict['state_dict'])
+        #print('Number of model parameters: {}'.format(sum([p.data.nelement() for p in self._model.parameters()])))
 
-print('Number of model parameters: {}'.format(sum([p.data.nelement() for p in model.parameters()])))
+    def test(self,imgL,imgR):
+        self._model.eval()
 
-def test(imgL,imgR):
-        model.eval()
-
-        #if args.cuda:
-        #   imgL = imgL.cuda()
-        #   imgR = imgR.cuda()     
+        if self._cuda:
+           imgL = imgL.cuda()
+           imgR = imgR.cuda()   
+           #print(type(imgL))
+           #print(imgL.get_device())
+           #print(type(self._model))
 
         with torch.no_grad():
-            disp = model(imgL,imgR)
+            disp = self._model(imgL,imgR)
 
         disp = torch.squeeze(disp)
         pred_disp = disp.data.cpu().numpy()
@@ -81,7 +96,7 @@ def test(imgL,imgR):
         return pred_disp
 
 
-def calculate(*,left,right,depth_multiplier=100):
+    def calculate(self,*,left,right,depth_multiplier=100):
 
         normal_mean_var = {'mean': [0.485, 0.456, 0.406],
                             'std': [0.229, 0.224, 0.225]}
@@ -112,7 +127,7 @@ def calculate(*,left,right,depth_multiplier=100):
         imgR = F.pad(imgR,(0,right_pad, top_pad,0)).unsqueeze(0)
 
         start_time = time.time()
-        pred_disp = test(imgL,imgR)
+        pred_disp = self.test(imgL,imgR)
         print('time = %.2f' %(time.time() - start_time))
 
         
@@ -130,8 +145,6 @@ def calculate(*,left,right,depth_multiplier=100):
         return 1/img*depth_multiplier#.astype(float)
         #img.save('Test_disparity.png')
 
-if __name__ == '__main__':
-   calculate(Image.open("raw.jpg"),Image.open("alt.jpg")).save("disparity.jpg")
 
 
 

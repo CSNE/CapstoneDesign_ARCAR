@@ -43,9 +43,13 @@ class BasicBlock(nn.Module):
         return out
 
 class disparityregression(nn.Module):
-    def __init__(self, maxdisp):
+    def __init__(self, maxdisp,use_cuda):
         super(disparityregression, self).__init__()
-        self.disp = torch.Tensor(np.reshape(np.array(range(maxdisp)),[1, maxdisp,1,1]))#.cuda()
+        disp=torch.Tensor(np.reshape(np.array(range(maxdisp)),[1, maxdisp,1,1]))
+        if use_cuda:
+            self.disp = disp.cuda()
+        else:
+            self.disp=disp
 
     def forward(self, x):
         out = torch.sum(x*self.disp.data,1, keepdim=True)

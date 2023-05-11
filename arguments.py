@@ -41,9 +41,7 @@ _ap.add_argument(
 	default=1.0)
 _ap.add_argument(
 	"--screenshot-region","-sr")
-_ap.add_argument(
-	"--stereo-solvers","-ss",
-	default="opencv,monodepth")
+
 
 # Optional
 _ap.add_argument(
@@ -53,7 +51,12 @@ _ap.add_argument(
 	'--verbose', '-v',
 	action='count',
 	default=0)
-
+_ap.add_argument(
+	"--stereo-solvers","-ss",
+	default="opencv,monodepth")
+_ap.add_argument(
+	"--cuda","-cuda",
+	action="store_true")
 
 # Arguments Parsing
 _args=_ap.parse_args()
@@ -149,3 +152,5 @@ else:
 
 singleframe=_args.single_frame
 verblevel=_args.verbose
+
+cuda=_args.cuda

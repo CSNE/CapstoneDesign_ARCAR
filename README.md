@@ -7,7 +7,7 @@ Using `conda` is recommended:
 `conda create -n arcar python=3.10`  
 `conda activate arcar`  
 #### PyTorch
-Please follow the instructions on the PyTorch website.
+Please follow the instructions on the PyTorch website:  
 https://pytorch.org/get-started/locally  
 #### Other dependencies (Conda or PIP)
 Conda: `conda install matplotlib opencv scikit-image tensorboardX`  
