@@ -39,6 +39,7 @@ if arguments.source=="kinectcapture":
 	import kinect_record
 import stereo
 import PSMNet.psm
+import IGEV_Stereo.igev
 
 # Make YOLO quiet
 import ultralytics.yolo.utils
@@ -48,6 +49,9 @@ if arguments.verblevel>2:
 	ultralytics.yolo.utils.LOGGER.setLevel(logging.INFO)
 if arguments.verblevel>3:
 	ultralytics.yolo.utils.LOGGER.setLevel(logging.DEBUG)
+
+# Setup IGEV
+igev=IGEV_Stereo.igev.IGEVDriver("IGEV_Stereo/pretrained_sceneflow.pth")
 
 # ANSI Console Colors
 CC_RESET = '\033[0m'
@@ -123,6 +127,7 @@ if arguments.output=="tk":
 	tid_dmd=tk_display.ImageDisplayWindow(img_disp_root,"Depth/MD")
 	tid_dcv=tk_display.ImageDisplayWindow(img_disp_root,"Depth/CV")
 	tid_dpsm=tk_display.ImageDisplayWindow(img_disp_root,"Depth/PSM")
+	tid_digev=tk_display.ImageDisplayWindow(img_disp_root,"Depth/IGEV")
 
 
 # Web Server setup
@@ -180,6 +185,12 @@ def display(img,*,stereo_right=None):
 			left=stereo_left_rsz,
 			right=stereo_right_rsz,
 			depth_multiplier=40) #MAGIC: Depth correction factor
+
+		timer.start("IGEV")
+		depth_igev = igev.calculate(
+			left=stereo_left_rsz,
+			right=stereo_right_rsz,
+			depth_multiplier=50) #MAGIC: Depth correction factor
 	
 
 	timer.start("SegDepth Calculate")
@@ -209,6 +220,8 @@ def display(img,*,stereo_right=None):
 		depth_opencv,"OpenCV",clip_percentiles=(5,95))
 	dvis_psm=visualizations.visualize_matrix(
 		depth_psm,"PSMNet",clip_percentiles=(5,95))
+	dvis_igev=visualizations.visualize_matrix(
+		depth_igev,"IGEV",clip_percentiles=(5,85))
 	if stereo_right is not None:
 		str_dif=PIL.ImageChops.difference(img,stereo_right)
 
@@ -224,7 +237,7 @@ def display(img,*,stereo_right=None):
 		tid_dmd.set_image(dvis_md)
 		tid_dcv.set_image(dvis_cv)
 		tid_dpsm.set_image(dvis_psm)
-		
+		tid_digev.set_image(dvis_igev)
 	elif arguments.output=="web":
 		# Raw frames
 		st.put_image("/raw.jpg",img)
@@ -261,6 +274,13 @@ def display(img,*,stereo_right=None):
 				color_image=img,
 				sampleN=5000))
 		st.put_image("/dpsm.jpg",dvis_psm)
+
+		st.put_json("/pc_igev.json",
+			webdata.depthmap_to_pointcloud_json(
+				depth_map=depth_igev,
+				color_image=img,
+				sampleN=5000))
+		st.put_image("/digev.jpg",dvis_igev)
 		
 		#st.put_image("/dcm.jpg",compare_vis)
 		
@@ -276,6 +296,7 @@ def display(img,*,stereo_right=None):
 		dvis_md.save("out/dvis_md.jpg")
 		dvis_cv.save("out/dvis_cv.jpg")
 		dvis_psm.save("out/dvis_psm.jpg")
+		dvis_igev.save("out/dvis_igev.jpg")
 	timer.start("Get Frame")
 		
 # Main capture loop

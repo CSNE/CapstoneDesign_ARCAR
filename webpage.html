@@ -27,6 +27,7 @@
 	<canvas id="pc_monodepth"> </canvas>
 	<canvas id="pc_opencv"> </canvas>
 	<canvas id="pc_psmnet"> </canvas>
+	<canvas id="pc_igev"> </canvas>
 	
 	<script>
 		// Periodically fetch data form server
@@ -51,16 +52,24 @@
 			addCell(img,desc)
 			imgDOMs[key]=img;
 		}
+		function addBr(){
+			var outerDiv=document.createElement("div");
+			outerDiv.style="width:100%;";
+			imgsContainer.appendChild(outerDiv);
+		}
 		
 		addImage("raw","Raw Image (L)");
 		addImage("dif","Stereo Difference");
 		addImage("str","Stereo Image (R)");
+		addBr();
 		addImage("dmd","MonoDepth Monocular Depth");
 		addImage("dcv","OpenCV Stereo Depth");
 		addImage("dpsm","PSMNet Stereo Depth");
+		addImage("digev","IGEV Stereo Depth");
 		addCell(document.getElementById("pc_monodepth"),"Point Cloud (MonoDepth)");
 		addCell(document.getElementById("pc_opencv"),"Point Cloud (OpenCV)");
 		addCell(document.getElementById("pc_psmnet"),"Point Cloud (PSMNet)");
+		addCell(document.getElementById("pc_igev"),"Point Cloud (IGEV)");
 		addImage("seg","Segmentation");
 		addImage("com","Seg+Depth");
 		

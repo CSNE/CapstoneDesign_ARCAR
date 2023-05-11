@@ -164,6 +164,7 @@ return getPointData;
 var upFunc1=setupPointCloudRenderer(pc_monodepth,"/pc_monodepth.json",50);
 var upFunc2=setupPointCloudRenderer(pc_opencv,"/pc_opencv.json",50);
 var upFunc3=setupPointCloudRenderer(pc_psmnet,"/pc_psmnet.json",50);
+var upFunc4=setupPointCloudRenderer(pc_igev,"/pc_igev.json",50);
 
 var last_update_flag;
 function checkUpdate(){
@@ -177,6 +178,7 @@ function checkUpdate(){
 				upFunc1();
 				upFunc2();
 				upFunc3();
+				upFunc4();
 			}
 			
 		}
