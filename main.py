@@ -57,8 +57,6 @@ if arguments.output=="web":
 	import webdata
 import maths
 import combined
-if arguments.source=="kinect":
-	import kinect_hardware
 import visualizations
 if arguments.source=="kinectcapture":
 	import kinect_record
@@ -352,16 +350,6 @@ def capture_loop():
 				continue
 			display(pimL,stereo_right=pimR)
 			if arguments.singleframe: break
-	elif arguments.source=="kinect":
-		k4a=kinect_hardware.getK4A(
-			arguments.kinect_rgb,
-			arguments.kinect_depth,
-			arguments.kinect_fps)
-		k4a.start()
-		while True:
-			kcd=kinect_hardware.getCap(k4a)
-			display(kcd.color_image,ir_depth=kcd.depth_data_mapped)
-			if arguments.singleframe: break
 	elif arguments.source=="image":
 		while True:
 			display(PIL.Image.open(arguments.infile))
@@ -384,73 +372,10 @@ def capture_loop():
 		while True:
 			display(PIL.ImageGrab.grab(arguments.sr))
 			if arguments.singleframe: break
-
-	elif arguments.source=="kinectcapture":
-		if os.path.isdir(arguments.infile):
-			filepaths=[
-				os.path.join(arguments.infile,fn)
-				for fn in os.listdir(arguments.infile)]
-		else:
-			filepaths=[arguments.infile]
-		filepaths.sort()
-		
-		playback_autonext=False
-		playback_frameN=0
-		playback_lastN=None
-
-		if arguments.output=="web":
-			def playback_countrol_handler(q):
-				nonlocal playback_autonext
-				nonlocal playback_frameN
-				t=q["type"][0]
-				print("PCH",t)
-				if t=="pause":
-					playback_autonext=False
-				elif t=="play":
-					playback_autonext=True
-				elif t=="+1":
-					playback_frameN+=1
-				elif t=="-1":
-					playback_frameN-=1
-				elif t=="-10":
-					playback_frameN-=10
-				elif t=="+10":
-					playback_frameN+=10
-				elif t=="-100":
-					playback_frameN-=100
-				elif t=="+100":
-					playback_frameN+=100
-				elif t=="rand":
-					playback_frameN=random.randint(0,len(filepaths)-1)
-				else:
-					print("Unknown command",q)
-			st.set_handler("/playbackControl",playback_countrol_handler)
-
-		while True:
-			if playback_autonext:
-				playback_frameN+=1
-
-			if playback_frameN != playback_lastN:
-				while True:
-					if playback_frameN<0:
-						playback_frameN=0
-					playback_frameN=playback_frameN%len(filepaths)
-					print("Load",playback_frameN)
-					kcd=kinect_record.load_capture(filepaths[playback_frameN])
-					err=kinect_record.detect_error(kcd.color_image)
-					if err:
-						print("Image seems errored. Get another frame.")
-						playback_frameN+=1
-						continue
-					display(kcd.color_image,ir_depth=kcd.depth_data_mapped)
-					playback_lastN=playback_frameN
-					break
-			else:
-				time.sleep(0.1)
-			if arguments.singleframe: break
-			#input()
-
-
+	
+	else:
+		print("how are you here")
+		0/0
 
 try:
 	capture_loop()

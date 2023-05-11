@@ -8,9 +8,10 @@ _ap=argparse.ArgumentParser(description="ARCAR Python Program")
 # Required
 _ap.add_argument(
 	"--source","-src",
-	choices=["webcam","webcam_stereo",
-		  "image","image_stereo","video","screenshot",
-		  "kinect","kinectcapture"],
+	choices=[
+		"webcam","webcam_stereo",
+		"image","image_stereo",
+		"video","screenshot"],
 	required=True)
 _ap.add_argument(
 	"--output","-o",
@@ -40,28 +41,6 @@ _ap.add_argument(
 	default=1.0)
 _ap.add_argument(
 	"--screenshot-region","-sr")
-_ap.add_argument(
-	"--kinect-depth","-kd",
-	choices=[
-		'NFOV_2X2BINNED',"nb",
-		'NFOV_UNBINNED',"nu",
-		'WFOV_2X2BINNED',"wb",
-		'WFOV_UNBINNED',"wu"],
-	default="NFOV_UNBINNED")
-_ap.add_argument(
-	"--kinect-rgb","-kr",
-	choices=[
-		'RES_720P',"720",
-		'RES_1080P',"1080",
-		'RES_1440P',"1440",
-		'RES_1536P',"1536",
-		'RES_2160P',"2160",
-		'RES_3072P',"3072"],
-	default="RES_720P")
-_ap.add_argument(
-	"--kinect-fps","-kf",
-	choices=["5","15","30"],
-	default="15")
 _ap.add_argument(
 	"--stereo-solvers","-ss",
 	default="opencv,monodepth")
@@ -95,9 +74,9 @@ for ss in _args.stereo_solvers.split(","):
 	stereo_solvers[ss]=True
 
 
-if source in ("image","video","kinectcapture"):
+if source in ("image","video"):
 	if _args.input_file is None:
-		print("For image or video or kinectcapture input, you need to supply the input file or directory.")
+		print("For image or video input, you need to supply the input file or directory.")
 		print("( --input-file=FILE or -f FILE )")
 		sys.exit(1)
 	else:
@@ -167,10 +146,6 @@ if _args.screenshot_region is not None:
 		sys.exit(1)
 else:
 	sr=None
-
-kinect_depth=_args.kinect_depth
-kinect_rgb=_args.kinect_rgb
-kinect_fps=_args.kinect_fps
 
 singleframe=_args.single_frame
 verblevel=_args.verbose

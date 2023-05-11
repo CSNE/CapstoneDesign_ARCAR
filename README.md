@@ -18,10 +18,6 @@ Conda: `conda install matplotlib opencv scikit-image tensorboardX`
 Only required for video input.  
 `apt install ffmpeg`  
 On Windows, download a precompiled `ffmpeg` binary and put it in `PATH` somewhere.
-#### Kinect Azure
-Only required for Kinect Azure input.  
-[Download and install Azure Kinect SDK from Microsoft.](https://github.com/microsoft/Azure-Kinect-Sensor-SDK/blob/develop/docs/usage.md)  
-Install python wrapper: `pip install pyk4a`
 #### Get code
 `git clone --recurse-submodules https://github.com/CSNE/CapstoneDesign_ARCAR.git`
 
@@ -30,8 +26,6 @@ Install python wrapper: `pip install pyk4a`
 - `--source` `-src` : Required. Select the frame source. 
     - `webcam`: Capture webcam.
     - `webcam_stereo`: Capture two webcams, for stereo depth.
-    - `kinect`: Capture from Azure Kinect.
-    - `kinectcapture`: Read Azure Kinect recording made with `kinect_record.py`
     - `image`: Read image file.
     - `image_stereo`: Read two image files, for stereo depth.
     - `video`: Read video file.
@@ -47,7 +41,6 @@ Install python wrapper: `pip install pyk4a`
 - `--image-left` `-il` / `--image-right` `-ir` : For `image_stereo` source. Self-explanatory.
 - `--video-speed` `-vs` : For `video` source, you can supply a video speed multiplier here. For example, `-vs 0.5` will play the video at half speed.
 - `--screenshot-region` `-sr` : For `screenshot` source, you can set the capture region. If not specified, captures the whole desktop.
-- `--kinect-depth` `-kd` / `--kinect-rgb` `-kr` / `--kinect-fps` `-kf` : For `kinect` source, configure Azure Kinect capture settings. View `--help` for possible values.
 - `--stereo-solvers` `-ss` : Select (multiple) stereo solvers. Comma-separated. Default is `opencv,monodepth`.
     - `monodepth`: MonoDepth2 (Monocular)
     - `opencv`: OpenCV StereoBM (Stereo)
@@ -62,7 +55,6 @@ Examples:
 `python3 main.py -src webcam -wc 2 -o web`  
 `python3 main.py --source=webcam_stereo --webcam-left 6 --webcam-right 8 --output web --stereo-solvers=psm,igev`
 `python3 main.py --source=screenshot --screenshot-region=1920,0,3840,1080 --output=web`  
-`python3 main.py --source=kinect --kinect-depth=NFOV_2X2BINNED --kinect-rgb 1080 -kf 5 --output=web`
 
 ## Structure
 `captures/`: Manually captured stereo images, by us.  

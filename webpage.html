@@ -11,6 +11,7 @@
 	</style>
 </head>
 <body>
+	<!--
 	<div id="buttonContainer">
 	<button onclick='playbackControl("pause");'>Pause</button>
 	<button onclick='playbackControl("play");'>Play</button>
@@ -21,7 +22,7 @@
 	<button onclick='playbackControl("+100");'>+100</button>
 	<button onclick='playbackControl("-100");'>-100</button>
 	<button onclick='playbackControl("rand");'>Random</button>
-	</div>
+	</div>-->
 	<div id="information"></div>
 	<div id="imgsContainer" style="display:flex;flex-direction:row;flex-wrap:wrap;"></div>
 	<canvas id="pc_monodepth"> </canvas>
@@ -119,12 +120,13 @@
 			xhr.send();
 		}
 		setInterval(updateCheck,50);
-
+		
+		/*
 		function playbackControl(type){
 			var xhr=new XMLHttpRequest();
 			xhr.open("GET","/playbackControl?type="+encodeURIComponent(type));
 			xhr.send();
-		}
+		}*/
 	</script>
 	
 	
