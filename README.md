@@ -30,6 +30,8 @@ Note: `--recurse-submodules` is required, or it won't pull in the MonoDepth subm
 
 ## Run
 `python3 main.py [args]`  
+Open `http://localhost:28301/main.html` with a browser to view AR content.  
+Argument list (`python3 main.py --help` may be more accurate):  
 - `--source` `-src` : Required. Select the frame source. 
     - `webcam` : Capture webcam.
     - `webcam_stereo` : Capture two webcams, for stereo depth.
@@ -37,7 +39,7 @@ Note: `--recurse-submodules` is required, or it won't pull in the MonoDepth subm
     - `image_stereo` : Read two image files, for stereo depth.
     - `video` : Read video file.
     - `screenshot` : Capture desktop.
-- `--debug-output` `-do` : Select how to visualize the program output.
+- `--debug-output` `-do` : Select how to display debug information.
     - `tk` : Outputs to a `tkinter` GUI.
     - `web` : Starts a web server. Go to `http://localhost:28301/debug.html` to view results.
     - `file` : Outputs to JPG files under `out/` directory.
@@ -61,11 +63,11 @@ Note: `--recurse-submodules` is required, or it won't pull in the MonoDepth subm
 
 
 Examples:  
-`python3 main.py --source=image -i testimg.png --single-frame --output file`  
-`python3 main.py --source video --input-file video.mp4 --output tk`  
+`python3 main.py --source=image -i testimg.png --single-frame`  
+`python3 main.py --source video --input-file video.mp4 --debug_output tk`  
 `python3 main.py -src webcam -wc 2 -o web`  
-`python3 main.py --source=webcam_stereo --webcam-left 6 --webcam-right 8 --output web --stereo-solvers=psm,igev --solve-resize=640x480`
-`python3 main.py --source=screenshot --screenshot-region=1920,0,3840,1080 --output=web`  
+`python3 main.py --source=webcam_stereo --webcam-left 6 --webcam-right 8 --debug_output web --stereo-solvers=psm,igev --solve-resize=640x480`
+`python3 main.py --source=screenshot --screenshot-region=1920,0,3840,1080`  
 
 ## Structure
 `captures/`: Manually captured stereo images, by us.  

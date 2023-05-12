@@ -71,10 +71,10 @@ if arguments.source=="video":
 	import_timer.split(starting="Video")
 	import video
 	
-if arguments.debug_output=="web":
-	import_timer.split(starting="Web")
-	import web
-	import webdata
+
+import_timer.split(starting="Web")
+import web
+import webdata
 
 import_timer.split(starting="misc")
 import maths
@@ -167,20 +167,29 @@ if arguments.debug_output=="tk":
 
 
 # Web Server setup
+
+setup_timer.split(starting="Webserver")
+server_port=28301
+st=web.ServerThread(server_port)
+st.start()
+cleanup_functions.append(lambda:st.die())
+web_url=F"http://localhost:{server_port}"
+
+with open("mainpage.html","rb") as f:
+	page=f.read()
+st.put_data("/main.html",page)
+print("Main page active at "+ansi.GREEN+ansi.BOLD+web_url+"/main.html"+ansi.RESET)
+
 if arguments.debug_output=="web":
-	setup_timer.split(starting="Webserver")
-	server_port=28301
-	dbg_url=F"http://localhost:{server_port}/debug.html"
-	st=web.ServerThread(server_port)
-	st.start()
-	cleanup_functions.append(lambda:st.die())
 	with open("webpage.html","rb") as f:
 		page=f.read()
 	st.put_data("/debug.html",page)
+	
 	with open("webpage.js","rb") as f:
 		page=f.read()
 	st.put_data("/webpage.js",page,"text/javascript")
-	print("Debug page active at "+ansi.GREEN+ansi.BOLD+dbg_url+ansi.RESET)
+	
+	print("Debug page active at "+ansi.GREEN+ansi.BOLD+web_url+"/debug.html"+ansi.RESET)
 setup_timer.split()
 
 
@@ -252,9 +261,12 @@ def display(img,*,stereo_right=None):
 				depth_multiplier=50) #MAGIC: Depth correction factor
 		else:
 			depth_igev=None
-	
+	else:
+		depth_opencv=None
+		depth_psm=None
+		depth_igev=None
 
-	loop_timer.split(starting="SegDepth")
+	loop_timer.split(starting="Seg+Depth Combine")
 	# Get the first non-null entry in the list - maybe make this smarter
 	depth=next(filter(
 		lambda x: x is not None,
@@ -270,6 +282,10 @@ def display(img,*,stereo_right=None):
 	diff=len(segdepths_raw)-len(segdepths_valid)
 	if diff != 0:
 		pass#print(F"Removed {diff} SegDepths out of {len(segdepths_raw)} because of insufficient depth data")
+	
+	loop_timer.split(starting="Build SegDepth JSON")
+	sgj=combined.segdepths_to_json(segdepths_valid,img)
+	st.put_json("/objects",sgj)
 	
 	if arguments.debug_output != "nothing":
 		loop_timer.split(starting="Visualize")
@@ -362,8 +378,6 @@ def display(img,*,stereo_right=None):
 				st.put_json("/pc_igev.json",pc_igev)
 				st.put_image("/digev.jpg",dvis_igev)
 			
-			st.put_string("/update_flag",str(random.random()))
-			
 		elif arguments.debug_output=="file":
 			loop_timer.split(starting="File output save")
 			img.save("out/img.jpg")
@@ -376,6 +390,9 @@ def display(img,*,stereo_right=None):
 			dvis_cv.save("out/dvis_cv.jpg")
 			dvis_psm.save("out/dvis_psm.jpg")
 			dvis_igev.save("out/dvis_igev.jpg")
+			
+	st.put_string("/update_flag",str(random.random()))
+	
 	loop_timer.split()
 	frame_timer.split(ending=F"Frame {frmN}")
 		

@@ -56,56 +56,6 @@ function setupPointCloudRenderer(canvasDOM){
 		controls.update();
 		renderer.render( scene, camera );
 	}
-	/*
-	// Function for creating objects from the python server
-	const loader = new THREE.TextureLoader();
-	var object_meshes=[];
-	function setObjects(objs){
-		// Remove all objects first
-		for (var i=0;i<object_meshes.length;i++){
-			scene.remove(object_meshes[i])
-		}
-		object_meshes=[];
-		
-		// Add objects
-		for (var i=0;i<objs.length;i++){
-			var obj=objs[i];
-			
-			const objGeom = new THREE.PlaneGeometry(obj["sizeX"], obj["sizeY"]);
-			
-			const objMat= new THREE.MeshBasicMaterial();
-			objMat.side=THREE.DoubleSide;
-			objMat.color.setRGB(1,1,1);
-			objMat.map=loader.load(obj["texture"]);
-			
-			const objMesh = new THREE.Mesh(objGeom,objMat);
-			objMesh.position.x=obj["coordX"];
-			objMesh.position.y=obj["coordY"];
-			objMesh.position.z=-obj["coordZ"];
-			
-			scene.add(objMesh);
-			object_meshes.push(objMesh)
-		}
-		
-	}
-
-	// Periodically fetch objects from python server
-	function getObjData(){
-		var xhr=new XMLHttpRequest();
-		xhr.open("GET","/objects");
-		xhr.addEventListener("load",function(e){
-			if (xhr.status==200){
-				var objson=JSON.parse(xhr.responseText);
-
-				setObjects(objson);
-			}
-		});
-		xhr.addEventListener("error",function(e){
-			//console.log("Request errored.");
-		});
-		xhr.send();
-	}*/
-
 	var object_points=[];
 	var pointCubeSize=0.10;
 	function setPointCloud(pointList){
@@ -135,27 +85,6 @@ function setupPointCloudRenderer(canvasDOM){
 		}
 }
 
-/*
-// Periodically fetch objects from python server
-function getPointData(){
-	var xhr=new XMLHttpRequest();
-	xhr.open("GET",jsonPath);
-	xhr.addEventListener("load",function(e){
-		if (xhr.status==200){
-			var objson=JSON.parse(xhr.responseText);
-			
-			setPointCloud(objson);
-		}
-	});
-	xhr.addEventListener("error",function(e){
-		console.log("Clearing points");
-		setPointCloud([]);
-	});
-	xhr.send();
-}*/
-
-//setInterval(getObjData,200);
-//setInterval(getPointData,updateInterval);
 return setPointCloud;
 }
 

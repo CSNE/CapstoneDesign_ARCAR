@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>ARCAR Web Renderer</title>
+	</style>
+</head>
+<body style="margin:0;">
+	<canvas id="ar_canvas"> </canvas>
+	
+	<script type="module">
+		import * as THREE from "https://cdn.skypack.dev/three@0.132.2";
+		import { OrbitControls } from "https://cdn.skypack.dev/three@0.132.2/examples/jsm/controls/OrbitControls.js";
+		
+		const scene = new THREE.Scene();
+
+		// Lights
+		const alight = new THREE.AmbientLight(0xFFFFFF, 0.5);
+		scene.add(alight);
+
+
+		// Renderer
+		const w=480;
+		const h=270;
+		const renderer = new THREE.WebGLRenderer( { antialias: true, canvas:ar_canvas} );
+		//renderer.setSize(w,h);
+		renderer.setAnimationLoop( animation );
+
+		// Camera controls
+		const camera = new THREE.PerspectiveCamera( 60, w/h, 0.001, 1000 );
+		const controls = new OrbitControls( camera, renderer.domElement );
+		controls.target=new THREE.Vector3( 0, 0, -3 );
+		camera.position.set( 0, 0, 0 );
+		controls.update();
+		
+		window.addEventListener('resize', makeCanvasFull);
+		window.addEventListener('load', makeCanvasFull);
+
+		function makeCanvasFull(){
+			camera.aspect = window.innerWidth / window.innerHeight;
+			camera.updateProjectionMatrix();
+			renderer.setSize( window.innerWidth, window.innerHeight );
+		}
+
+
+		// Anim Loop
+		function animation( time ) {
+			controls.update();
+			renderer.render( scene, camera );
+		}
+		
+		
+		
+		function request(location,succ,fail){
+			var xhr=new XMLHttpRequest();
+			xhr.open("GET",location);
+			xhr.addEventListener("load",function(e){
+				if (xhr.status==200) succ(xhr.responseText);
+				else fail(xhr.status);
+			});
+			xhr.addEventListener("error",function(e){
+				fail(e);
+			});
+			xhr.send();
+		}
+		
+		// Function for creating objects from the python server
+		const loader = new THREE.TextureLoader();
+		var object_meshes=[];
+		function setObjects(objs){
+			// Remove all objects first
+			for (var i=0;i<object_meshes.length;i++){
+				scene.remove(object_meshes[i])
+			}
+			object_meshes=[];
+			
+			// Add objects
+			for (var i=0;i<objs.length;i++){
+				var obj=objs[i];
+				
+				const objGeom = new THREE.PlaneGeometry(obj["sizeX"], obj["sizeY"]);
+				
+				const objMat= new THREE.MeshBasicMaterial();
+				objMat.side=THREE.DoubleSide;
+				objMat.color.setRGB(1,1,1);
+				objMat.map=loader.load(obj["texture"]);
+				
+				const objMesh = new THREE.Mesh(objGeom,objMat);
+				objMesh.position.x=obj["coordX"];
+				objMesh.position.y=obj["coordY"];
+				objMesh.position.z=-obj["coordZ"];
+				
+				scene.add(objMesh);
+				object_meshes.push(objMesh)
+			}
+			
+		}
+
+		// Periodically fetch objects from python server
+		function getObjData(){
+			request(
+				"/objects",
+				function(resp){setObjects(JSON.parse(resp));},
+				function(){})
+		}
+		
+		
+		var last_update_flag;
+		function updateCheck(){
+			request(
+				"/update_flag",
+				function(resp){
+					if (resp != last_update_flag){
+						console.log("Updating "+resp);
+						last_update_flag=resp;
+						getObjData();
+					}
+				},
+				function(e){}
+			);
+		}
+		setInterval(updateCheck,50);
+		
+		
+
+	</script>
+	
+	
+	</body>
+</html>
