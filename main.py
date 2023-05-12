@@ -170,16 +170,17 @@ if arguments.debug_output=="tk":
 if arguments.debug_output=="web":
 	setup_timer.split(starting="Webserver")
 	server_port=28301
+	dbg_url=F"http://localhost:{server_port}/debug.html"
 	st=web.ServerThread(server_port)
 	st.start()
 	cleanup_functions.append(lambda:st.die())
 	with open("webpage.html","rb") as f:
 		page=f.read()
-	st.put_data("/",page)
+	st.put_data("/debug.html",page)
 	with open("webpage.js","rb") as f:
 		page=f.read()
 	st.put_data("/webpage.js",page,"text/javascript")
-	time.sleep(1.0)
+	print("Debug page active at "+ansi.GREEN+ansi.BOLD+dbg_url+ansi.RESET)
 setup_timer.split()
 
 

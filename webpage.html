@@ -2,7 +2,7 @@
 <html>
 <head>
 	<title>ARCAR Web Renderer</title>
-	<script type="module" src="./webpage.js"></script>
+	<!--<script type="module" src="./webpage.js"></script>-->
 	<style>
 	@keyframes flash {
 		from {background-color: #A0FFA0;}
@@ -30,7 +30,8 @@
 	<canvas id="pc_psmnet"> </canvas>
 	<canvas id="pc_igev"> </canvas>
 	
-	<script>
+	<script type="module">
+		import {setupPointCloudRenderer} from "./webpage.js";
 		// Periodically fetch data form server
 		var infoDiv=document.getElementById("information");
 		
@@ -76,20 +77,41 @@
 		addImage("seg","Segmentation");
 		addImage("com","Seg+Depth");
 		
+		var pointCloudCanvases=[
+			{"canvas":pc_monodepth,
+			 "json":"/pc_monodepth.json"},
+			{"canvas":pc_opencv,
+			 "json":"/pc_opencv.json"},
+			{"canvas":pc_psmnet,
+			 "json":"/pc_psmnet.json"},
+			{"canvas":pc_igev,
+			 "json":"/pc_igev.json"},
+		];
+		for (var i in pointCloudCanvases){
+			pointCloudCanvases[i]["upFunc"]=setupPointCloudRenderer(
+				pointCloudCanvases[i]["canvas"]);
+		}
 		
-		function update_all(){
+		function request(location,succ,fail){
 			var xhr=new XMLHttpRequest();
-			xhr.open("GET","/information");
+			xhr.open("GET",location);
 			xhr.addEventListener("load",function(e){
-				if (xhr.status==200) infoDiv.innerHTML=xhr.responseText;
+				if (xhr.status==200) succ(xhr.responseText);
+				else fail(xhr.status);
 			});
 			xhr.addEventListener("error",function(e){
-				//console.log("Request errored.");
+				fail(e);
 			});
-			xhr.overrideMimeType("text/plain");
 			xhr.send();
+		}
+		function update_all(){
+			request(
+				"/information",
+				function(resp){infoDiv.innerHTML=resp;},
+				function(e){}
+			);
 			
-			for (k in imgDOMs){
+			for (var k in imgDOMs){
 				/*
 				//imgDOMs[k].onload=function(){console.log("Img"+k+"Loaded");};
 				imgDOMs[k].onload=function(){
@@ -97,31 +119,42 @@
 				};*/
 				//console.log(imgDOMs[k]);
 				imgDOMs[k].src=k+".jpg?forcereload="+(new Date()).getTime();
-				
-				
+			}
+			
+			for (var i in pointCloudCanvases){
+				let o=pointCloudCanvases[i];
+				request(
+					o["json"],
+					function(resp){
+						//console.log("Request succ:"+o["json"]);
+						o["upFunc"](JSON.parse(resp));
+					},
+					function(resp){
+						//console.log("Request fail:"+o["json"]);
+						o["upFunc"]([]); //Clear points
+					}
+				)
 			}
 		}
 		
+		
+		
 		var last_update_flag;
 		function updateCheck(){
-			var xhr=new XMLHttpRequest();
-			xhr.open("GET","/update_flag");
-			xhr.addEventListener("load",function(e){
-				if (xhr.status==200){
-					if (xhr.responseText != last_update_flag){
-						console.log("Updating images "+xhr.responseText);
-						last_update_flag=xhr.responseText;
+			request(
+				"/update_flag",
+				function(resp){
+					if (resp != last_update_flag){
+						console.log("Updating images "+resp);
+						last_update_flag=resp;
 						update_all();
 					}
-					
-				}
-			});
-			xhr.addEventListener("error",function(e){
-				console.log("Request errored.");
-			});
-			xhr.send();
+				},
+				function(e){}
+			);
 		}
 		setInterval(updateCheck,50);
+		
 		
 		/*
 		function playbackControl(type){
