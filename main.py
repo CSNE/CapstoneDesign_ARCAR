@@ -221,9 +221,9 @@ def display(img,*,stereo_right=None):
 		depth_monodepth=None
 		
 	if stereo_right is not None:
+		stereo_left=img
 		if arguments.stereo_solvers["opencv"]:
 			loop_timer.split(starting="OpenCV")
-			stereo_left=img
 			depth_opencv=stereo.stereo_calculate(
 				left=stereo_left,right=stereo_right,
 				depth_multiplier=700) #MAGIC: Depth correction factor
