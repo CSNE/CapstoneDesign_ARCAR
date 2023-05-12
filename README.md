@@ -14,6 +14,12 @@ Conda: `conda install matplotlib opencv scikit-image tensorboardX`
 PIP: `pip3 install matplotlib opencv-python scikit-image tensorboardX`  
 #### Other dependencies (PIP only)
 `pip install ultralytics timm==0.5.4`
+#### CUDA
+Only required when using `--cuda` options.  
+On Windows,  
+- Install NVIDIA Drivers
+- Install CUDA runtime: `conda install cuda`
+On Linux, refer to your distribution's documentation.
 #### FFMPEG
 Only required for video input.  
 `apt install ffmpeg`  
@@ -38,11 +44,11 @@ Note: `--recurse-submodules` is required, or it won't pull in the MonoDepth subm
     - `nothing` : Don't output anything.
 - `--webcam-number` `-wc` : For `webcam` source, you can set the webcam number here. If not, defaults to 0. (On linux, run `v4l2-ctl --list-devices` to get the device number.)
 - `--webcam-left` `-wl` / `--webcam-right` `-wr` : For `webcam_stereo` source. Self-explanatory.
-- `--input-file` `-i` : For `image`, `video`, and `kinectcapture` sources, you need to supply the file path here.
-- `--image-left` `-il` / `--image-right` `-ir` : For `image_stereo` source. Self-explanatory.
+- `--input-file` `-i` : For `image` and `video` sources, you need to supply the file path here.
+- `--image-left` `-il` / `--image-right` `-ir` : For `image_stereo` source. Self-explanatory. If only one is given, the program will try to infer the other pair's name.  
 - `--video-speed` `-vs` : For `video` source, you can supply a video speed multiplier here. For example, `-vs 0.5` will play the video at half speed.
 - `--screenshot-region` `-sr` : For `screenshot` source, you can set the capture region. If not specified, captures the whole desktop.
-- `--cuda` `-cuda` : Use GPU acceleration.
+- `--cuda` `-cuda` : Use GPU acceleration. Only uses CPU by default.
 - `--stereo-solvers` `-ss` : Select (multiple) stereo solvers. Comma-separated. Default is `opencv`.
     - `monodepth` : MonoDepth2 (Monocular)
     - `opencv` : OpenCV StereoBM (Stereo)

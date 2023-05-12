@@ -15,7 +15,7 @@ class SequenceTimer:
 		self._pip=print_in_progress
 		self._pf=prefix
 		namelen=self._tl-len(self._pf)
-		self._fmtstr_name=("{:>"+str(namelen)+"s}")
+		self._fmtstr_name=("{:<"+str(namelen)+"s}")
 		self._fmtstr_ms=("{:>"+ms_format+"f}")
 		self._ms_len=len(self._fmtstr_ms.format(0.0))+2
 		
@@ -23,12 +23,13 @@ class SequenceTimer:
 		self._current_segment_start=None
 	
 	def _print(self,name,delta=None):
-		print(ansi.BLUE+self._pf+" "+ansi.RESET,end='')
-		print(ansi.BLUE+ansi.BOLD+self._fmtstr_name.format(name)+": "+ansi.RESET,end='')
+		print(ansi.MAGENTA+self._pf+" ",end='')
+		print(ansi.BOLD+self._fmtstr_name.format(name)+ansi.RESET,end='')
 		
 		if delta is None:
 			# Segment start - don't go to newline yet
-			print(ansi.WHITE+ansi.BLINK+" "*((self._ms_len-3)//2)+"..."+ansi.RESET+"\r",flush=True,end='')
+			pass#print(ansi.WHITE+ansi.BLINK+" "*((self._ms_len-3)//2)+"..."+ansi.RESET+"\r",flush=True,end='')
+			print("\r",flush=True,end='')
 			
 		else:
 			if delta<self._ot:

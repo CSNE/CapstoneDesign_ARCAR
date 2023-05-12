@@ -1,10 +1,19 @@
+
 # Arguments parse
 import arguments
+
+# Terminal colors setup
+import platform
+if platform.system()=="Windows":
+	import os
+	os.system("color") #enable color on Windows
+import ansi
+print("Enabled "+ansi.CYAN+ansi.BOLD+"COLOR"+ansi.RESET)
 
 # Supress warnings
 import warnings
 if arguments.verblevel<2:
-	print("Supressing all warnings!")
+	print(ansi.YELLOW+ansi.BOLD+"Supressing all warnings!"+ansi.RESET)
 	warnings.filterwarnings("ignore")
 
 
@@ -14,6 +23,7 @@ import_timer=sequence_timer.SequenceTimer(prefix="Import")
 
 
 # Imports
+print("\nImporting everything...")
 # Standard Library
 import_timer.split(starting="Standard Library")
 import time
@@ -29,12 +39,12 @@ import_timer.split(starting="PIL")
 import PIL.Image
 import PIL.ImageGrab
 
-import_timer.split(starting="OpenCV")
-import cv2
-
 import_timer.split(starting="Numpy")
 import numpy
 import numpy.ma
+
+import_timer.split(starting="OpenCV")
+import cv2
 
 import_timer.split(starting="PyTorch")
 import torch
@@ -68,7 +78,7 @@ if arguments.output=="web":
 
 import_timer.split(starting="misc")
 import maths
-import ansi
+
 
 import_timer.split(starting="combine")
 import combined
@@ -91,8 +101,9 @@ if arguments.stereo_solvers["psm"]:
 if arguments.stereo_solvers["igev"]:
 	import_timer.split(starting="IGEV")
 	import IGEV_Stereo.igev
+import_timer.split()
 
-
+print("\nSetup...")
 ## Setup
 setup_timer=sequence_timer.SequenceTimer(prefix="Setup")
 setup_timer.split(starting="YOLO")
@@ -172,6 +183,7 @@ if arguments.output=="web":
 setup_timer.split()
 
 
+print("\nStart Loop...")
 null_dm=numpy.ma.masked_equal(numpy.zeros((320,480),float),0)
 # Display function
 frmN=0
@@ -179,11 +191,13 @@ loop_timer=sequence_timer.SequenceTimer(
 	prefix="Frameloop",
 	orange_thresh=0.1,red_thresh=0.3)
 frame_timer=sequence_timer.SequenceTimer(
+	prefix="Frame Total Time > ",
 	orange_thresh=0.3,red_thresh=1.0)
 def display(img,*,stereo_right=None):
 	global frmN
 	frmN+=1
-	print(ansi.BOLD+ansi.GREEN+F"\n### Frame {frmN} ###"+ansi.RESET)
+	pad=" "*2+"#"*8+" "*2
+	print("\n"+ansi.BOLD+ansi.CYAN+pad+F"Frame {frmN:>4d}"+pad+ansi.RESET)
 	frame_timer.split()
 	loop_timer.split(ending="Frame Acquisition")
 	if arguments.output=="tk":
