@@ -56,7 +56,7 @@ if arguments.cuda:
 		print("CUDA option was set but torch.cuda.is_available() is False")
 		sys.exit(1)
 
-if arguments.output=="tk":
+if arguments.debug_output=="tk":
 	import_timer.split(starting="TkDisplay")
 	import tk_display
 
@@ -71,7 +71,7 @@ if arguments.source=="video":
 	import_timer.split(starting="Video")
 	import video
 	
-if arguments.output=="web":
+if arguments.debug_output=="web":
 	import_timer.split(starting="Web")
 	import web
 	import webdata
@@ -149,7 +149,7 @@ cleanup_functions=[]
 
 
 ## GUI Setup
-if arguments.output=="tk":
+if arguments.debug_output=="tk":
 	setup_timer.split(starting="Tk")
 	img_disp_root=tk_display.ImageDisplayerRoot()
 	img_disp_root.start()
@@ -167,7 +167,7 @@ if arguments.output=="tk":
 
 
 # Web Server setup
-if arguments.output=="web":
+if arguments.debug_output=="web":
 	setup_timer.split(starting="Webserver")
 	server_port=28301
 	st=web.ServerThread(server_port)
@@ -200,7 +200,7 @@ def display(img,*,stereo_right=None):
 	print("\n"+ansi.BOLD+ansi.CYAN+pad+F"Frame {frmN:>4d}"+pad+ansi.RESET)
 	frame_timer.split()
 	loop_timer.split(ending="Frame Acquisition")
-	if arguments.output=="tk":
+	if arguments.debug_output=="tk":
 		if img_disp_root.opt_mirror:
 			img=img.transpose(PIL.Image.FLIP_LEFT_RIGHT)
 	
@@ -217,8 +217,8 @@ def display(img,*,stereo_right=None):
 		img_smallsize=maths.fit(img.size,(480,320))
 		depth_monodepth=maths.resize_matrix(md_raw,(img_smallsize[1],img_smallsize[0]))
 	else:
-		depth_monodepth=null_dm
-	
+		depth_monodepth=None
+		
 	if stereo_right is not None:
 		if arguments.stereo_solvers["opencv"]:
 			loop_timer.split(starting="OpenCV")
@@ -229,20 +229,19 @@ def display(img,*,stereo_right=None):
 			if hasattr(depth_opencv,"count"): # Only has it if MaskedArray
 				pass#print("OpenCV valid pixels: {}/{}".format(depth_opencv.count(),depth_opencv.size))
 		else:
-			depth_opencv=null_dm
-
+			depth_opencv=None
+			
 		stereo_left_rsz=maths.resize_fit(stereo_left,arguments.solve_resize)
 		stereo_right_rsz=maths.resize_fit(stereo_right,arguments.solve_resize)
 
 		if arguments.stereo_solvers["psm"]:
 			loop_timer.split(starting="PSMNet")
-
 			depth_psm = psmnet.calculate(
 				left=stereo_left_rsz,
 				right=stereo_right_rsz,
 				depth_multiplier=40) #MAGIC: Depth correction factor
 		else:
-			depth_psm=null_dm
+			depth_psm=None
 
 		if arguments.stereo_solvers["igev"]:
 			loop_timer.split(starting="IGEV")
@@ -251,14 +250,14 @@ def display(img,*,stereo_right=None):
 				right=stereo_right_rsz,
 				depth_multiplier=50) #MAGIC: Depth correction factor
 		else:
-			depth_igev=null_dm
+			depth_igev=None
 	
 
 	loop_timer.split(starting="SegDepth")
-	# Combine
-	depth=depth_monodepth #TODO intelligent depth combining
-	if depth_opencv is not None:
-		depth=depth_opencv
+	# Get the first non-null entry in the list - maybe make this smarter
+	depth=next(filter(
+		lambda x: x is not None,
+		[depth_igev,depth_opencv,depth_psm,depth_monodepth]))
 	segdepths_raw=combined.calculate_segdepth(segs,depth)
 
 	# Filter out SegDepths with too little depth data
@@ -271,93 +270,111 @@ def display(img,*,stereo_right=None):
 	if diff != 0:
 		pass#print(F"Removed {diff} SegDepths out of {len(segdepths_raw)} because of insufficient depth data")
 	
-	loop_timer.split(starting="Visualize")
-	# Visualize Segdepths
-	seg_vis=visualizations.visualize_segmentations(segs,img.size)
-	combined_vis=visualizations.visualize_segdepth(segdepths_valid,img.size,img)
-	dvis_md=visualizations.visualize_matrix(
-		depth_monodepth,"MonoDepth")
-	dvis_cv=visualizations.visualize_matrix(
-		depth_opencv,"OpenCV",clip_percentiles=(5,95))
-	dvis_psm=visualizations.visualize_matrix(
-		depth_psm,"PSMNet",clip_percentiles=(5,95))
-	dvis_igev=visualizations.visualize_matrix(
-		depth_igev,"IGEV",clip_percentiles=(5,85))
-	if stereo_right is not None:
-		str_dif=PIL.ImageChops.difference(img,stereo_right)
+	if arguments.debug_output != "nothing":
+		loop_timer.split(starting="Visualize")
+		# Visualize Segdepths
+		seg_vis=visualizations.visualize_segmentations(segs,img.size)
+		combined_vis=visualizations.visualize_segdepth(segdepths_valid,img.size,img)
+		if arguments.stereo_solvers["monodepth"]:
+			dvis_md=visualizations.visualize_matrix(
+				depth_monodepth,"MonoDepth")
+		if arguments.stereo_solvers["opencv"]:
+			dvis_cv=visualizations.visualize_matrix(
+				depth_opencv,"OpenCV",clip_percentiles=(5,95))
+		if arguments.stereo_solvers["psm"]:
+			dvis_psm=visualizations.visualize_matrix(
+				depth_psm,"PSMNet",clip_percentiles=(5,95))
+		if arguments.stereo_solvers["igev"]:
+			dvis_igev=visualizations.visualize_matrix(
+				depth_igev,"IGEV",clip_percentiles=(5,85))
+		if stereo_right is not None:
+			str_dif=PIL.ImageChops.difference(img,stereo_right)
+		
+		
 
-	loop_timer.split(starting="Output")
-	# Output
-	if arguments.output=="tk":
-		tid_raw.set_image(img)
-		if stereo_right is not None:
-			tid_str.set_image(stereo_right)
-			tid_dif.set_image(str_dif)
-		tid_seg.set_image(seg_vis)
-		tid_com.set_image(combined_vis)
-		tid_dmd.set_image(dvis_md)
-		tid_dcv.set_image(dvis_cv)
-		tid_dpsm.set_image(dvis_psm)
-		tid_digev.set_image(dvis_igev)
-	elif arguments.output=="web":
-		# Raw frames
-		st.put_image("/raw.jpg",img)
-		if stereo_right is not None:
-			st.put_image("/str.jpg",stereo_right)
-			st.put_image("/dif.jpg",str_dif)
+		
+		# Output
+		if arguments.debug_output=="tk":
+			loop_timer.split(starting="Tk update")
+			tid_raw.set_image(img)
+			if stereo_right is not None:
+				tid_str.set_image(stereo_right)
+				tid_dif.set_image(str_dif)
+			tid_seg.set_image(seg_vis)
+			tid_com.set_image(combined_vis)
+			tid_dmd.set_image(dvis_md)
+			tid_dcv.set_image(dvis_cv)
+			tid_dpsm.set_image(dvis_psm)
+			tid_digev.set_image(dvis_igev)
+		elif arguments.debug_output=="web":
+			loop_timer.split(starting="Point Cloud Sampling")
+			if arguments.stereo_solvers["monodepth"]:
+				pc_monodepth=webdata.depthmap_to_pointcloud_json(
+					depth_map=depth_monodepth,
+					color_image=img,
+					sampleN=5000)
+			if arguments.stereo_solvers["opencv"]:
+				pc_opencv=webdata.depthmap_to_pointcloud_json(
+					depth_map=depth_opencv,
+					color_image=img,
+					sampleN=5000)
+			if arguments.stereo_solvers["psm"]:
+				pc_psmnet=webdata.depthmap_to_pointcloud_json(
+					depth_map=depth_psm,
+					color_image=img,
+					sampleN=5000)
+			if arguments.stereo_solvers["igev"]:
+				pc_igev=webdata.depthmap_to_pointcloud_json(
+					depth_map=depth_igev,
+					color_image=img,
+					sampleN=5000)
 			
-		# Segmentations
-		st.put_image("/seg.jpg",seg_vis)
-		st.put_image("/com.jpg",combined_vis)
-		st.put_string("/information",str(frmN))
-		
-		objects_json=combined.segdepths_to_json(segdepths_valid,img)
-		st.put_json("/objects",objects_json)
-		
-		# Depths
-		st.put_json("/pc_monodepth.json",
-			webdata.depthmap_to_pointcloud_json(
-				depth_map=depth_monodepth,
-				color_image=img,
-				sampleN=5000))
-		st.put_image("/dmd.jpg",dvis_md)
-		
-		st.put_json("/pc_opencv.json",
-			webdata.depthmap_to_pointcloud_json(
-				depth_map=depth_opencv,
-				color_image=img,
-				sampleN=5000))
-		st.put_image("/dcv.jpg",dvis_cv)
-		
-		st.put_json("/pc_psmnet.json",
-			webdata.depthmap_to_pointcloud_json(
-				depth_map=depth_psm,
-				color_image=img,
-				sampleN=5000))
-		st.put_image("/dpsm.jpg",dvis_psm)
+			loop_timer.split(starting="Update Debug Page")
+			# Raw frames
+			st.put_image("/raw.jpg",img)
+			if stereo_right is not None:
+				st.put_image("/str.jpg",stereo_right)
+				st.put_image("/dif.jpg",str_dif)
+				
+			# Segmentations
+			st.put_image("/seg.jpg",seg_vis)
+			st.put_image("/com.jpg",combined_vis)
+			st.put_string("/information",str(frmN))
+			
+			objects_json=combined.segdepths_to_json(segdepths_valid,img)
+			st.put_json("/objects",objects_json)
+			
+			# Depths
+			if arguments.stereo_solvers["monodepth"]:
+				st.put_json("/pc_monodepth.json",pc_monodepth)
+				st.put_image("/dmd.jpg",dvis_md)
+			
+			if arguments.stereo_solvers["opencv"]:
+				st.put_json("/pc_opencv.json",pc_opencv)
+				st.put_image("/dcv.jpg",dvis_cv)
+			
+			if arguments.stereo_solvers["psm"]:
+				st.put_json("/pc_psmnet.json",pc_psmnet)
+				st.put_image("/dpsm.jpg",dvis_psm)
 
-		st.put_json("/pc_igev.json",
-			webdata.depthmap_to_pointcloud_json(
-				depth_map=depth_igev,
-				color_image=img,
-				sampleN=5000))
-		st.put_image("/digev.jpg",dvis_igev)
-		
-		#st.put_image("/dcm.jpg",compare_vis)
-		
-		st.put_string("/update_flag",str(random.random()))
-		
-	elif arguments.output=="file":
-		img.save("out/img.jpg")
-		if stereo_right is not None:
-			stereo_right.save("out/stereo_right.jpg")
-			str_dif.save("out/str_dif.jpg")
-		seg_vis.save("out/seg_vis.jpg")
-		combined_vis.save("out/combined_vis.jpg")
-		dvis_md.save("out/dvis_md.jpg")
-		dvis_cv.save("out/dvis_cv.jpg")
-		dvis_psm.save("out/dvis_psm.jpg")
-		dvis_igev.save("out/dvis_igev.jpg")
+			if arguments.stereo_solvers["igev"]:
+				st.put_json("/pc_igev.json",pc_igev)
+				st.put_image("/digev.jpg",dvis_igev)
+			
+			st.put_string("/update_flag",str(random.random()))
+			
+		elif arguments.debug_output=="file":
+			loop_timer.split(starting="File output save")
+			img.save("out/img.jpg")
+			if stereo_right is not None:
+				stereo_right.save("out/stereo_right.jpg")
+				str_dif.save("out/str_dif.jpg")
+			seg_vis.save("out/seg_vis.jpg")
+			combined_vis.save("out/combined_vis.jpg")
+			dvis_md.save("out/dvis_md.jpg")
+			dvis_cv.save("out/dvis_cv.jpg")
+			dvis_psm.save("out/dvis_psm.jpg")
+			dvis_igev.save("out/dvis_igev.jpg")
 	loop_timer.split()
 	frame_timer.split(ending=F"Frame {frmN}")
 		

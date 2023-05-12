@@ -151,7 +151,8 @@ function getPointData(){
 		}
 	});
 	xhr.addEventListener("error",function(e){
-		console.log("Request errored.");
+		//console.log("Request errored.");
+		setPointCloud([]);
 	});
 	xhr.send();
 }
@@ -173,7 +174,7 @@ function checkUpdate(){
 	xhr.addEventListener("load",function(e){
 		if (xhr.status==200){
 			if (xhr.responseText != last_update_flag){
-				console.log("Updating 3D");
+				console.log("Updating 3D "+xhr.responseText);
 				last_update_flag=xhr.responseText;
 				upFunc1();
 				upFunc2();

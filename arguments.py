@@ -14,10 +14,6 @@ _ap.add_argument(
 		"image","image_stereo",
 		"video","screenshot"],
 	required=True)
-_ap.add_argument(
-	"--output","-o",
-	choices=["tk","web","file","nothing"],
-	required=True)
 
 
 # Per-Input
@@ -47,6 +43,10 @@ _ap.add_argument(
 
 # Optional
 _ap.add_argument(
+	"--debug-output","-do",
+	choices=["tk","web","file","nothing"],
+	default="nothing")
+_ap.add_argument(
 	"--cuda","-cuda",
 	action="store_true")
 _ap.add_argument(
@@ -68,7 +68,7 @@ _ap.add_argument(
 _args=_ap.parse_args()
 
 source=_args.source
-output=_args.output
+debug_output=_args.debug_output
 
 wc=_args.webcam_number
 vs=_args.video_speed

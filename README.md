@@ -37,11 +37,11 @@ Note: `--recurse-submodules` is required, or it won't pull in the MonoDepth subm
     - `image_stereo` : Read two image files, for stereo depth.
     - `video` : Read video file.
     - `screenshot` : Capture desktop.
-- `--output` `-o` : Required. Select how to visualize the program output.
+- `--debug-output` `-do` : Select how to visualize the program output.
     - `tk` : Outputs to a `tkinter` GUI.
-    - `web` : Starts a web server. Go to `http://localhost:28301` to view results.
+    - `web` : Starts a web server. Go to `http://localhost:28301/debug.html` to view results.
     - `file` : Outputs to JPG files under `out/` directory.
-    - `nothing` : Don't output anything.
+    - `nothing` : Don't output anything. Default.
 - `--webcam-number` `-wc` : For `webcam` source, you can set the webcam number here. If not, defaults to 0. (On linux, run `v4l2-ctl --list-devices` to get the device number.)
 - `--webcam-left` `-wl` / `--webcam-right` `-wr` : For `webcam_stereo` source. Self-explanatory.
 - `--input-file` `-i` : For `image` and `video` sources, you need to supply the file path here.

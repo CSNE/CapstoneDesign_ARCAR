@@ -67,10 +67,12 @@
 		addImage("dcv","OpenCV Stereo Depth");
 		addImage("dpsm","PSMNet Stereo Depth");
 		addImage("digev","IGEV Stereo Depth");
+		addBr();
 		addCell(document.getElementById("pc_monodepth"),"Point Cloud (MonoDepth)");
 		addCell(document.getElementById("pc_opencv"),"Point Cloud (OpenCV)");
 		addCell(document.getElementById("pc_psmnet"),"Point Cloud (PSMNet)");
 		addCell(document.getElementById("pc_igev"),"Point Cloud (IGEV)");
+		addBr();
 		addImage("seg","Segmentation");
 		addImage("com","Seg+Depth");
 		
@@ -107,7 +109,7 @@
 			xhr.addEventListener("load",function(e){
 				if (xhr.status==200){
 					if (xhr.responseText != last_update_flag){
-						console.log("Updating images");
+						console.log("Updating images "+xhr.responseText);
 						last_update_flag=xhr.responseText;
 						update_all();
 					}
