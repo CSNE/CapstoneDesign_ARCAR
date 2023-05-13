@@ -415,6 +415,11 @@ def display(img,*,stereo_right=None):
 	st.put_string("/update_flag",str(random.random()))
 	seg3d_json=webdata.seg3d_to_json(seg3ds)
 	st.put_json("/seg3d",seg3d_json)
+	pc_default=webdata.depthmap_to_pointcloud_json(
+		depth_map=depth,mapper=ss2rsm,
+		color_image=img,
+		sampleN=10000)
+	st.put_json("/pointcloud",pc_default)
 	
 	loop_timer.split()
 	frame_timer.split(ending=F"Frame {frmN}")
