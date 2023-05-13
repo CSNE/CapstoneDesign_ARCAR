@@ -1,9 +1,16 @@
 import web
 import maths
 import random
+import PIL.Image
+import combined
+import typing
+import coordinates
+import io
+import base64
 
 def depthmap_to_pointcloud_json(*,
 	depth_map,color_image,
+	mapper: coordinates.ScreenSpaceToRealSpaceMapper,
 	sampleN=1000,regular_sampling=False):
 	res=[]
 	samples=maths.sample_npa(depth_map,sampleN)
@@ -21,7 +28,10 @@ def depthmap_to_pointcloud_json(*,
 		clr=color_image.getpixel((clrX,clrY))
 		
 		#Cam-space coordinates
-		csc=maths.screenspace_to_camspace((dmX,dmY),(dm_sizeX,dm_sizeY),d)
+		csc=mapper.map_relcoords(
+			relX=relX,
+			relY=relY,
+			depth=d)
 		#print(x,y,d,"-->",ssc)
 		res.append( {
 			"x":csc[0],
@@ -29,3 +39,76 @@ def depthmap_to_pointcloud_json(*,
 			"z":csc[2],
 			"r":clr[0]/255,"g":clr[1]/255,"b":clr[2]/255})
 	return res
+
+def segdepths_to_json(
+		segdepths: typing.List[combined.SegDepth2D],
+		orig_img: PIL.Image,
+		mapper:coordinates.ScreenSpaceToRealSpaceMapper):
+	'''
+	Pack all the segdepth data into a JSON,
+	to be used in the browser visualizer.
+	'''
+	orig_img_size=orig_img.size
+	objects_json=[]
+	for sd in segdepths:
+		dep=sd.depth_average
+		seg=sd.segment
+		
+		# Calculate bounding boxes
+		bbox_center_X=(seg.bbox_pixel.xmin+seg.bbox_pixel.xmax)/2
+		bbox_size_X=seg.bbox_pixel.xmax-seg.bbox_pixel.xmin
+		bbox_center_Y=(seg.bbox_pixel.ymin+seg.bbox_pixel.ymax)/2
+		bbox_size_Y=seg.bbox_pixel.ymax-seg.bbox_pixel.ymin
+		
+		
+		acXmin, acYmin, _ = mapper.map_pxcoords(
+			pxX=seg.bbox_pixel.xmin,
+			pxY=seg.bbox_pixel.ymax,
+			depth=dep)
+		acXmax, acYmax, _ = mapper.map_pxcoords(
+			pxX=seg.bbox_pixel.xmax,
+			pxY=seg.bbox_pixel.ymin,
+			depth=dep)
+		
+		actual_coords_X=(acXmax+acXmin)/2
+		actual_coords_Y=(acYmax+acYmin)/2
+		actual_size_X=(acXmax-acXmin)
+		actual_size_Y=(acYmax-acYmin)
+		
+		# Get texture, a 100x100(max) JPG in b64 format
+		tex=orig_img.crop((
+			seg.bbox_pixel.xmin,seg.bbox_pixel.ymin,
+			seg.bbox_pixel.xmax,seg.bbox_pixel.ymax))
+		if tex.width>tex.height:
+			if tex.width>100:
+				tex=tex.resize((100,round(100/tex.width*tex.height)))
+		else:
+			if tex.height>100:
+				tex=tex.resize((round(100/tex.height*tex.width),100))
+		
+		bio=io.BytesIO()
+		tex.save(bio,format="JPEG")
+		b64=base64.b64encode(bio.getvalue()).decode()
+		
+		# Finally, pack it into a JSON-able format
+		obj_data={"name":str(seg.name),
+			 "coordX":float(actual_coords_X),
+			 "coordY":float(actual_coords_Y),
+			 "coordZ":float(dep),
+			 "sizeX":float(actual_size_X),
+			 "sizeY":float(actual_size_Y),
+			 "texture":"data:image/jpeg;base64,"+b64}
+		
+		objects_json.append(obj_data)
+	return objects_json
+
+def seg3d_to_json(seg3ds:typing.List[combined.Segment3D]):
+	obj=[]
+	for seg3d in seg3ds:
+		pointlist=[]
+		for point in seg3d.point_list:
+			pointlist.append([point.x,point.y,point.z])
+		obj.append(
+			{"name":seg3d.name,
+			 "pointlist":pointlist})
+	return obj

@@ -1,20 +1,28 @@
 # Functions for combining YOLO and Depth data
 
-import base64
-import io
 import PIL.ImageFont
 import numpy.ma
 import numpy
 import maths
 import collections
 
+import coordinates
+
 
 # A namedtuple for storing the depth along with the segment.
-SegDepth=collections.namedtuple(
-	"SegDepth",
+# The segment is assumed to be flat.
+SegDepth2D=collections.namedtuple(
+	"SegDepth3D",
 	["segment",
 	 "depth_average","depth_min","depth_max",
 	 "depth_valid","depth_valid_ratio"])
+
+# A namedtuple for storing data about a 3D segment.
+# The segment is a list of 
+Segment3D = collections.namedtuple(
+	"Segment3D",
+	["name","point_list","confidence"]
+	)
 
 def calculate_segdepth(segments,depthmap):
 	'''
@@ -51,7 +59,7 @@ def calculate_segdepth(segments,depthmap):
 		# No valid depth data
 
 		
-		result.append(SegDepth(
+		result.append(SegDepth2D(
 			segment=s,
 			depth_average=intersection_masked_depth.mean(),
 			depth_min=intersection_masked_depth.min(),
@@ -61,61 +69,73 @@ def calculate_segdepth(segments,depthmap):
 	return result
 
 
-	
+def sample_matrix(*,relX,relY,mat):
+	assert 0.0<=relX<=1.0
+	assert 0.0<=relY<=1.0
+	sizY,sizX=mat.shape
+	x=round(relX*sizX-0.5)
+	if x==sizX: x=sizX-1
+	y=round(relY*sizY-0.5)
+	if y==sizY: y=sizY-1
+	return mat[y][x]
 
-def segdepths_to_json(segdepths,orig_img):
+def segments_3dify(*,
+		segments,
+		sstrsm: coordinates.ScreenSpaceToRealSpaceMapper,
+		depthmap):
 	'''
-	Pack all the segdepth data into a JSON,
-	to be used in the browser visualizer.
+	Convert list of SegmentationResult into list of Segment3D
 	'''
-	orig_img_size=orig_img.size
-	objects_json=[]
-	for sd in segdepths:
-		dep=sd.depth_average
-		seg=sd.segment
-		
-		# Calculate bounding boxes
-		bbox_center_X=(seg.xmin+seg.xmax)/2
-		bbox_size_X=seg.xmax-seg.xmin
-		bbox_center_Y=(seg.ymin+seg.ymax)/2
-		bbox_size_Y=seg.ymax-seg.ymin
-		
-		
-		acXmin, acYmin, _ = maths.screenspace_to_camspace(
-			(seg.xmin,seg.ymin),
-			orig_img_size,
-			dep)
-		acXmax, acYmax, _ = maths.screenspace_to_camspace(
-			(seg.xmax,seg.ymax),
-			orig_img_size,
-			dep)
-		
-		actual_coords_X=(acXmax+acXmin)/2
-		actual_coords_Y=(acYmax+acYmin)/2
-		actual_size_X=(acXmax-acXmin)
-		actual_size_Y=(acYmax-acYmin)
-		
-		# Get texture, a 100x100(max) JPG in b64 format
-		tex=orig_img.crop((seg.xmin,seg.ymin,seg.xmax,seg.ymax))
-		if tex.width>tex.height:
-			if tex.width>100:
-				tex=tex.resize((100,round(100/tex.width*tex.height)))
-		else:
-			if tex.height>100:
-				tex=tex.resize((round(100/tex.height*tex.width),100))
-		
-		bio=io.BytesIO()
-		tex.save(bio,format="JPEG")
-		b64=base64.b64encode(bio.getvalue()).decode()
-		
-		# Finally, pack it into a JSON-able format
-		obj_data={"name":str(seg.name),
-			 "coordX":float(actual_coords_X),
-			 "coordY":float(actual_coords_Y),
-			 "coordZ":float(dep),
-			 "sizeX":float(actual_size_X),
-			 "sizeY":float(actual_size_Y),
-			 "texture":"data:image/jpeg;base64,"+b64}
-		
-		objects_json.append(obj_data)
-	return objects_json
+	res=[]
+	for s in segments:
+		pl=[]
+		for p in s.points_ratio:
+			d=sample_matrix(
+				relX=p.x,relY=p.y,mat=depthmap)
+			c3d=sstrsm.map_relcoords(
+				relX=p.x,relY=p.y,
+				depth=d)
+			pl.append(c3d)
+		res.append(
+			Segment3D(
+				name=s.name,
+				confidence=s.confidence,
+				point_list=pl))
+	return res
+
+
+
+if __name__=="__main__":
+	print("Import YOLO")
+	import yolodriver
+	print("Import PIL")
+	import PIL.Image
+	import visualizations
+	print("Import MD2")
+	import monodepth_driver
+	de=monodepth_driver.DepthEstimator()
+	img=PIL.Image.open("test_images/2630Social_distancing_and_panic_buying_36.jpg")
+	segs=yolodriver.segment(img)
+	dep=de.estimate(img)
+	vis=visualizations.visualize_matrix(dep)
+	vis.save("out/temp.png")
+	
+	
+	
+	sstrsm=coordinates.ScreenSpaceToRealSpaceMapper(
+		image_width=img.width,
+		image_height=img.height,
+		reference_distance=5,
+		reference_width=10)
+	seg3ds=segments_3dify(
+		segments=segs,
+		sstrsm=sstrsm,
+		depthmap=dep)
+	for seg3d in seg3ds:
+		print("SEGMENT:")
+		print("  Name",seg3d.name)
+		print("  Conf",seg3d.confidence)
+		print("  Points:")
+		for p in seg3d.point_list:
+			print("    ",p)
+		0/0

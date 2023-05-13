@@ -90,7 +90,7 @@
 				objMesh.position.z=-obj["coordZ"];
 				
 				scene.add(objMesh);
-				object_meshes.push(objMesh)
+				object_meshes.push(objMesh);
 			}
 			
 		}
@@ -103,6 +103,62 @@
 				function(){})
 		}
 		
+		function buildWireMesh(pointlist){
+			const geometry = new THREE.BufferGeometry();
+			
+			let positions=[];
+			for (var i in pointlist){
+				var pt=pointlist[i];
+				positions.push(pt[0]);
+				positions.push(pt[1]);
+				positions.push(pt[2]);
+			}
+			const vertices = new Float32Array(positions);
+			console.log(vertices);
+
+			// itemSize = 3 because there are 3 values (components) per vertex
+			geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+			//const material = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
+			//const mesh = new THREE.Mesh( geometry, material );
+			geometry.computeBoundingSphere();
+			//const wireframe = new THREE.WireframeGeometry( geometry );
+
+			//const line = new THREE.LineSegments( wireframe );
+			//line.material.depthTest = false;
+			//line.material.opacity = 0.25;
+			//line.material.transparent = true;
+			
+			const material = new THREE.LineBasicMaterial();
+			material.color=0xFFFFFF;
+			var line = new THREE.Line( geometry, material );
+			
+			return line;
+		}
+		
+		var wire_meshes=[];
+		function setSeg3D(s3d){
+			// Remove all objects first
+			for (var i=0;i<wire_meshes.length;i++){
+				scene.remove(wire_meshes[i])
+			}
+			wire_meshes=[];
+			
+			for (var i in s3d){
+				let name = s3d[i]["name"];
+				let pointlist= s3d[i]["pointlist"];
+				let wm=buildWireMesh(pointlist);
+				scene.add(wm);
+				wire_meshes.push(wm);
+			}
+		}
+		
+		function updateSeg3D(){
+			request(
+				"seg3d",
+				function(resp){setSeg3D(JSON.parse(resp));},
+				function(){});
+		}
+		
 		
 		var last_update_flag;
 		function updateCheck(){
@@ -112,7 +168,8 @@
 					if (resp != last_update_flag){
 						console.log("Updating "+resp);
 						last_update_flag=resp;
-						getObjData();
+						//getObjData();
+						updateSeg3D();
 					}
 				},
 				function(e){}

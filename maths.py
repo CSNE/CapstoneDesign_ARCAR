@@ -32,39 +32,6 @@ def resize_fit(img,bound):
 		img=img.resize(target_size)
 	return img
 
-if __name__=="__main__":
-	# Testing code
-	nda=numpy.array([[1,2,3],[4,5,6],[7,8,9]])
-	print(nda,nda.shape,type(nda),nda.dtype)
-	rsz=resize_matrix(nda,(5,5))
-	print(rsz,rsz.shape,type(rsz),rsz.dtype)
-
-def screenspace_to_camspace(cxy,sxy,d):
-	# cxy - Screen coords, XY 
-	# sxy - Image dimensions, XY
-	# d - depth
-	# Returns (X,Y,Z) real-space coords
-	bbox_center_X=cxy[0]
-	bbox_center_Y=cxy[1]
-	orig_img_size=sxy
-	
-	# TODO actually formalize this crude conversion process
-	#      maybe use matrices or something
-	# Map screen-space coordinates to real-world relative coordinates
-	# this is a very crude conversion - should probably refine later.
-	# 5 meters is the reference point - calibrate later
-	distance_scaling_factor=d/5 #MAGIC
-	# at reference distance, how large is the screen? - again, calibrate later
-	screen_dim_X=8 #MAGIC
-	screen_dim_Y=screen_dim_X/orig_img_size[0]*orig_img_size[1]
-	rel_coords_X=(bbox_center_X-(orig_img_size[0]/2))/orig_img_size[0]
-	actual_coords_X=rel_coords_X*screen_dim_X*distance_scaling_factor
-	#actual_size_X=bbox_size_X/orig_img_size[0]*screen_dim_X*distance_scaling_factor
-	rel_coords_Y=(bbox_center_Y-(orig_img_size[1]/2))/orig_img_size[1]
-	actual_coords_Y=rel_coords_Y*screen_dim_Y*distance_scaling_factor
-	#actual_size_Y=bbox_size_Y/orig_img_size[1]*screen_dim_Y*distance_scaling_factor
-	return float(actual_coords_X),float(actual_coords_Y),float(d)
-
 def sample_npa(npa,sample=100):
 	# Sample a 2D numpy array. May be masked.
 	ir=npa

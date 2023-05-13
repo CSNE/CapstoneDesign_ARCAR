@@ -7,8 +7,9 @@ import platform
 if platform.system()=="Windows":
 	import os
 	os.system("color") #enable color on Windows
+	print("Enabled "+ansi.CYAN+ansi.BOLD+"COLOR"+ansi.RESET)
 import ansi
-print("Enabled "+ansi.CYAN+ansi.BOLD+"COLOR"+ansi.RESET)
+
 
 # Supress warnings
 import warnings
@@ -19,7 +20,9 @@ if arguments.verblevel<2:
 
 # Timer
 import sequence_timer
-import_timer=sequence_timer.SequenceTimer(prefix="Import")
+import_timer=sequence_timer.SequenceTimer(
+	orange_thresh=0.5,red_thresh=2.0,	
+	prefix="Import")
 
 
 # Imports
@@ -78,12 +81,8 @@ import webdata
 
 import_timer.split(starting="misc")
 import maths
-
-
-import_timer.split(starting="combine")
+import coordinates
 import combined
-
-import_timer.split(starting="visualizations")
 import visualizations
 
 if arguments.stereo_solvers["opencv"]:
@@ -105,7 +104,9 @@ import_timer.split()
 
 print("\nSetup...")
 ## Setup
-setup_timer=sequence_timer.SequenceTimer(prefix="Setup")
+setup_timer=sequence_timer.SequenceTimer(
+	orange_thresh=0.5,red_thresh=2.0,	
+	prefix="Setup")
 setup_timer.split(starting="YOLO")
 
 # Make YOLO quiet
@@ -283,15 +284,31 @@ def display(img,*,stereo_right=None):
 	if diff != 0:
 		pass#print(F"Removed {diff} SegDepths out of {len(segdepths_raw)} because of insufficient depth data")
 	
+	ss2rsm=coordinates.ScreenSpaceToRealSpaceMapper(
+		image_width=img.width,image_height=img.height,
+		reference_distance=5,reference_width=8)
+	
 	loop_timer.split(starting="Build SegDepth JSON")
-	sgj=combined.segdepths_to_json(segdepths_valid,img)
+	sgj=webdata.segdepths_to_json(segdepths_valid,img,ss2rsm)
 	st.put_json("/objects",sgj)
 	
+	loop_timer.split(starting="Seg3D Calculate")
+	
+	seg3ds=combined.segments_3dify(
+		segments=segs,
+		sstrsm=ss2rsm,
+		depthmap=depth)
+	
+	
 	if arguments.debug_output != "nothing":
-		loop_timer.split(starting="Visualize")
+		loop_timer.split(starting="Segment visuals")
 		# Visualize Segdepths
 		seg_vis=visualizations.visualize_segmentations(segs,img.size)
+		
+		loop_timer.split(starting="SegDepth Visuals")
 		combined_vis=visualizations.visualize_segdepth(segdepths_valid,img.size,img)
+		
+		loop_timer.split(starting="Matrix ")
 		if arguments.stereo_solvers["monodepth"]:
 			dvis_md=visualizations.visualize_matrix(
 				depth_monodepth,"MonoDepth")
@@ -327,22 +344,22 @@ def display(img,*,stereo_right=None):
 			loop_timer.split(starting="Point Cloud Sampling")
 			if arguments.stereo_solvers["monodepth"]:
 				pc_monodepth=webdata.depthmap_to_pointcloud_json(
-					depth_map=depth_monodepth,
+					depth_map=depth_monodepth,mapper=ss2rsm,
 					color_image=img,
 					sampleN=5000)
 			if arguments.stereo_solvers["opencv"]:
 				pc_opencv=webdata.depthmap_to_pointcloud_json(
-					depth_map=depth_opencv,
+					depth_map=depth_opencv,mapper=ss2rsm,
 					color_image=img,
 					sampleN=5000)
 			if arguments.stereo_solvers["psm"]:
 				pc_psmnet=webdata.depthmap_to_pointcloud_json(
-					depth_map=depth_psm,
+					depth_map=depth_psm,mapper=ss2rsm,
 					color_image=img,
 					sampleN=5000)
 			if arguments.stereo_solvers["igev"]:
 				pc_igev=webdata.depthmap_to_pointcloud_json(
-					depth_map=depth_igev,
+					depth_map=depth_igev,mapper=ss2rsm,
 					color_image=img,
 					sampleN=5000)
 			
@@ -358,8 +375,11 @@ def display(img,*,stereo_right=None):
 			st.put_image("/com.jpg",combined_vis)
 			st.put_string("/information",str(frmN))
 			
-			objects_json=combined.segdepths_to_json(segdepths_valid,img)
+			objects_json=webdata.segdepths_to_json(
+				segdepths_valid,img,mapper=ss2rsm)
 			st.put_json("/objects",objects_json)
+			
+			
 			
 			# Depths
 			if arguments.stereo_solvers["monodepth"]:
@@ -390,8 +410,11 @@ def display(img,*,stereo_right=None):
 			dvis_cv.save("out/dvis_cv.jpg")
 			dvis_psm.save("out/dvis_psm.jpg")
 			dvis_igev.save("out/dvis_igev.jpg")
-			
+	
+	loop_timer.split(starting="Update Main Page")
 	st.put_string("/update_flag",str(random.random()))
+	seg3d_json=webdata.seg3d_to_json(seg3ds)
+	st.put_json("/seg3d",seg3d_json)
 	
 	loop_timer.split()
 	frame_timer.split(ending=F"Frame {frmN}")

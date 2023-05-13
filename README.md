@@ -1,6 +1,8 @@
 # Capstone Design / ARCAR
 
 ## Installation
+Tested OS: Archlinux / Ubuntu 20.04 / Windows 10  
+Tested compute device: CPU / CUDA (single-GPU)
 #### Python
 Tested on Python `3.10` - some required packages are not yet available on `3.11`.  
 Using `conda` is recommended:  
@@ -16,9 +18,7 @@ PIP: `pip3 install matplotlib opencv-python scikit-image tensorboardX`
 `pip install ultralytics timm==0.5.4`
 #### CUDA
 Only required when using `--cuda` options.  
-On Windows,  
-- Install NVIDIA Drivers
-- Install CUDA runtime: `conda install cuda`
+On Windows, install the latest NVIDIA Drivers, then install CUDA runtime: `conda install cuda`  
 On Linux, refer to your distribution's documentation.
 #### FFMPEG
 Only required for video input.  

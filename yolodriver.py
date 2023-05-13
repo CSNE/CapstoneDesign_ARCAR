@@ -7,6 +7,9 @@ import PIL.Image
 # std library
 import collections
 
+# Local
+import coordinates
+
 ## Model Setup
 model_seg = ultralytics.YOLO("yolov8s-seg.pt")
 
@@ -14,7 +17,11 @@ model_seg = ultralytics.YOLO("yolov8s-seg.pt")
 # namedtuple for storing the segmentation results.
 SegmentationResult=collections.namedtuple(
 	"SegmentationResult",
-	["points","area","confidence","name","xmin","xmax","ymin","ymax"])
+	["points_ratio","points_pixel",
+	 "area","confidence","name",
+	 "bbox_ratio","bbox_pixel"])
+
+
 
 def segment(pim:PIL.Image,use_cuda=False) -> SegmentationResult:
 	'''
@@ -30,7 +37,10 @@ def segment(pim:PIL.Image,use_cuda=False) -> SegmentationResult:
 	result_seg=results_seg[0]
 
 	# Get results
-	orig_size=result_seg.orig_shape
+	
+	orig_sizeX=result_seg.orig_shape[1]
+	orig_sizeY=result_seg.orig_shape[0]
+	assert (orig_sizeX,orig_sizeY) == pim.size
 	masks=result_seg.masks
 	if masks is None: # No detections
 		return []
@@ -50,18 +60,41 @@ def segment(pim:PIL.Image,use_cuda=False) -> SegmentationResult:
 		b=boxes[i]
 		a=areas[i]
 		npa=a.cpu().numpy()
+		#print("Seg len",segs[i].shape)
 		s=segs[i]
+		#print(s)
+		s_px=[]
+		s_rel=[]
+		for coords in s:
+			s_px.append(
+				coordinates.Coordinates2D(
+					x=coords[0]*orig_sizeX,
+					y=coords[1]*orig_sizeY))
+			s_rel.append(
+				coordinates.Coordinates2D(
+					x=coords[0],
+					y=coords[1]))
+		
+		bbx_rat=coordinates.BoundingBox(
+			xmin=b[0],
+			xmax=b[2],
+			ymin=b[1],
+			ymax=b[3])
+		bbx_px=coordinates.BoundingBox(
+			xmin=b[0]*orig_sizeX,
+			xmax=b[2]*orig_sizeX,
+			ymin=b[1]*orig_sizeY,
+			ymax=b[3]*orig_sizeY)
 
 		results.append(
 			SegmentationResult(
-				points=s,
+				points_ratio=s_rel,
+				points_pixel=s_px,
 				area=npa,
 				confidence=c,
 				name=n,
-				xmin=b[0]*orig_size[1],
-				xmax=b[2]*orig_size[1],
-				ymin=b[1]*orig_size[0],
-				ymax=b[3]*orig_size[0]))
+				bbox_ratio=bbx_rat,
+				bbox_pixel=bbx_px))
 	return results
 
 

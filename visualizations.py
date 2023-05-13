@@ -103,16 +103,16 @@ def visualize_segdepth(segdepths,size,bg=None):
 		dep_percentage=sd.depth_valid_ratio*100
 		seg=sd.segment
 
-		bbox_center_X=(seg.xmin+seg.xmax)/2
-		bbox_center_Y=(seg.ymin+seg.ymax)/2
+		bbox_center_X=(seg.bbox_pixel.xmin+seg.bbox_pixel.xmax)/2
+		bbox_center_Y=(seg.bbox_pixel.ymin+seg.bbox_pixel.ymax)/2
 
 		# Draw outline
-		for i in range(len(seg.points)):
+		for i in range(len(seg.points_pixel)):
 			j=i-1
-			startX=seg.points[i][0]*size[0]
-			startY=seg.points[i][1]*size[1]
-			endX=  seg.points[j][0]*size[0]
-			endY=  seg.points[j][1]*size[1]
+			startX=seg.points_ratio[i].x*size[0]
+			startY=seg.points_ratio[i].y*size[1]
+			endX=  seg.points_ratio[j].x*size[0]
+			endY=  seg.points_ratio[j].y*size[1]
 			draw.line((startX,startY,endX,endY),fill="#FF0000",width=3)
 
 		# Write text
