@@ -179,6 +179,12 @@ web_url=F"http://localhost:{server_port}"
 with open("mainpage.html","rb") as f:
 	page=f.read()
 st.put_data("/main.html",page)
+with open("mainpage.js","rb") as f:
+	page=f.read()
+st.put_data("/mainpage.js",page,"text/javascript")
+with open("helvetiker_regular.typeface.json","rb") as f:
+	fnt=f.read()
+st.put_data("/font.typeface.json",fnt)
 print("Main page active at "+ansi.GREEN+ansi.BOLD+web_url+"/main.html"+ansi.RESET)
 
 if arguments.debug_output=="web":
@@ -299,7 +305,7 @@ def display(img,*,stereo_right=None):
 		segments=segs,
 		sstrsm=ss2rsm,
 		depthmap=depth,
-		normal_sample_offset=3)
+		normal_sample_offset=None)#3)
 	
 	
 	if arguments.debug_output != "nothing":
@@ -412,6 +418,8 @@ def display(img,*,stereo_right=None):
 	loop_timer.split(starting="Update Main Page")
 	seg3d_json=webdata.seg3d_to_json(seg3ds)
 	st.put_json("/seg3d",seg3d_json)
+	seg3dText_json=webdata.seg3d_to_text_json(seg3ds)
+	st.put_json("/texts",seg3dText_json)
 	if arguments.pointcloud:
 		loop_timer.split(starting="Mainpage Point Cloud")
 		pc_main=webdata.depthmap_to_pointcloud_json(

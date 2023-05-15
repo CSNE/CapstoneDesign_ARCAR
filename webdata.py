@@ -7,6 +7,7 @@ import typing
 import coordinates
 import io
 import base64
+import collections
 
 def depthmap_to_pointcloud_json(*,
 	depth_map,color_image,
@@ -112,3 +113,29 @@ def seg3d_to_json(seg3ds:typing.List[combined.Segment3D]):
 			{"name":seg3d.name,
 			 "pointlist":pointlist})
 	return obj
+
+'''
+Text3D = collections.namedtuple(
+	"Text3D",
+	["text","size","x","y","z"])'''
+centerMM = lambda l: (min(l)+max(l))/2 #Min-Max Center
+median = lambda l: sorted(l)[len(l)/2]
+avg=lambda l: sum(l)/len(l)
+def seg3d_to_text_json(seg3ds:typing.List[combined.Segment3D]):
+	obj=[]
+	for seg3d in seg3ds:
+		coordsX=[]
+		coordsY=[]
+		coordsZ=[]
+		for point in seg3d.point_list:
+			coordsX.append(point.x)
+			coordsY.append(point.y)
+			coordsZ.append(point.z)
+		obj.append({
+			"text":seg3d.name,
+			"size":0.5,
+			"x":avg(coordsX),
+			"y":avg(coordsY),
+			"z":avg(coordsZ)})
+	return obj
+
