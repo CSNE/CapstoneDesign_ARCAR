@@ -44,3 +44,8 @@ def sample_npa(npa,sample=100):
 			(random.randint(0,ir.shape[0]-1),
 			 random.randint(0,ir.shape[1]-1)) for i in range(sample)]
 	return sample_points
+
+def gaussian_blur(npa,sdev):
+	return scipy.ndimage.gaussian_filter(
+		npa,sdev,
+		mode="nearest",truncate=3.0)

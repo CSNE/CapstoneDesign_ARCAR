@@ -7,6 +7,7 @@ import maths
 import collections
 
 import coordinates
+from tuples import Tuples
 
 
 # A namedtuple for storing the depth along with the segment.
@@ -82,16 +83,63 @@ def sample_matrix(*,relX,relY,mat):
 def segments_3dify(*,
 		segments,
 		sstrsm: coordinates.ScreenSpaceToRealSpaceMapper,
-		depthmap):
+		depthmap,
+		normal_sample_offset=None):
 	'''
 	Convert list of SegmentationResult into list of Segment3D
 	'''
+	
+	dbg_img=PIL.Image.new("RGB",(depthmap.shape[1],depthmap.shape[0]))
+	
 	res=[]
-	for s in segments:
+	for s in segments:		
+		
 		pl=[]
-		for p in s.points_ratio:
+		for i in range(len(s.points_ratio)):
+			p=s.points_ratio[i]
+			
+			if normal_sample_offset:
+				pointO=(p.x,p.y)
+				
+				if i==0:
+					pointP=s.points_ratio[len(s.points_ratio)-1]
+				else:
+					pointP=s.points_ratio[i-1]
+				if i==(len(s.points_ratio)-1):
+					pointN=s.points_ratio[0]
+				else:
+					pointN=s.points_ratio[i+1]
+				
+				pointP=(pointP.x,pointP.y)
+				pointN=(pointN.x,pointN.y)
+				#print(F"+{pointP}")
+				#print(F"-{pointN}")
+				tangent = Tuples.normalize(Tuples.sub(pointN,pointP))
+				#print(F"T{tangent}")
+				normal = Tuples.rotate(tangent,deg=-90)
+				#print(F"N{normal}")
+				offset = Tuples.mult(normal,normal_sample_offset/100) #offset of image
+				#print(F"O{offset}")
+				applied= Tuples.add(pointO,offset)
+				#print(F"S{samplepoint}")
+				constrained= Tuples.elementwise_func(lambda x:min(max(x,0),1), applied)
+				#print(F"C{constrained}")
+				
+				sample_point=constrained
+				
+				pxOx=round(pointO[0]*(depthmap.shape[1]-1))
+				pxOy=round(pointO[1]*(depthmap.shape[0]-1))
+				pxCx=round(constrained[0]*(depthmap.shape[1]-1))
+				pxCy=round(constrained[1]*(depthmap.shape[0]-1))
+				
+				#print(pxO)
+				dbg_img.putpixel([pxOx,pxOy],(255,0,255))
+				dbg_img.putpixel([pxCx,pxCy],(0,255,0))
+			else:
+				sample_point=(p.x,p.y)
+			
 			d=sample_matrix(
-				relX=p.x,relY=p.y,mat=depthmap)
+				relX=sample_point[0],relY=sample_point[1],mat=depthmap)
 			c3d=sstrsm.map_relcoords(
 				relX=p.x,relY=p.y,
 				depth=d)
@@ -101,6 +149,7 @@ def segments_3dify(*,
 				name=s.name,
 				confidence=s.confidence,
 				point_list=pl))
+	#dbg_img.save("out/seg3d_samplepoints.png")
 	return res
 
 

@@ -66,25 +66,26 @@ def segment(pim:PIL.Image,use_cuda=False) -> SegmentationResult:
 		s_px=[]
 		s_rel=[]
 		for coords in s:
+			# Cast to regular python floats from np.float64 because why not
 			s_px.append(
 				coordinates.Coordinates2D(
-					x=coords[0]*orig_sizeX,
-					y=coords[1]*orig_sizeY))
+					x=float(coords[0]*orig_sizeX),
+					y=float(coords[1]*orig_sizeY)))
 			s_rel.append(
 				coordinates.Coordinates2D(
-					x=coords[0],
-					y=coords[1]))
+					x=float(coords[0]),
+					y=float(coords[1])))
 		
 		bbx_rat=coordinates.BoundingBox(
-			xmin=b[0],
-			xmax=b[2],
-			ymin=b[1],
-			ymax=b[3])
+			xmin=float(b[0]),
+			xmax=float(b[2]),
+			ymin=float(b[1]),
+			ymax=float(b[3]))
 		bbx_px=coordinates.BoundingBox(
-			xmin=b[0]*orig_sizeX,
-			xmax=b[2]*orig_sizeX,
-			ymin=b[1]*orig_sizeY,
-			ymax=b[3]*orig_sizeY)
+			xmin=float(b[0]*orig_sizeX),
+			xmax=float(b[2]*orig_sizeX),
+			ymin=float(b[1]*orig_sizeY),
+			ymax=float(b[3]*orig_sizeY))
 
 		results.append(
 			SegmentationResult(

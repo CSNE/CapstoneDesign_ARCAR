@@ -273,6 +273,7 @@ def display(img,*,stereo_right=None):
 		lambda x: x is not None,
 		[depth_igev,depth_opencv,depth_psm,depth_monodepth]))
 	segdepths_raw=combined.calculate_segdepth(segs,depth)
+	#depth_blurred=maths.gaussian_blur(depth,3)
 
 	# Filter out SegDepths with too little depth data
 	segdepths_valid=[]
@@ -297,7 +298,8 @@ def display(img,*,stereo_right=None):
 	seg3ds=combined.segments_3dify(
 		segments=segs,
 		sstrsm=ss2rsm,
-		depthmap=depth)
+		depthmap=depth,
+		normal_sample_offset=3)
 	
 	
 	if arguments.debug_output != "nothing":
@@ -412,7 +414,6 @@ def display(img,*,stereo_right=None):
 			dvis_igev.save("out/dvis_igev.jpg")
 	
 	loop_timer.split(starting="Update Main Page")
-	st.put_string("/update_flag",str(random.random()))
 	seg3d_json=webdata.seg3d_to_json(seg3ds)
 	st.put_json("/seg3d",seg3d_json)
 	pc_default=webdata.depthmap_to_pointcloud_json(
@@ -420,6 +421,8 @@ def display(img,*,stereo_right=None):
 		color_image=img,
 		sampleN=10000)
 	st.put_json("/pointcloud",pc_default)
+	
+	st.put_string("/update_flag",str(random.random()))
 	
 	loop_timer.split()
 	frame_timer.split(ending=F"Frame {frmN}")
