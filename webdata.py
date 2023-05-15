@@ -133,7 +133,7 @@ def seg3d_to_text_json(seg3ds:typing.List[combined.Segment3D]):
 			coordsZ.append(point.z)
 		obj.append({
 			"text":seg3d.name,
-			"size":0.5,
+			"size":0.2,
 			"x":avg(coordsX),
 			"y":avg(coordsY),
 			"z":avg(coordsZ)})

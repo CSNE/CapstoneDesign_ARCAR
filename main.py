@@ -84,6 +84,7 @@ import maths
 import coordinates
 import combined
 import visualizations
+import stereo_playback
 
 if arguments.stereo_solvers["opencv"]:
 	import_timer.split(starting="Stereo")
@@ -256,7 +257,7 @@ def display(img,*,stereo_right=None):
 			depth_psm = psmnet.calculate(
 				left=stereo_left_rsz,
 				right=stereo_right_rsz,
-				depth_multiplier=40) #MAGIC: Depth correction factor
+				depth_multiplier=40).astype(float) #MAGIC: Depth correction factor
 		else:
 			depth_psm=None
 
@@ -469,6 +470,37 @@ def capture_loop():
 		while True:
 			iL=PIL.Image.open(arguments.infileL).convert("RGB")
 			iR=PIL.Image.open(arguments.infileR).convert("RGB")
+			display(iL,stereo_right=iR)
+			if arguments.singleframe: break
+	elif arguments.source=="stereo_playback":
+		sp=stereo_playback.StereoPlayback(arguments.infile)
+		
+		def pch(q):
+			
+			t=q["type"][0]
+			print("Browser command:",t)
+			{"pause":lambda: sp.stop(),
+			 "rewind":lambda: sp.rewind(),
+			 "play":lambda: sp.play(),
+			 "+1":lambda: sp.delta_frame(+1),
+			 "-1":lambda: sp.delta_frame(-1),
+			 "+10":lambda: sp.delta_frame(+10),
+			 "-10":lambda: sp.delta_frame(-10),
+			 "+100":lambda: sp.delta_frame(+100),
+			 "-100":lambda: sp.delta_frame(-100),
+			 "rand":lambda: sp.randframe()}[t]()
+		st.set_handler("/playbackControl",pch)
+		
+		last_fidx=None
+		while True:
+			sp.update()
+			if sp.frameindex == last_fidx:
+				time.sleep(0.01)
+				continue
+			last_fidx=sp.frameindex
+			if sp.over():
+				break
+			iL,iR=sp.get_frame()
 			display(iL,stereo_right=iR)
 			if arguments.singleframe: break
 	elif arguments.source=="video":

@@ -14,7 +14,7 @@ camL=webcam.ThreadedWebcam(idL)
 camL.start()
 camR=webcam.ThreadedWebcam(idR)
 camR.start()
-time.sleep(0.5) # Race condition
+time.sleep(2) # Race condition
 
 tidL=tk_display.ImageDisplayWindow(img_disp_root,"Left")
 tidR=tk_display.ImageDisplayWindow(img_disp_root,"Right")

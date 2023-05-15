@@ -11,7 +11,7 @@ _ap.add_argument(
 	"--source","-src",
 	choices=[
 		"webcam","webcam_stereo",
-		"image","image_stereo",
+		"image","image_stereo","stereo_playback",
 		"video","screenshot"],
 	required=True)
 
@@ -86,9 +86,9 @@ for ss in _args.stereo_solvers.split(","):
 	stereo_solvers[ss]=True
 
 
-if source in ("image","video"):
+if source in ("image","video","stereo_playback"):
 	if _args.input_file is None:
-		print("For image or video input, you need to supply the input file or directory.")
+		print("For image or video or stereo_playback input, you need to supply the input file or directory.")
 		print("( --input-file=FILE or -f FILE )")
 		sys.exit(1)
 	else:

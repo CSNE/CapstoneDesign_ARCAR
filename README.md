@@ -37,6 +37,7 @@ Argument list (`python3 main.py --help` may be more accurate):
     - `webcam_stereo` : Capture two webcams, for stereo depth.
     - `image` : Read image file.
     - `image_stereo` : Read two image files, for stereo depth.
+    - `stereo_playback`: Read capture directory created by `stereo_capture.py`
     - `video` : Read video file.
     - `screenshot` : Capture desktop.
 - `--debug-output` `-do` : Select how to display debug information.
@@ -46,7 +47,7 @@ Argument list (`python3 main.py --help` may be more accurate):
     - `nothing` : Don't output anything. Default.
 - `--webcam-number` `-wc` : For `webcam` source, you can set the webcam number here. If not, defaults to 0. (On linux, run `v4l2-ctl --list-devices` to get the device number.)
 - `--webcam-left` `-wl` / `--webcam-right` `-wr` : For `webcam_stereo` source. Self-explanatory.
-- `--input-file` `-i` : For `image` and `video` sources, you need to supply the file path here.
+- `--input-file` `-i` : For `image` and `video` and `stereo_playback` sources, you need to supply the file path here.
 - `--image-left` `-il` / `--image-right` `-ir` : For `image_stereo` source. Self-explanatory. If only one is given, the program will try to infer the other pair's name.  
 - `--video-speed` `-vs` : For `video` source, you can supply a video speed multiplier here. For example, `-vs 0.5` will play the video at half speed.
 - `--screenshot-region` `-sr` : For `screenshot` source, you can set the capture region. If not specified, captures the whole desktop.

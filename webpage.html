@@ -11,9 +11,10 @@
 	</style>
 </head>
 <body>
-	<!--
+	
 	<div id="buttonContainer">
 	<button onclick='playbackControl("pause");'>Pause</button>
+	<button onclick='playbackControl("rewind");'>Rewind</button>
 	<button onclick='playbackControl("play");'>Play</button>
 	<button onclick='playbackControl("+1");'>Next</button>
 	<button onclick='playbackControl("-1");'>Prev</button>
@@ -22,13 +23,22 @@
 	<button onclick='playbackControl("+100");'>+100</button>
 	<button onclick='playbackControl("-100");'>-100</button>
 	<button onclick='playbackControl("rand");'>Random</button>
-	</div>-->
+	</div>
+	
 	<div id="information"></div>
 	<div id="imgsContainer" style="display:flex;flex-direction:row;flex-wrap:wrap;"></div>
 	<canvas id="pc_monodepth"> </canvas>
 	<canvas id="pc_opencv"> </canvas>
 	<canvas id="pc_psmnet"> </canvas>
 	<canvas id="pc_igev"> </canvas>
+	
+	<script>
+		function playbackControl(type){
+			var xhr=new XMLHttpRequest();
+			xhr.open("GET","/playbackControl?type="+encodeURIComponent(type));
+			xhr.send();
+		}
+	</script>
 	
 	<script type="module">
 		import {setupPointCloudRenderer} from "./webpage.js";
@@ -156,12 +166,8 @@
 		setInterval(updateCheck,50);
 		
 		
-		/*
-		function playbackControl(type){
-			var xhr=new XMLHttpRequest();
-			xhr.open("GET","/playbackControl?type="+encodeURIComponent(type));
-			xhr.send();
-		}*/
+		
+		
 	</script>
 	
 	

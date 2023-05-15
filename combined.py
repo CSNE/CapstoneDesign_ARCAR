@@ -140,10 +140,13 @@ def segments_3dify(*,
 			
 			d=sample_matrix(
 				relX=sample_point[0],relY=sample_point[1],mat=depthmap)
-			c3d=sstrsm.map_relcoords(
-				relX=p.x,relY=p.y,
-				depth=d)
-			pl.append(c3d)
+			if d is numpy.ma.masked:
+				pass
+			else:
+				c3d=sstrsm.map_relcoords(
+					relX=p.x,relY=p.y,
+					depth=d)
+				pl.append(c3d)
 		res.append(
 			Segment3D(
 				name=s.name,
