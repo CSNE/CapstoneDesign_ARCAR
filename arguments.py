@@ -62,13 +62,16 @@ _ap.add_argument(
 	'--verbose', '-v',
 	action='count',
 	default=0)
-
+_ap.add_argument(
+	"--pointcloud","-pc",
+	action="store_true")
 
 # Arguments Parsing
 _args=_ap.parse_args()
 
 source=_args.source
 debug_output=_args.debug_output
+pointcloud=_args.pointcloud
 
 wc=_args.webcam_number
 vs=_args.video_speed

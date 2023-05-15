@@ -310,7 +310,7 @@ def display(img,*,stereo_right=None):
 		loop_timer.split(starting="SegDepth Visuals")
 		combined_vis=visualizations.visualize_segdepth(segdepths_valid,img.size,img)
 		
-		loop_timer.split(starting="Matrix ")
+		loop_timer.split(starting="Matrix Visuals")
 		if arguments.stereo_solvers["monodepth"]:
 			dvis_md=visualizations.visualize_matrix(
 				depth_monodepth,"MonoDepth")
@@ -343,27 +343,32 @@ def display(img,*,stereo_right=None):
 			tid_dpsm.set_image(dvis_psm)
 			tid_digev.set_image(dvis_igev)
 		elif arguments.debug_output=="web":
-			loop_timer.split(starting="Point Cloud Sampling")
-			if arguments.stereo_solvers["monodepth"]:
-				pc_monodepth=webdata.depthmap_to_pointcloud_json(
-					depth_map=depth_monodepth,mapper=ss2rsm,
-					color_image=img,
-					sampleN=5000)
-			if arguments.stereo_solvers["opencv"]:
-				pc_opencv=webdata.depthmap_to_pointcloud_json(
-					depth_map=depth_opencv,mapper=ss2rsm,
-					color_image=img,
-					sampleN=5000)
-			if arguments.stereo_solvers["psm"]:
-				pc_psmnet=webdata.depthmap_to_pointcloud_json(
-					depth_map=depth_psm,mapper=ss2rsm,
-					color_image=img,
-					sampleN=5000)
-			if arguments.stereo_solvers["igev"]:
-				pc_igev=webdata.depthmap_to_pointcloud_json(
-					depth_map=depth_igev,mapper=ss2rsm,
-					color_image=img,
-					sampleN=5000)
+			if arguments.pointcloud:
+				loop_timer.split(starting="Debug Point Cloud")
+				if arguments.stereo_solvers["monodepth"]:
+					pc_monodepth=webdata.depthmap_to_pointcloud_json(
+						depth_map=depth_monodepth,mapper=ss2rsm,
+						color_image=img,
+						sampleN=5000)
+					st.put_json("/pc_monodepth.json",pc_monodepth)
+				if arguments.stereo_solvers["opencv"]:
+					pc_opencv=webdata.depthmap_to_pointcloud_json(
+						depth_map=depth_opencv,mapper=ss2rsm,
+						color_image=img,
+						sampleN=5000)
+					st.put_json("/pc_opencv.json",pc_opencv)
+				if arguments.stereo_solvers["psm"]:
+					pc_psmnet=webdata.depthmap_to_pointcloud_json(
+						depth_map=depth_psm,mapper=ss2rsm,
+						color_image=img,
+						sampleN=5000)
+					st.put_json("/pc_psmnet.json",pc_psmnet)
+				if arguments.stereo_solvers["igev"]:
+					pc_igev=webdata.depthmap_to_pointcloud_json(
+						depth_map=depth_igev,mapper=ss2rsm,
+						color_image=img,
+						sampleN=5000)
+					st.put_json("/pc_igev.json",pc_igev)
 			
 			loop_timer.split(starting="Update Debug Page")
 			# Raw frames
@@ -381,25 +386,16 @@ def display(img,*,stereo_right=None):
 				segdepths_valid,img,mapper=ss2rsm)
 			st.put_json("/objects",objects_json)
 			
-			
-			
 			# Depths
 			if arguments.stereo_solvers["monodepth"]:
-				st.put_json("/pc_monodepth.json",pc_monodepth)
 				st.put_image("/dmd.jpg",dvis_md)
-			
 			if arguments.stereo_solvers["opencv"]:
-				st.put_json("/pc_opencv.json",pc_opencv)
 				st.put_image("/dcv.jpg",dvis_cv)
-			
 			if arguments.stereo_solvers["psm"]:
-				st.put_json("/pc_psmnet.json",pc_psmnet)
 				st.put_image("/dpsm.jpg",dvis_psm)
-
 			if arguments.stereo_solvers["igev"]:
-				st.put_json("/pc_igev.json",pc_igev)
 				st.put_image("/digev.jpg",dvis_igev)
-			
+
 		elif arguments.debug_output=="file":
 			loop_timer.split(starting="File output save")
 			img.save("out/img.jpg")
@@ -416,11 +412,13 @@ def display(img,*,stereo_right=None):
 	loop_timer.split(starting="Update Main Page")
 	seg3d_json=webdata.seg3d_to_json(seg3ds)
 	st.put_json("/seg3d",seg3d_json)
-	pc_default=webdata.depthmap_to_pointcloud_json(
-		depth_map=depth,mapper=ss2rsm,
-		color_image=img,
-		sampleN=10000)
-	st.put_json("/pointcloud",pc_default)
+	if arguments.pointcloud:
+		loop_timer.split(starting="Mainpage Point Cloud")
+		pc_main=webdata.depthmap_to_pointcloud_json(
+			depth_map=depth,mapper=ss2rsm,
+			color_image=img,
+			sampleN=10000)
+		st.put_json("/pointcloud",pc_main)
 	
 	st.put_string("/update_flag",str(random.random()))
 	

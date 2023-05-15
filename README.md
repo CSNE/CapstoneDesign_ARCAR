@@ -59,6 +59,7 @@ Argument list (`python3 main.py --help` may be more accurate):
 - `--solve-resize` `-srz` : Stereo image dimension to resize before feeding it to the stereo solver algorithms(Except OpenCV). For example `-srz 640x480` will resize each stereo image pair to no bigger than 640x480 (preserving aspect ratio, and no upscaling) before being input to the algorithms. Smaller sizes are faster but less accurate. Default `480x320`. Note that PSMNet errors out if this is too small.  
 - `--single-frame` `-sf` : Exit after processing a single frame. Tip: use in combination with `-o file` for debugging.
 - `--verbose` `-v` : Verbose logging. Repeat for even more verbosity. (`-vvv`)
+- `--pointcloud` `-pc` : Enable "point-cloud" visuals. Bad for performance.
 
 
 
