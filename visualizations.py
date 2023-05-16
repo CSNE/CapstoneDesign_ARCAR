@@ -38,35 +38,44 @@ def visualize_segmentations(segments,size):
 	return seg_out
 
 def visualize_matrix(
-		arr,title=None,target_aspect=(9/16),
+		arr,title=None,target_aspect=(3/4),
 		clip_percentiles=None,clip_values=None,
-		cmap="plasma"):
+		cmap="plasma",cmap_reverse=True,annotate_point=None):
 	'''
 	Visualize a numpy 2D array to a PIL image, using matplotlib
 	'''
+	plot_args={}
 	if clip_values:
 		assert len(clip_values)==2 #min,max
 		assert clip_values[0]<clip_values[1]
-		arr=numpy.clip(arr,clip_values[0],clip_values[1])
+		#arr=numpy.clip(arr,clip_values[0],clip_values[1])
+		plot_args["vmin"]=clip_values[0]
+		plot_args["vmax"]=clip_values[1]
 	elif clip_percentiles:
 		assert len(clip_percentiles)==2 #min,max
 		assert clip_percentiles[0]<clip_percentiles[1]
 		naned = numpy.ma.filled(arr, numpy.nan)
 		pv=numpy.nanpercentile(naned,clip_percentiles)
-		arr=numpy.clip(arr,pv[0],pv[1])
+		plot_args["vmin"]=pv[0]
+		plot_args["vmax"]=pv[1]
+		#arr=numpy.clip(arr,pv[0],pv[1])
 		
 	array_aspect=arr.shape[0]/arr.shape[1]
 
 	fig = plt.figure()
-	cmap=mpl.colormaps.get_cmap(cmap).reversed()
+	cmap=mpl.colormaps.get_cmap(cmap)
+	if cmap_reverse:
+		cmap=cmap.reversed()
 	ax = fig.add_subplot()
 	ax.set_facecolor("#00A000")
 	if title is not None:
 		ax.set_title(title)
-	plt.imshow(arr,cmap=cmap)
+	plt.imshow(arr,cmap=cmap,**plot_args)
+	if annotate_point is not None:
+		plt.plot([annotate_point.x], [annotate_point.y], marker="o", markersize=5, markeredgecolor="#FF00FF", markerfacecolor="#FF00FF")
 	ax.set_aspect(target_aspect/array_aspect) #height=N*width
 	plt.colorbar(orientation='vertical')
-
+	
 	bio=io.BytesIO()
 	plt.savefig(bio)
 	bio.seek(0)

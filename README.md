@@ -61,7 +61,7 @@ Argument list (`python3 main.py --help` may be more accurate):
 - `--single-frame` `-sf` : Exit after processing a single frame. Tip: use in combination with `-o file` for debugging.
 - `--verbose` `-v` : Verbose logging. Repeat for even more verbosity. (`-vvv`)
 - `--pointcloud` `-pc` : Enable "point-cloud" visuals. Bad for performance.
-
+- `--detect-walls` `-dw` : Enable wall detection.
 
 
 Examples:  

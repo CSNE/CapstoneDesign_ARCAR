@@ -85,6 +85,7 @@ import coordinates
 import combined
 import visualizations
 import stereo_playback
+import building_detect
 
 if arguments.stereo_solvers["opencv"]:
 	import_timer.split(starting="Stereo")
@@ -292,22 +293,36 @@ def display(img,*,stereo_right=None):
 	if diff != 0:
 		pass#print(F"Removed {diff} SegDepths out of {len(segdepths_raw)} because of insufficient depth data")
 	
-	ss2rsm=coordinates.ScreenSpaceToRealSpaceMapper(
+	ss2rsm_image=coordinates.ScreenSpaceToRealSpaceMapper(
 		image_width=img.width,image_height=img.height,
+		reference_distance=5,reference_width=8)
+	ss2rsm_depthmap=coordinates.ScreenSpaceToRealSpaceMapper(
+		image_width=depth.shape[1],image_height=depth.shape[0],
 		reference_distance=5,reference_width=8)
 	
 	loop_timer.split(starting="Build SegDepth JSON")
-	sgj=webdata.segdepths_to_json(segdepths_valid,img,ss2rsm)
+	sgj=webdata.segdepths_to_json(segdepths_valid,img,ss2rsm_image)
 	st.put_json("/objects",sgj)
 	
 	loop_timer.split(starting="Seg3D Calculate")
 	
 	seg3ds=combined.segments_3dify(
 		segments=segs,
-		sstrsm=ss2rsm,
+		sstrsm=ss2rsm_image,
 		depthmap=depth,
 		normal_sample_offset=None)#3)
 	
+	if arguments.detect_walls:
+		loop_timer.split(starting="Detect building")
+		depth_blurred=maths.gaussian_blur(depth,5)
+		walls=building_detect.get_fit_candidates(depth_blurred,100,10,ss2rsm_depthmap)
+		
+		for i in range(len(walls[:4])):
+			print(i)
+			print("  ",walls[i].match_ratio)
+			print("  ",walls[i].plane_definition)
+			print("  ",walls[i].normal_vector)
+			print("  ",walls[i].center_real)
 	
 	if arguments.debug_output != "nothing":
 		loop_timer.split(starting="Segment visuals")
@@ -333,6 +348,23 @@ def display(img,*,stereo_right=None):
 		if stereo_right is not None:
 			str_dif=PIL.ImageChops.difference(img,stereo_right)
 		
+		if arguments.detect_walls:
+			wvis_blurred_depth=visualizations.visualize_matrix(
+				depth_blurred,"Depth Blurred",clip_percentiles=(5,95))
+			wvis_error=[]
+			wvis_mask=[]
+			for i in range(4):
+				wall=walls[i]
+				wvis_error.append(visualizations.visualize_matrix(
+					wall.error,F"Wall {i} Error",
+					clip_values=(-2,+2),cmap="seismic",
+					annotate_point=coordinates.Coordinates2D(
+						x=wall.plane_definition.originX,
+						y=wall.plane_definition.originY)))
+				wvis_mask.append(visualizations.visualize_matrix(
+					wall.mask,F"Wall {i} Mask",
+					cmap="Greys",
+					annotate_point=wall.center_map))
 		
 
 		
@@ -354,25 +386,25 @@ def display(img,*,stereo_right=None):
 				loop_timer.split(starting="Debug Point Cloud")
 				if arguments.stereo_solvers["monodepth"]:
 					pc_monodepth=webdata.depthmap_to_pointcloud_json(
-						depth_map=depth_monodepth,mapper=ss2rsm,
+						depth_map=depth_monodepth,mapper=ss2rsm_image,
 						color_image=img,
 						sampleN=5000)
 					st.put_json("/pc_monodepth.json",pc_monodepth)
 				if arguments.stereo_solvers["opencv"]:
 					pc_opencv=webdata.depthmap_to_pointcloud_json(
-						depth_map=depth_opencv,mapper=ss2rsm,
+						depth_map=depth_opencv,mapper=ss2rsm_image,
 						color_image=img,
 						sampleN=5000)
 					st.put_json("/pc_opencv.json",pc_opencv)
 				if arguments.stereo_solvers["psm"]:
 					pc_psmnet=webdata.depthmap_to_pointcloud_json(
-						depth_map=depth_psm,mapper=ss2rsm,
+						depth_map=depth_psm,mapper=ss2rsm_image,
 						color_image=img,
 						sampleN=5000)
 					st.put_json("/pc_psmnet.json",pc_psmnet)
 				if arguments.stereo_solvers["igev"]:
 					pc_igev=webdata.depthmap_to_pointcloud_json(
-						depth_map=depth_igev,mapper=ss2rsm,
+						depth_map=depth_igev,mapper=ss2rsm_image,
 						color_image=img,
 						sampleN=5000)
 					st.put_json("/pc_igev.json",pc_igev)
@@ -390,7 +422,7 @@ def display(img,*,stereo_right=None):
 			st.put_string("/information",str(frmN))
 			
 			objects_json=webdata.segdepths_to_json(
-				segdepths_valid,img,mapper=ss2rsm)
+				segdepths_valid,img,mapper=ss2rsm_image)
 			st.put_json("/objects",objects_json)
 			
 			# Depths
@@ -402,6 +434,13 @@ def display(img,*,stereo_right=None):
 				st.put_image("/dpsm.jpg",dvis_psm)
 			if arguments.stereo_solvers["igev"]:
 				st.put_image("/digev.jpg",dvis_igev)
+				
+			# Wall
+			if arguments.detect_walls:
+				st.put_image("/wblur.jpg",wvis_blurred_depth)
+				for i in range(4):
+					st.put_image(F"/werr{i}.jpg",wvis_error[i])
+					st.put_image(F"/wmsk{i}.jpg",wvis_mask[i])
 
 		elif arguments.debug_output=="file":
 			loop_timer.split(starting="File output save")
@@ -424,7 +463,7 @@ def display(img,*,stereo_right=None):
 	if arguments.pointcloud:
 		loop_timer.split(starting="Mainpage Point Cloud")
 		pc_main=webdata.depthmap_to_pointcloud_json(
-			depth_map=depth,mapper=ss2rsm,
+			depth_map=depth,mapper=ss2rsm_image,
 			color_image=img,
 			sampleN=10000)
 		st.put_json("/pointcloud",pc_main)

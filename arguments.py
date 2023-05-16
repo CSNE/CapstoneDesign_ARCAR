@@ -65,6 +65,9 @@ _ap.add_argument(
 _ap.add_argument(
 	"--pointcloud","-pc",
 	action="store_true")
+_ap.add_argument(
+	"--detect-walls","-dw",
+	action="store_true")
 
 # Arguments Parsing
 _args=_ap.parse_args()
@@ -72,6 +75,7 @@ _args=_ap.parse_args()
 source=_args.source
 debug_output=_args.debug_output
 pointcloud=_args.pointcloud
+detect_walls=_args.detect_walls
 
 wc=_args.webcam_number
 vs=_args.video_speed

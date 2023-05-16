@@ -1,4 +1,4 @@
-print("Import...")
+
 import visualizations
 import PIL.Image
 import maths
@@ -9,6 +9,7 @@ import coordinates
 import random
 import collections
 from tuples import Tuples
+import scipy.ndimage
 
 def derivative(dm):
 	pass
@@ -54,7 +55,7 @@ def _test_calc_save_depthmap():
 
 PlaneDefinition=collections.namedtuple(
 	"PlaneDefinition",
-	["originX","originY","originZ","gradientX","gradientY"])
+	["originX","originY","originZ","gradientX","gradientY","f"])
 
 def linear_approximate(depthmap,sample_point:coordinates.Coordinates2D,sample_radius):
 	xp=coordinates.Coordinates2D(x=sample_point.x+sample_radius,y=sample_point.y)
@@ -69,25 +70,26 @@ def linear_approximate(depthmap,sample_point:coordinates.Coordinates2D,sample_ra
 
 	#print(F"gX{gradX} gY{gradY} nX{normal_vec[0]} nY{normal_vec[1]}")
 	
+	def plane(y,x):
+		dx=x-sample_point.x
+		dy=y-sample_point.y
+		return center + gradX*dx + gradY*dy
+		
 	return PlaneDefinition(
 		originX=sample_point.x,
 		originY=sample_point.y,
 		originZ=center,
 		gradientX=gradX,
-		gradientY=gradY)
+		gradientY=gradY,
+		f=plane)
 
 def realize_plane(shape,pd:PlaneDefinition):
-	def plane(y,x):
-		dx=x-pd.originX
-		dy=y-pd.originY
-		return pd.originZ + pd.gradientX*dx + pd.gradientY*dy
-		
-	return numpy.fromfunction(plane,shape)
+	return numpy.fromfunction(pd.f,shape)
 	
 
 PlaneMatchResult=collections.namedtuple(
 	"PlaneMatchResult",
-	["match_ratio","plane_definition","normal_vector","mask","depth"])
+	["match_ratio","plane_definition","normal_vector","mask","error","depth","center_real","center_map"])
 def get_fit_candidates(depthmap,n,r,sstrsm):
 	res=[]
 	for i in range(n):
@@ -102,20 +104,32 @@ def get_fit_candidates(depthmap,n,r,sstrsm):
 		nvec=Tuples.normalize([pd.gradientX/px_to_meters.x,pd.gradientY/px_to_meters.y,1])
 		plane=realize_plane(depthmap.shape,pd)
 		#visualizations.visualize_matrix(plane).save("out/plane.png")
-		
-		ext_error=numpy.absolute(depthmap-plane)
+		error=depthmap-plane
 		#visualizations.visualize_matrix(ext_error,clip_values=(-1,+2)).save("out/err.png")
 		
-		ext_err_masked=numpy.ma.masked_greater(ext_error,depth*0.05)
-		ratio=ext_err_masked.count() / ext_err_masked.size
+		err_threshd=numpy.ma.masked_greater(numpy.absolute(error),depth*0.05) #MAGIC: depth thressh
+		ratio=err_threshd.count() / err_threshd.size
+		
+		mask=numpy.logical_not(err_threshd.mask)
+		#print(err_threshd.dtype)
+		com=scipy.ndimage.center_of_mass(mask)
+		comZ=pd.f(*com)
+		com_real=sstrsm.map_pxcoords(pxX=com[1],pxY=com[0],depth=comZ)
+		#print("COM",com)
+		#print("COMr",com_real)
+		
+		
 		
 		#print((pd,ratio))
 		res.append(PlaneMatchResult(
 			match_ratio=ratio,
 			plane_definition=pd,
 			normal_vector=nvec,
-			mask=ext_err_masked.mask,
-			depth=depth))
+			mask=mask,
+			error=error,
+			depth=depth,
+			center_real=com_real,
+			center_map=coordinates.Coordinates2D(x=com[1],y=com[0])))
 	
 	res=[i for i in res if i.depth<30] #MAGIC: maximum distance
 	res.sort(key=lambda x:x.match_ratio, reverse=True) # High matches first
@@ -148,7 +162,7 @@ def get_fit_candidates(depthmap,n,r,sstrsm):
 	
 	
 		
-	return res[:5]
+	return res[:10]
 			
 		
 def _test_infer_gradient():
@@ -162,47 +176,31 @@ def _test_infer_gradient():
 	depth_blurred=maths.gaussian_blur(depth,5)
 	visualizations.visualize_matrix(depth_blurred,clip_percentiles=(5,85)).save("out/dm_blurred.png")
 	
-	gradY,gradX=numpy.gradient(depth_blurred)
-	visualizations.visualize_matrix(gradX,clip_values=(-0.05,+0.05)).save("out/gradX.png")
-	visualizations.visualize_matrix(gradY,clip_values=(-0.05,+0.05)).save("out/gradY.png")
-	
-	r=numpy.clip(gradX*7000+128,0,255).astype(numpy.uint8)
-	g=numpy.clip(gradY*7000+128,0,255).astype(numpy.uint8)
-	b=numpy.zeros(r.shape).astype(numpy.uint8)
-	
-	stacked=numpy.stack([r,g,b],axis=-1)
-	img=PIL.Image.fromarray(stacked)
-	img.save("out/gradRGB.png")
-	print(stacked.shape)
-	rv,ffimg,ffmsk,rec=cv2.floodFill(stacked,None,(200,240),255,loDiff=50,upDiff=50)
-	#print(rv)
-	#print(img)
-	#print(msk)
-	#print(rec)
-	ffmask=PIL.Image.fromarray(ffmsk)
-	ffmask.save("out/ffMask.png")
-	ffimg=PIL.Image.fromarray(ffimg)
-	ffimg.save("out/ffImg.png")
-	
 	fc=get_fit_candidates(depth_blurred,100,10,ss2rsm)
 	for i in range(len(fc)):
 		print(i)
 		print("  ",fc[i].match_ratio)
 		print("  ",fc[i].plane_definition)
 		print("  ",fc[i].normal_vector)
-		visualizations.visualize_matrix(fc[i].mask).save(F"out/fit{i}.png")
+		print("  ",fc[i].center_real)
+		visualizations.visualize_matrix(
+			fc[i].mask,
+			annotate_point=fc[i].center_map).save(F"out/fit{i}.png")
 		visualizations.visualize_matrix(
 				depth_blurred-realize_plane(
 					depth_blurred.shape,
 					fc[i].plane_definition),
 			clip_values=(-2,+2),
-			cmap="seismic").save(F"out/err{i}.png")
+			cmap="seismic",
+			annotate_point=coordinates.Coordinates2D(
+						x=fc[i].plane_definition.originX,
+						y=fc[i].plane_definition.originY)).save(F"out/err{i}.png")
 	
 	
 def _test_infer_pc_ransac():
 	pass
 	
 if __name__=="__main__":
-	_test_calc_save_depthmap()
+	#_test_calc_save_depthmap()
 	_test_infer_gradient()
 	
