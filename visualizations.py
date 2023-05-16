@@ -3,6 +3,7 @@
 import PIL.Image
 import PIL.ImageDraw
 import PIL.ImageOps
+import PIL.ImageFont
 import PIL.ImageChops
 
 import matplotlib as mpl
@@ -16,9 +17,9 @@ import numpy.ma
 import random
 import io
 
-import yolodriver
 
-def visualize_segmentations(segments: list[yolodriver.SegmentationResult],size):
+
+def visualize_segmentations(segments,size):
 	'''
 	Visualze segmentation results.
 	'''
@@ -36,11 +37,18 @@ def visualize_segmentations(segments: list[yolodriver.SegmentationResult],size):
 
 	return seg_out
 
-def visualize_matrix(arr,title=None,target_aspect=(9/16),clip_percentiles=None):
+def visualize_matrix(
+		arr,title=None,target_aspect=(9/16),
+		clip_percentiles=None,clip_values=None,
+		cmap="plasma"):
 	'''
 	Visualize a numpy 2D array to a PIL image, using matplotlib
 	'''
-	if clip_percentiles:
+	if clip_values:
+		assert len(clip_values)==2 #min,max
+		assert clip_values[0]<clip_values[1]
+		arr=numpy.clip(arr,clip_values[0],clip_values[1])
+	elif clip_percentiles:
 		assert len(clip_percentiles)==2 #min,max
 		assert clip_percentiles[0]<clip_percentiles[1]
 		naned = numpy.ma.filled(arr, numpy.nan)
@@ -50,7 +58,7 @@ def visualize_matrix(arr,title=None,target_aspect=(9/16),clip_percentiles=None):
 	array_aspect=arr.shape[0]/arr.shape[1]
 
 	fig = plt.figure()
-	cmap=mpl.colormaps.get_cmap("plasma").reversed()
+	cmap=mpl.colormaps.get_cmap(cmap).reversed()
 	ax = fig.add_subplot()
 	ax.set_facecolor("#00A000")
 	if title is not None:

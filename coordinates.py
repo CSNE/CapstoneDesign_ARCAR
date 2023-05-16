@@ -45,5 +45,15 @@ class ScreenSpaceToRealSpaceMapper:
 			relX=pxX/self._imgW,
 			relY=pxY/self._imgH,
 			depth=depth)
+	def map_reldistance(self,*,distX,distY,depth):
+		distance_factor=depth/self._refdist
+		realX=distX*distance_factor*self._refW
+		realY=distY*distance_factor*self._refH
+		return Coordinates2D(x=realX,y=realY)
+	def map_pxdistance(self,*,distX,distY,depth):
+		return self.map_reldistance(
+			distX=distX/self._imgW,
+			distY=distY/self._imgH,
+			depth=depth)
 	def relcoords_to_pxcoords(self,*,relX,relY):
 		return Coordinates2D(x=relX*self._imgW,y=relY*self._imgH)
