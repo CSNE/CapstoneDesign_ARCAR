@@ -101,7 +101,7 @@ def get_fit_candidates(depthmap,n,r,sstrsm):
 		depth=pd.originZ
 		
 		px_to_meters=sstrsm.map_pxdistance(distX=1,distY=1,depth=depth)
-		nvec=Tuples.normalize([pd.gradientX/px_to_meters.x,pd.gradientY/px_to_meters.y,1])
+		nvec=Tuples.normalize([pd.gradientX/px_to_meters.x,-pd.gradientY/px_to_meters.y,1])
 		plane=realize_plane(depthmap.shape,pd)
 		#visualizations.visualize_matrix(plane).save("out/plane.png")
 		error=depthmap-plane

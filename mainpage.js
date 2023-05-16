@@ -161,7 +161,7 @@ function updateSeg3D(){
 // Display: Point Cloud
 
 var object_points=[];
-var pointCubeSize=0.02;
+var pointCubeSize=0.03;
 function setPointCloud(pointList){
     for (var i=0;i<object_points.length;i++){
         scene.remove(object_points[i])
@@ -227,6 +227,11 @@ function setTexts(textList){
                 //bevelOffset: 0,
                 //bevelSegments: 5
             } );
+            
+            textGeom.computeBoundingBox();
+            //textGeom.translate(-textGeom.boundingBox.max.x/2,0,0);
+            textGeom.center();
+            
             const textMat= new THREE.MeshBasicMaterial();
             //objMat.side=THREE.DoubleSide;
             const textMesh = new THREE.Mesh(textGeom,textMat);
@@ -248,6 +253,78 @@ function updateTexts(){
         function(){});
 }
 
+// Display: Point Cloud
+var object_walls=[];
+var planeSize=3.0;
+function setWalls(wallList){
+    for (var i=0;i<object_walls.length;i++){
+        scene.remove(object_walls[i])
+    }
+    object_walls=[];
+    
+    // Add objects
+    for (var i=0;i<wallList.length;i++){
+        var wall=wallList[i];
+        
+        let x=wall["x"];
+        let y=wall["y"];
+        let z=wall["z"];
+        let laX=wall["x"]+wall["nvX"];
+        let laY=wall["y"]+wall["nvY"];
+        let laZ=wall["z"]+wall["nvZ"];
+        let tContent = "Wall "+i;
+        let tSize=0.5;
+        
+        const objGeom = new THREE.PlaneGeometry(planeSize,planeSize);
+        const objMat= new THREE.MeshStandardMaterial();
+        objMat.wireframe=true;
+        //const objMat = new THREE.LineBasicMaterial();
+        objMat.color=new THREE.Color(0,1,1);
+        //objMat.side=THREE.DoubleSide;
+        const objMesh = new THREE.Mesh(objGeom,objMat);
+        objMesh.position.x=x;
+        objMesh.position.y=y;
+        objMesh.position.z=z;
+        
+        objMesh.lookAt(laX,laY,laZ);
+        
+        scene.add(objMesh);
+        object_walls.push(objMesh);
+        
+        floader.load( 'font.typeface.json', function ( font ) {
+            
+            const textGeom = new TextGeometry( tContent, {
+                font: font,
+                size: tSize,
+                height: tSize/10,
+                curveSegments: 12,
+            } );
+            textGeom.computeBoundingBox();
+            //textGeom.translate(-textGeom.boundingBox.max.x/2,0,0);
+            textGeom.center();
+            const textMat= new THREE.MeshBasicMaterial();
+            //objMat.side=THREE.DoubleSide;
+            const textMesh = new THREE.Mesh(textGeom,textMat);
+            textMat.color=new THREE.Color(0,1,1);
+            textMesh.position.x=x;
+            textMesh.position.y=y;
+            textMesh.position.z=z;
+            textMesh.lookAt(laX,laY,laZ);
+            
+            scene.add(textMesh);
+            object_walls.push(textMesh);
+        });
+        
+        
+    }
+}
+
+function updateWalls(){
+    request(
+        "walls",
+        function(resp){setWalls(JSON.parse(resp));},
+            function(){});
+}
 
 var last_update_flag;
 function updateCheck(){
@@ -261,6 +338,7 @@ function updateCheck(){
                 updateSeg3D();
                 updatePC();
                 updateTexts();
+                updateWalls();
             }
         },
         function(e){}

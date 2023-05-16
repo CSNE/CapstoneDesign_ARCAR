@@ -8,6 +8,7 @@ import coordinates
 import io
 import base64
 import collections
+import building_detect
 
 def depthmap_to_pointcloud_json(*,
 	depth_map,color_image,
@@ -139,3 +140,14 @@ def seg3d_to_text_json(seg3ds:typing.List[combined.Segment3D]):
 			"z":avg(coordsZ)})
 	return obj
 
+def wall_to_json(pmrs:typing.List[building_detect.PlaneMatchResult]):
+	obj=[]
+	for pmr in pmrs:
+		obj.append({
+			"nvX":pmr.normal_vector[0],
+			"nvY":pmr.normal_vector[1],
+			"nvZ":pmr.normal_vector[2],
+			"x":pmr.center_real.x,
+			"y":pmr.center_real.y,
+			"z":pmr.center_real.z})
+	return obj

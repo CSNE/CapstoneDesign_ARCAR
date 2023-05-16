@@ -317,12 +317,13 @@ def display(img,*,stereo_right=None):
 		depth_blurred=maths.gaussian_blur(depth,5)
 		walls=building_detect.get_fit_candidates(depth_blurred,100,10,ss2rsm_depthmap)
 		
+		'''
 		for i in range(len(walls[:4])):
 			print(i)
 			print("  ",walls[i].match_ratio)
 			print("  ",walls[i].plane_definition)
 			print("  ",walls[i].normal_vector)
-			print("  ",walls[i].center_real)
+			print("  ",walls[i].center_real)'''
 	
 	if arguments.debug_output != "nothing":
 		loop_timer.split(starting="Segment visuals")
@@ -467,6 +468,9 @@ def display(img,*,stereo_right=None):
 			color_image=img,
 			sampleN=10000)
 		st.put_json("/pointcloud",pc_main)
+	if arguments.detect_walls:
+		wj=webdata.wall_to_json(walls[:2])
+		st.put_json("/walls",wj)
 	
 	st.put_string("/update_flag",str(random.random()))
 	
