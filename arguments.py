@@ -68,6 +68,9 @@ _ap.add_argument(
 _ap.add_argument(
 	"--detect-walls","-dw",
 	action="store_true")
+_ap.add_argument(
+	"--skip-wall-visuals","-swv",
+	action="store_true")
 
 # Arguments Parsing
 _args=_ap.parse_args()
@@ -76,6 +79,7 @@ source=_args.source
 debug_output=_args.debug_output
 pointcloud=_args.pointcloud
 detect_walls=_args.detect_walls
+do_wall_visual=not _args.skip_wall_visuals
 
 wc=_args.webcam_number
 vs=_args.video_speed

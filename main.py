@@ -357,24 +357,23 @@ def display(img,*,stereo_right=None,frame_name=None):
 		if arguments.detect_walls:
 			wvis_blurred_depth=visualizations.visualize_matrix(
 				depth_blurred,"Depth Blurred",clip_percentiles=(5,95))
-			wvis_error=[]
-			wvis_mask=[]
-			for i in range(4):
-				if i<len(walls_unfiltered):
-					wall=walls_unfiltered[i]
-					wvis_error.append(visualizations.visualize_matrix(
-						wall.error,F"Wall {i} Error",
-						clip_values=(-2,+2),cmap="seismic",
-						annotate_point=coordinates.Coordinates2D(
-							x=wall.plane_definition.originX,
-							y=wall.plane_definition.originY)))
-					wvis_mask.append(visualizations.visualize_matrix(
-						wall.mask,F"Wall {i} Mask",
-						cmap="Greys",
-						annotate_point=wall.center_map))
-				else:
-					wvis_error.append(None)
-					wvis_mask.append(None)
+			wvis_error=[None]*4
+			wvis_mask=[None]*4
+			if arguments.do_wall_visual:
+				for i in range(4):
+					if i<len(walls_unfiltered):
+						wall=walls_unfiltered[i]
+						wvis_error[i]=(visualizations.visualize_matrix(
+							wall.error,F"Wall {i} Error",
+							clip_values=(-2,+2),cmap="seismic",
+							annotate_point=coordinates.Coordinates2D(
+								x=wall.plane_definition.originX,
+								y=wall.plane_definition.originY)))
+						wvis_mask[i]=(visualizations.visualize_matrix(
+							wall.mask,F"Wall {i} Mask",
+							cmap="Greys",
+							annotate_point=wall.center_map))
+
 		
 
 		
@@ -534,20 +533,23 @@ def capture_loop():
 	elif arguments.source=="stereo_playback":
 		sp=stereo_playback.StereoPlayback(arguments.infile)
 		
+		force_refresh=False
 		def pch(q):
+			nonlocal force_refresh
 			if "type" in q:
 				t=q["type"][0]
 				print("Browser command:",t)
-				{"pause":lambda: sp.stop(),
-				"rewind":lambda: sp.rewind(),
-				"play":lambda: sp.play(),
-				"+1":lambda: sp.delta_frame(+1),
-				"-1":lambda: sp.delta_frame(-1),
-				"+10":lambda: sp.delta_frame(+10),
-				"-10":lambda: sp.delta_frame(-10),
-				"+100":lambda: sp.delta_frame(+100),
-				"-100":lambda: sp.delta_frame(-100),
-				"rand":lambda: sp.randframe()}[t]()
+				if t=="pause": sp.stop()
+				elif t=="rewind": sp.rewind()
+				elif t=="play": sp.play()
+				elif t=="+1": sp.delta_frame(+1)
+				elif t=="-1": sp.delta_frame(-1)
+				elif t=="+10": sp.delta_frame(+10)
+				elif t=="-10": sp.delta_frame(-10)
+				elif t=="+100": sp.delta_frame(+100)
+				elif t=="-100": sp.delta_frame(-100)
+				elif t=="reload": force_refresh=True
+				elif t=="rand": sp.randframe()
 			elif "jumpTo" in q:
 				jt=int(q["jumpTo"][0])
 				print("Jump frame:",jt)
@@ -558,9 +560,11 @@ def capture_loop():
 		last_fidx=None
 		while True:
 			sp.update()
-			if sp.frameindex == last_fidx:
+			if (not force_refresh) and (sp.frameindex == last_fidx):
 				time.sleep(0.01)
 				continue
+			# Refreshing!
+			force_refresh=False
 			framepath=sp.get_frame_fp()[0]
 			#print("Read frame",framepath)
 			last_fidx=sp.frameindex
