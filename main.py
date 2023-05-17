@@ -6,6 +6,7 @@ import arguments
 import platform
 if platform.system()=="Windows":
 	import os
+	import ansi
 	os.system("color") #enable color on Windows
 	print("Enabled "+ansi.CYAN+ansi.BOLD+"COLOR"+ansi.RESET)
 import ansi
