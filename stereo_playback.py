@@ -56,6 +56,10 @@ class StereoPlayback:
                 break
             self._fidx+=1
             #print(self._fidx)
+    def set_frame(self,n):
+        self._fidx=n
+        self.constrain_frame_index()
+        self.reanchor_play()
     
     def randframe(self):
         self._fidx=random.randint(0,len(self._frames)-1)
@@ -78,9 +82,12 @@ class StereoPlayback:
         
     def over(self):
         return self._fidx == len(self._frames)-1
-    def get_frame(self):
+    def get_frame_fp(self):
         fpL=self._frames[self._fidx].left
         fpR=self._frames[self._fidx].right
+        return fpL,fpR
+    def get_frame(self):
+        fpL,fpR=self.get_frame_fp()
         return (PIL.Image.open(fpL),PIL.Image.open(fpR))
 
 

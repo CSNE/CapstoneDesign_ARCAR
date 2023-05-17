@@ -212,11 +212,13 @@ loop_timer=sequence_timer.SequenceTimer(
 frame_timer=sequence_timer.SequenceTimer(
 	prefix="Frame Total Time > ",
 	orange_thresh=0.3,red_thresh=1.0)
-def display(img,*,stereo_right=None):
+def display(img,*,stereo_right=None,frame_name=None):
 	global frmN
 	frmN+=1
 	pad=" "*2+"#"*8+" "*2
-	print("\n"+ansi.BOLD+ansi.CYAN+pad+F"Frame {frmN:>4d}"+pad+ansi.RESET)
+	print("\n"+ansi.BOLD+ansi.BLUE+pad+F"Frame {frmN:>4d}"+pad+ansi.RESET)
+	if frame_name:
+		print(ansi.BLUE+""+frame_name+ansi.RESET)
 	frame_timer.split()
 	loop_timer.split(ending="Frame Acquisition")
 	if arguments.debug_output=="tk":
@@ -420,7 +422,10 @@ def display(img,*,stereo_right=None):
 			# Segmentations
 			st.put_image("/seg.jpg",seg_vis)
 			st.put_image("/com.jpg",combined_vis)
-			st.put_string("/information",str(frmN))
+			if frame_name is None:
+				st.put_string("/information",str(frmN))
+			else:
+				st.put_string("/information",str(frame_name))
 			
 			objects_json=webdata.segdepths_to_json(
 				segdepths_valid,img,mapper=ss2rsm_image)
@@ -519,19 +524,24 @@ def capture_loop():
 		sp=stereo_playback.StereoPlayback(arguments.infile)
 		
 		def pch(q):
-			
-			t=q["type"][0]
-			print("Browser command:",t)
-			{"pause":lambda: sp.stop(),
-			 "rewind":lambda: sp.rewind(),
-			 "play":lambda: sp.play(),
-			 "+1":lambda: sp.delta_frame(+1),
-			 "-1":lambda: sp.delta_frame(-1),
-			 "+10":lambda: sp.delta_frame(+10),
-			 "-10":lambda: sp.delta_frame(-10),
-			 "+100":lambda: sp.delta_frame(+100),
-			 "-100":lambda: sp.delta_frame(-100),
-			 "rand":lambda: sp.randframe()}[t]()
+			if "type" in q:
+				t=q["type"][0]
+				print("Browser command:",t)
+				{"pause":lambda: sp.stop(),
+				"rewind":lambda: sp.rewind(),
+				"play":lambda: sp.play(),
+				"+1":lambda: sp.delta_frame(+1),
+				"-1":lambda: sp.delta_frame(-1),
+				"+10":lambda: sp.delta_frame(+10),
+				"-10":lambda: sp.delta_frame(-10),
+				"+100":lambda: sp.delta_frame(+100),
+				"-100":lambda: sp.delta_frame(-100),
+				"rand":lambda: sp.randframe()}[t]()
+			elif "jumpTo" in q:
+				jt=int(q["jumpTo"][0])
+				print("Jump frame:",jt)
+				sp.set_frame(jt)
+
 		st.set_handler("/playbackControl",pch)
 		
 		last_fidx=None
@@ -540,11 +550,14 @@ def capture_loop():
 			if sp.frameindex == last_fidx:
 				time.sleep(0.01)
 				continue
+			framepath=sp.get_frame_fp()[0]
+			#print("Read frame",framepath)
 			last_fidx=sp.frameindex
 			if sp.over():
 				break
 			iL,iR=sp.get_frame()
-			display(iL,stereo_right=iR)
+			display(iL,stereo_right=iR,
+				frame_name=framepath)
 			if arguments.singleframe: break
 	elif arguments.source=="video":
 		startT=time.time()

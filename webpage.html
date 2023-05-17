@@ -23,6 +23,8 @@
 	<button onclick='playbackControl("+100");'>+100</button>
 	<button onclick='playbackControl("-100");'>-100</button>
 	<button onclick='playbackControl("rand");'>Random</button>
+	<input type="text" id="jumpTarget">
+	<button onclick='pbcJump();'>JUMP</button>
 	</div>
 	
 	<div id="information"></div>
@@ -36,6 +38,13 @@
 		function playbackControl(type){
 			var xhr=new XMLHttpRequest();
 			xhr.open("GET","/playbackControl?type="+encodeURIComponent(type));
+			xhr.send();
+		}
+		function pbcJump(){
+			var val=jumpTarget.value;
+			console.log("Jump req to "+val)
+			var xhr=new XMLHttpRequest();
+			xhr.open("GET","/playbackControl?jumpTo="+encodeURIComponent(val));
 			xhr.send();
 		}
 	</script>
@@ -92,6 +101,7 @@
 		addImage("werr1","Wall[1] Error");
 		addImage("werr2","Wall[2] Error");
 		addImage("werr3","Wall[3] Error");
+		addBr();
 		addImage("wmsk0","Wall[0] Mask");
 		addImage("wmsk1","Wall[1] Mask");
 		addImage("wmsk2","Wall[2] Mask");
