@@ -76,11 +76,13 @@ class ServerThread(threading.Thread):
 					self.end_headers()
 				
 		self._reqhandler=ReqHandler
-		
+
 	def put_data(self,k,v,mimetype=None):
 
 		resp= WebResponse(content=v,mimetype=mimetype)
 		self.set_handler(k,lambda q: resp)
+	def clear_data(self,k):
+		self.clear_handler(k)
 
 	def put_image(self,k,img):
 		bio=io.BytesIO()
@@ -100,6 +102,9 @@ class ServerThread(threading.Thread):
 		This has priority over regular data.
 		'''
 		self._handlers[path]=f
+	def clear_handler(self,path):
+		if path in self._handlers:
+			del self._handlers[path]
 		
 	def run(self):
 		#print("Server thread started")

@@ -318,8 +318,10 @@ def display(img,*,stereo_right=None,frame_name=None):
 	if arguments.detect_walls:
 		loop_timer.split(starting="Detect building")
 		depth_blurred=maths.gaussian_blur(depth,5)
-		walls=building_detect.get_fit_candidates(depth_blurred,100,10,ss2rsm_depthmap)
+		walls_unfiltered=building_detect.get_fit_candidates(depth_blurred,100,10,ss2rsm_depthmap)
 		
+		walls=[i for i in walls_unfiltered if i.match_ratio>0.15] #MAGIC: match thresh
+		print(F"{len(walls)} walls detected.                     ")
 		'''
 		for i in range(len(walls[:4])):
 			print(i)
@@ -358,17 +360,21 @@ def display(img,*,stereo_right=None,frame_name=None):
 			wvis_error=[]
 			wvis_mask=[]
 			for i in range(4):
-				wall=walls[i]
-				wvis_error.append(visualizations.visualize_matrix(
-					wall.error,F"Wall {i} Error",
-					clip_values=(-2,+2),cmap="seismic",
-					annotate_point=coordinates.Coordinates2D(
-						x=wall.plane_definition.originX,
-						y=wall.plane_definition.originY)))
-				wvis_mask.append(visualizations.visualize_matrix(
-					wall.mask,F"Wall {i} Mask",
-					cmap="Greys",
-					annotate_point=wall.center_map))
+				if i<len(walls_unfiltered):
+					wall=walls_unfiltered[i]
+					wvis_error.append(visualizations.visualize_matrix(
+						wall.error,F"Wall {i} Error",
+						clip_values=(-2,+2),cmap="seismic",
+						annotate_point=coordinates.Coordinates2D(
+							x=wall.plane_definition.originX,
+							y=wall.plane_definition.originY)))
+					wvis_mask.append(visualizations.visualize_matrix(
+						wall.mask,F"Wall {i} Mask",
+						cmap="Greys",
+						annotate_point=wall.center_map))
+				else:
+					wvis_error.append(None)
+					wvis_mask.append(None)
 		
 
 		
@@ -446,8 +452,12 @@ def display(img,*,stereo_right=None,frame_name=None):
 			if arguments.detect_walls:
 				st.put_image("/wblur.jpg",wvis_blurred_depth)
 				for i in range(4):
-					st.put_image(F"/werr{i}.jpg",wvis_error[i])
-					st.put_image(F"/wmsk{i}.jpg",wvis_mask[i])
+					if wvis_error[i] is not None:
+						st.put_image(F"/werr{i}.jpg",wvis_error[i])
+						st.put_image(F"/wmsk{i}.jpg",wvis_mask[i])
+					else:
+						st.clear_data(F"/werr{i}.jpg")
+						st.clear_data(F"/wmsk{i}.jpg")
 
 		elif arguments.debug_output=="file":
 			loop_timer.split(starting="File output save")
@@ -475,7 +485,7 @@ def display(img,*,stereo_right=None,frame_name=None):
 			sampleN=10000)
 		st.put_json("/pointcloud",pc_main)
 	if arguments.detect_walls:
-		wj=webdata.wall_to_json(walls[:2])
+		wj=webdata.wall_to_json(walls)
 		st.put_json("/walls",wj)
 	
 	st.put_string("/update_flag",str(random.random()))
