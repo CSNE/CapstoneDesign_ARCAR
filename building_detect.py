@@ -90,7 +90,7 @@ def realize_plane(shape,pd:PlaneDefinition):
 
 PlaneMatchResult=collections.namedtuple(
 	"PlaneMatchResult",
-	["match_ratio","plane_definition","normal_vector","mask","error","depth","center_real","center_map"])
+	["match_ratio","plane_definition","normal_vector","mask_prechoke","mask","error","depth","center_real","center_map"])
 def get_fit_candidates(depthmap,n,r,sstrsm):
 	res=[]
 	for i in range(n):
@@ -108,11 +108,20 @@ def get_fit_candidates(depthmap,n,r,sstrsm):
 		error=depthmap-plane
 		#visualizations.visualize_matrix(ext_error,clip_values=(-1,+2)).save("out/err.png")
 		
-		err_threshd=numpy.ma.masked_greater(numpy.absolute(error),depth*magic.walls.inwall_thresh_ratio)
-		ratio=err_threshd.count() / err_threshd.size
+		err_threshed=numpy.ma.masked_greater(numpy.absolute(error),depth*magic.walls.inwall_thresh_ratio)
+		mask_prechoke=numpy.logical_not(err_threshed.mask)
 		
-		mask=numpy.logical_not(err_threshd.mask)
-		#print(err_threshd.dtype)
+		emask_blurred=maths.gaussian_blur(mask_prechoke.astype(numpy.float32),magic.walls.choke_sdev)
+		emask_choked=numpy.ma.masked_greater(emask_blurred,magic.walls.choke_thresh)
+		mask=emask_choked.mask
+		mask_nz=numpy.count_nonzero(mask)
+		
+		if mask_nz==0:
+			continue
+			
+		ratio=mask_nz / mask.size
+		#print(ratio)
+		
 		com=scipy.ndimage.center_of_mass(mask)
 		comZ=pd.f(*com)
 		com_real=sstrsm.map_pxcoords(pxX=com[1],pxY=com[0],depth=comZ)
@@ -126,6 +135,7 @@ def get_fit_candidates(depthmap,n,r,sstrsm):
 			match_ratio=ratio,
 			plane_definition=pd,
 			normal_vector=nvec,
+			mask_prechoke=mask_prechoke,
 			mask=mask,
 			error=error,
 			depth=depth,
@@ -144,14 +154,13 @@ def get_fit_candidates(depthmap,n,r,sstrsm):
 	while i<len(res):
 		j=len(res)-1
 		while j>i:
-			nv_delta=Tuples.mag(
-				Tuples.sub(
-					res[i].normal_vector,
-					res[j].normal_vector))
+			nv_dot=Tuples.dot(
+				res[i].normal_vector,
+				res[j].normal_vector)
 			#print("NV-i",res[i][1].normal_vector)
 			#print("NV-j",res[j][1].normal_vector)
 			#print("NV Delta",nv_delta)
-			if nv_delta<magic.walls.nvec_same_thresh:
+			if nv_dot>magic.walls.nvec_dot_thresh:
 				#print("Remove",j)
 				del res[j]
 			j-=1
@@ -185,8 +194,16 @@ def _test_infer_gradient():
 		print("  ",fc[i].normal_vector)
 		print("  ",fc[i].center_real)
 		visualizations.visualize_matrix(
+			realize_plane(depth.shape,fc[i].plane_definition),
+			annotate_point=coordinates.Coordinates2D(
+						x=fc[i].plane_definition.originX,
+						y=fc[i].plane_definition.originY)).save(F"out/plane{i}.png")
+		visualizations.visualize_matrix(
 			fc[i].mask,
-			annotate_point=fc[i].center_map).save(F"out/fit{i}.png")
+			annotate_point=fc[i].center_map).save(F"out/mask{i}.png")
+		visualizations.visualize_matrix(
+			fc[i].mask_prechoke,
+			annotate_point=fc[i].center_map).save(F"out/prechoke{i}.png")
 		visualizations.visualize_matrix(
 				depth_blurred-realize_plane(
 					depth_blurred.shape,

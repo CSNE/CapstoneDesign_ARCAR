@@ -7,8 +7,10 @@ class visuals:
 	
 class walls:
 	# How much area of the screen the wall should occupy for it to be valid
-	match_threshold=0.15
+	match_threshold=0.05
 	
+	choke_sdev=5
+	choke_thresh=0.9
 	# How many samples to... sample
 	random_samples=100
 	# Radius for calculating derivative
@@ -19,9 +21,9 @@ class walls:
 	inwall_thresh_ratio=0.05
 	# Walls farther than this will be discarded
 	max_distance=30
-	# Normal vectors with difference magnitude smaller than this will
+	# Normal vectors with dot products bigger than this will
 	# be considered the same.
-	nvec_same_thresh=0.5
+	nvec_dot_thresh=0.7
 
 class system:
 	tk_initialize_wait=0.5

@@ -366,6 +366,7 @@ def display(img,*,stereo_right=None,frame_name=None):
 				depth_blurred,"Depth Blurred",clip_percentiles=(5,95))
 			wvis_error=[None]*4
 			wvis_mask=[None]*4
+			wvis_maskpc=[None]*4
 			if arguments.do_wall_visual:
 				for i in range(4):
 					if i<len(walls_unfiltered):
@@ -377,7 +378,11 @@ def display(img,*,stereo_right=None,frame_name=None):
 								x=wall.plane_definition.originX,
 								y=wall.plane_definition.originY)))
 						wvis_mask[i]=(visualizations.visualize_matrix(
-							wall.mask,F"Wall {i} Mask",
+							wall.mask,F"Wall {i} Mask (Ratio={wall.match_ratio*100:.1f}%)",
+							cmap="Greys",
+							annotate_point=wall.center_map))
+						wvis_maskpc[i]=(visualizations.visualize_matrix(
+							wall.mask_prechoke,F"Wall {i} Pre-Choke Mask",
 							cmap="Greys",
 							annotate_point=wall.center_map))
 
@@ -461,9 +466,11 @@ def display(img,*,stereo_right=None,frame_name=None):
 					if wvis_error[i] is not None:
 						st.put_image(F"/werr{i}.jpg",wvis_error[i])
 						st.put_image(F"/wmsk{i}.jpg",wvis_mask[i])
+						st.put_image(F"/wmpc{i}.jpg",wvis_maskpc[i])
 					else:
 						st.clear_data(F"/werr{i}.jpg")
 						st.clear_data(F"/wmsk{i}.jpg")
+						st.clear_data(F"/wmpc{i}.jpg")
 
 		elif arguments.debug_output=="file":
 			loop_timer.split(starting="File output save")
