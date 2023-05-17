@@ -10,6 +10,7 @@ import random
 import collections
 from tuples import Tuples
 import scipy.ndimage
+import magic
 
 def derivative(dm):
 	pass
@@ -107,7 +108,7 @@ def get_fit_candidates(depthmap,n,r,sstrsm):
 		error=depthmap-plane
 		#visualizations.visualize_matrix(ext_error,clip_values=(-1,+2)).save("out/err.png")
 		
-		err_threshd=numpy.ma.masked_greater(numpy.absolute(error),depth*0.05) #MAGIC: depth thressh
+		err_threshd=numpy.ma.masked_greater(numpy.absolute(error),depth*magic.walls.inwall_thresh_ratio)
 		ratio=err_threshd.count() / err_threshd.size
 		
 		mask=numpy.logical_not(err_threshd.mask)
@@ -131,7 +132,7 @@ def get_fit_candidates(depthmap,n,r,sstrsm):
 			center_real=com_real,
 			center_map=coordinates.Coordinates2D(x=com[1],y=com[0])))
 	
-	res=[i for i in res if i.depth<30] #MAGIC: maximum distance
+	res=[i for i in res if i.depth<magic.walls.max_distance] #MAGIC: maximum distance
 	res.sort(key=lambda x:x.match_ratio, reverse=True) # High matches first
 	
 	for i in res:
@@ -150,7 +151,7 @@ def get_fit_candidates(depthmap,n,r,sstrsm):
 			#print("NV-i",res[i][1].normal_vector)
 			#print("NV-j",res[j][1].normal_vector)
 			#print("NV Delta",nv_delta)
-			if nv_delta<0.5: #MAGIC: normal duplicate threshold
+			if nv_delta<magic.walls.nvec_same_thresh:
 				#print("Remove",j)
 				del res[j]
 			j-=1

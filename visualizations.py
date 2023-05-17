@@ -17,7 +17,7 @@ import numpy.ma
 import random
 import io
 
-
+import magic
 
 def visualize_segmentations(segments,size):
 	'''
@@ -90,7 +90,7 @@ font_list=[
 	"arialbd.ttf", # Windows
 	"arial.ttf" # Windows 2
 	]
-font_size=36
+font_size=magic.visuals.font_size
 font=None
 for font_path in font_list:
 	try:

@@ -87,6 +87,7 @@ import combined
 import visualizations
 import stereo_playback
 import building_detect
+import magic
 
 if arguments.stereo_solvers["opencv"]:
 	import_timer.split(starting="Stereo")
@@ -157,7 +158,7 @@ if arguments.debug_output=="tk":
 	setup_timer.split(starting="Tk")
 	img_disp_root=tk_display.ImageDisplayerRoot()
 	img_disp_root.start()
-	time.sleep(0.5) # Race condition
+	time.sleep(magic.system.tk_initialize_wait) # Race condition
 
 	tid_raw=tk_display.ImageDisplayWindow(img_disp_root,"Source Image")
 	tid_str=tk_display.ImageDisplayWindow(img_disp_root,"Stereo Right")
@@ -173,7 +174,7 @@ if arguments.debug_output=="tk":
 # Web Server setup
 
 setup_timer.split(starting="Webserver")
-server_port=28301
+server_port=magic.web.server_port
 st=web.ServerThread(server_port)
 st.start()
 cleanup_functions.append(lambda:st.die())
@@ -234,7 +235,7 @@ def display(img,*,stereo_right=None,frame_name=None):
 	# Depth estimation
 	if arguments.stereo_solvers["monodepth"]:
 		loop_timer.split(starting="MonoDepth")
-		md_raw=md_de.estimate(img,depth_multiplier=0.3)
+		md_raw=md_de.estimate(img,depth_multiplier=magic.monodepth.multiplier)
 		# Restore aspect ratio
 		img_smallsize=maths.fit(img.size,(480,320))
 		depth_monodepth=maths.resize_matrix(md_raw,(img_smallsize[1],img_smallsize[0]))
@@ -247,7 +248,7 @@ def display(img,*,stereo_right=None,frame_name=None):
 			loop_timer.split(starting="OpenCV")
 			depth_opencv=stereo.stereo_calculate(
 				left=stereo_left,right=stereo_right,
-				depth_multiplier=700) #MAGIC: Depth correction factor
+				depth_multiplier=magic.opencv.multiplier) 
 			if hasattr(depth_opencv,"count"): # Only has it if MaskedArray
 				pass#print("OpenCV valid pixels: {}/{}".format(depth_opencv.count(),depth_opencv.size))
 		else:
@@ -261,7 +262,7 @@ def display(img,*,stereo_right=None,frame_name=None):
 			depth_psm = psmnet.calculate(
 				left=stereo_left_rsz,
 				right=stereo_right_rsz,
-				depth_multiplier=40).astype(float) #MAGIC: Depth correction factor
+				depth_multiplier=magic.psm.multiplier).astype(float)
 		else:
 			depth_psm=None
 
@@ -270,7 +271,7 @@ def display(img,*,stereo_right=None,frame_name=None):
 			depth_igev = igev.calculate(
 				left=stereo_left_rsz,
 				right=stereo_right_rsz,
-				depth_multiplier=50) #MAGIC: Depth correction factor
+				depth_multiplier=magic.igev.multiplier) 
 		else:
 			depth_igev=None
 	else:
@@ -289,7 +290,7 @@ def display(img,*,stereo_right=None,frame_name=None):
 	# Filter out SegDepths with too little depth data
 	segdepths_valid=[]
 	for sd in segdepths_raw:
-		if sd.depth_valid_ratio<0.1:
+		if sd.depth_valid_ratio<magic.segdepth.ratio_threshold:
 			continue
 		segdepths_valid.append(sd)
 	diff=len(segdepths_raw)-len(segdepths_valid)
@@ -298,10 +299,12 @@ def display(img,*,stereo_right=None,frame_name=None):
 	
 	ss2rsm_image=coordinates.ScreenSpaceToRealSpaceMapper(
 		image_width=img.width,image_height=img.height,
-		reference_distance=5,reference_width=8)
+		reference_distance=magic.mapping.reference_distance,
+		reference_width=magic.mapping.reference_width)
 	ss2rsm_depthmap=coordinates.ScreenSpaceToRealSpaceMapper(
 		image_width=depth.shape[1],image_height=depth.shape[0],
-		reference_distance=5,reference_width=8)
+		reference_distance=magic.mapping.reference_distance,
+		reference_width=magic.mapping.reference_width)
 	
 	loop_timer.split(starting="Build SegDepth JSON")
 	sgj=webdata.segdepths_to_json(segdepths_valid,img,ss2rsm_image)
@@ -317,10 +320,14 @@ def display(img,*,stereo_right=None,frame_name=None):
 	
 	if arguments.detect_walls:
 		loop_timer.split(starting="Detect building")
-		depth_blurred=maths.gaussian_blur(depth,5)
-		walls_unfiltered=building_detect.get_fit_candidates(depth_blurred,100,10,ss2rsm_depthmap)
+		depth_blurred=maths.gaussian_blur(depth,magic.walls.blur_sdev)
+		walls_unfiltered=building_detect.get_fit_candidates(
+			depth_blurred,
+			magic.walls.random_samples,
+			magic.walls.derivative_radius,
+			ss2rsm_depthmap)
 		
-		walls=[i for i in walls_unfiltered if i.match_ratio>0.15] #MAGIC: match thresh
+		walls=[i for i in walls_unfiltered if i.match_ratio>magic.walls.match_threshold] #MAGIC: match thresh
 		print(F"{len(walls)} walls detected.                     ")
 		'''
 		for i in range(len(walls[:4])):
@@ -397,25 +404,25 @@ def display(img,*,stereo_right=None,frame_name=None):
 					pc_monodepth=webdata.depthmap_to_pointcloud_json(
 						depth_map=depth_monodepth,mapper=ss2rsm_image,
 						color_image=img,
-						sampleN=5000)
+						sampleN=magic.visuals.debug_pointcloud_count)
 					st.put_json("/pc_monodepth.json",pc_monodepth)
 				if arguments.stereo_solvers["opencv"]:
 					pc_opencv=webdata.depthmap_to_pointcloud_json(
 						depth_map=depth_opencv,mapper=ss2rsm_image,
 						color_image=img,
-						sampleN=5000)
+						sampleN=magic.visuals.debug_pointcloud_count)
 					st.put_json("/pc_opencv.json",pc_opencv)
 				if arguments.stereo_solvers["psm"]:
 					pc_psmnet=webdata.depthmap_to_pointcloud_json(
 						depth_map=depth_psm,mapper=ss2rsm_image,
 						color_image=img,
-						sampleN=5000)
+						sampleN=magic.visuals.debug_pointcloud_count)
 					st.put_json("/pc_psmnet.json",pc_psmnet)
 				if arguments.stereo_solvers["igev"]:
 					pc_igev=webdata.depthmap_to_pointcloud_json(
 						depth_map=depth_igev,mapper=ss2rsm_image,
 						color_image=img,
-						sampleN=5000)
+						sampleN=magic.visuals.debug_pointcloud_count)
 					st.put_json("/pc_igev.json",pc_igev)
 			
 			loop_timer.split(starting="Update Debug Page")
@@ -481,7 +488,7 @@ def display(img,*,stereo_right=None,frame_name=None):
 		pc_main=webdata.depthmap_to_pointcloud_json(
 			depth_map=depth,mapper=ss2rsm_image,
 			color_image=img,
-			sampleN=10000)
+			sampleN=magic.visuals.mainpage_pointcloud_count)
 		st.put_json("/pointcloud",pc_main)
 	if arguments.detect_walls:
 		wj=webdata.wall_to_json(walls)
