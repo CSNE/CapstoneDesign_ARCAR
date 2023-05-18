@@ -324,11 +324,9 @@ def display(img,*,stereo_right=None,frame_name=None):
 			print("  ",walls[i].center_real)'''
 	
 	if arguments.debug_output != "nothing":
-		loop_timer.split(starting="Segment visuals")
+		loop_timer.split(starting="Segment Visuals")
 		# Visualize Segdepths
 		seg_vis=visualizations.visualize_segmentations(segs,img.size)
-		
-		loop_timer.split(starting="SegDepth Visuals")
 		combined_vis=visualizations.visualize_seg3d(seg3ds,img.size,img)
 		
 		loop_timer.split(starting="Matrix Visuals")
@@ -348,6 +346,7 @@ def display(img,*,stereo_right=None,frame_name=None):
 			str_dif=PIL.ImageChops.difference(img,stereo_right)
 		
 		if arguments.detect_walls:
+			loop_timer.split(starting="Wall Detection")
 			wvis_blurred_depth=visualizations.visualize_matrix(
 				depth_blurred,"Depth Blurred",clip_percentiles=(5,95))
 			wvis_error=[None]*4

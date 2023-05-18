@@ -4,6 +4,7 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 
 const scene = new THREE.Scene();
 
@@ -240,7 +241,63 @@ function updateTexts(){
         function(){});
 }
 
-// Display: Point Cloud
+function createSquareFrameGeometry(innerL,outerL){
+    const geometry = new THREE.BufferGeometry();
+    
+    let i1=[+innerL,+innerL,0];
+    let i2=[-innerL,+innerL,0];
+    let i3=[-innerL,-innerL,0];
+    let i4=[+innerL,-innerL,0];
+    let o1=[+outerL,+outerL,0];
+    let o2=[-outerL,+outerL,0];
+    let o3=[-outerL,-outerL,0];
+    let o4=[+outerL,-outerL,0];
+    const vertices = new Float32Array( [
+        +innerL,+innerL,0,
+        -outerL,+outerL,0,
+        +outerL,+outerL,0,
+        
+        +innerL,+innerL,0,
+        -outerL,+outerL,0,
+        -innerL,+innerL,0,
+        
+        
+        -innerL,+innerL,0,
+        -outerL,-outerL,0,
+        -outerL,+outerL,0,
+        
+        -innerL,+innerL,0,
+        -outerL,-outerL,0,
+        -innerL,-innerL,0,
+        
+        
+        -innerL,-innerL,0,
+        +outerL,-outerL,0,
+        -outerL,-outerL,0,
+        
+        -innerL,-innerL,0,
+        +outerL,-outerL,0,
+        +innerL,-innerL,0,
+        
+        
+        +innerL,-innerL,0,
+        +outerL,+outerL,0,
+        +outerL,-outerL,0,
+        
+        +innerL,-innerL,0,
+        +outerL,+outerL,0,
+        +innerL,+innerL,0]
+    );
+    
+    //console.log(vertices);
+
+    // itemSize = 3 because there are 3 values (components) per vertex
+    geometry.setAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
+    geometry.computeBoundingBox();
+    return geometry;
+}
+
+// Display: Walls
 var object_walls=[];
 var planeSize=3.0;
 function setWalls(wallList){
@@ -260,7 +317,9 @@ function setWalls(wallList){
         let laY=wall["y"]+wall["nvY"];
         let laZ=wall["z"]+wall["nvZ"];
         let tContent = "Wall "+i;
-        let tSize=0.5;
+        let tSize=0.4;
+        
+        /*
         
         const objGeom = new THREE.PlaneGeometry(planeSize,planeSize);
         const objMat= new THREE.MeshStandardMaterial();
@@ -268,7 +327,17 @@ function setWalls(wallList){
         //const objMat = new THREE.LineBasicMaterial();
         objMat.color=new THREE.Color(0,1,1);
         //objMat.side=THREE.DoubleSide;
-        const objMesh = new THREE.Mesh(objGeom,objMat);
+        const objMesh = new THREE.Mesh(objGeom,objMat);*/
+        const objGeom=BufferGeometryUtils.mergeGeometries(
+            [createSquareFrameGeometry(0.9,1.0),
+             createSquareFrameGeometry(1.2,1.3)],false);
+                                                          
+        
+        const objMat = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
+        objMat.color = new THREE.Color(0.5,0.0,0.5);
+        objMat.side=THREE.DoubleSide;
+        const objMesh = new THREE.Mesh( objGeom, objMat );
+    
         objMesh.position.x=x;
         objMesh.position.y=y;
         objMesh.position.z=z;
@@ -292,7 +361,7 @@ function setWalls(wallList){
             const textMat= new THREE.MeshBasicMaterial();
             //objMat.side=THREE.DoubleSide;
             const textMesh = new THREE.Mesh(textGeom,textMat);
-            textMat.color=new THREE.Color(0,1,1);
+            textMat.color=new THREE.Color(1.0,0.3,1.0);
             textMesh.position.x=x;
             textMesh.position.y=y;
             textMesh.position.z=z;
