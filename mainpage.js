@@ -57,46 +57,6 @@ function request(location,succ,fail){
     xhr.send();
 }
 
-// Display: SegDepth
-const tloader = new THREE.TextureLoader();
-var object_meshes=[];
-function setObjects(objs){
-    // Remove all objects first
-    for (var i=0;i<object_meshes.length;i++){
-        scene.remove(object_meshes[i])
-    }
-    object_meshes=[];
-
-    // Add objects
-    for (var i=0;i<objs.length;i++){
-        var obj=objs[i];
-
-        const objGeom = new THREE.PlaneGeometry(obj["sizeX"], obj["sizeY"]);
-
-        const objMat= new THREE.MeshBasicMaterial();
-        objMat.side=THREE.DoubleSide;
-        objMat.color.setRGB(1,1,1);
-        objMat.map=tloader.load(obj["texture"]);
-
-        const objMesh = new THREE.Mesh(objGeom,objMat);
-        objMesh.position.x=obj["coordX"];
-        objMesh.position.y=obj["coordY"];
-        objMesh.position.z=-obj["coordZ"];
-
-        scene.add(objMesh);
-        object_meshes.push(objMesh);
-    }
-
-}
-
-// Periodically fetch objects from python server
-function getObjData(){
-    request(
-        "/objects",
-        function(resp){setObjects(JSON.parse(resp));},
-        function(){})
-}
-
 
 // Display: Seg3D
 function buildWireMesh(pointlist){
@@ -133,6 +93,33 @@ function buildWireMesh(pointlist){
     return line;
 }
 
+// Use Catmull-Rom Curve
+function buildWireMeshCC(pointlist){
+    
+    let points=[];
+    for (var i in pointlist){
+        var pt=pointlist[i];
+        points.push(new THREE.Vector3(pt[0],pt[1],pt[2]));
+    }
+    const curve = new THREE.CatmullRomCurve3(points);
+    
+    //const curvePoints = curve.getPoints( 100 );
+    //const geometry = new THREE.BufferGeometry().setFromPoints( curvePoints );
+    const geometry = new THREE.TubeGeometry(
+        curve,
+        128, //Curve Segments
+        0.05, //Radius
+        4,   //Radial Segments
+        true //Closed
+    )
+    
+    const material = new THREE.MeshBasicMaterial();
+    material.color=new THREE.Color(1,0,0);
+    var line = new THREE.Mesh( geometry, material );
+    
+    return line;
+}
+
 var wire_meshes=[];
 function setSeg3D(s3d){
     // Remove all objects first
@@ -144,7 +131,7 @@ function setSeg3D(s3d){
     for (var i in s3d){
         let name = s3d[i]["name"];
         let pointlist= s3d[i]["pointlist"];
-        let wm=buildWireMesh(pointlist);
+        let wm=buildWireMeshCC(pointlist);
         scene.add(wm);
         wire_meshes.push(wm);
     }
@@ -334,7 +321,6 @@ function updateCheck(){
             if (resp != last_update_flag){
                 console.log("Updating "+resp);
                 last_update_flag=resp;
-                //getObjData();
                 updateSeg3D();
                 updatePC();
                 updateTexts();

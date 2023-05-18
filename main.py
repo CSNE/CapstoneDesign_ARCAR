@@ -279,23 +279,11 @@ def display(img,*,stereo_right=None,frame_name=None):
 		depth_psm=None
 		depth_igev=None
 
-	loop_timer.split(starting="Seg+Depth Combine")
+
 	# Get the first non-null entry in the list - maybe make this smarter
 	depth=next(filter(
 		lambda x: x is not None,
 		[depth_igev,depth_opencv,depth_psm,depth_monodepth]))
-	segdepths_raw=combined.calculate_segdepth(segs,depth)
-	#depth_blurred=maths.gaussian_blur(depth,3)
-
-	# Filter out SegDepths with too little depth data
-	segdepths_valid=[]
-	for sd in segdepths_raw:
-		if sd.depth_valid_ratio<magic.segdepth.ratio_threshold:
-			continue
-		segdepths_valid.append(sd)
-	diff=len(segdepths_raw)-len(segdepths_valid)
-	if diff != 0:
-		pass#print(F"Removed {diff} SegDepths out of {len(segdepths_raw)} because of insufficient depth data")
 	
 	ss2rsm_image=coordinates.ScreenSpaceToRealSpaceMapper(
 		image_width=img.width,image_height=img.height,
@@ -306,17 +294,15 @@ def display(img,*,stereo_right=None,frame_name=None):
 		reference_distance=magic.mapping.reference_distance,
 		reference_width=magic.mapping.reference_width)
 	
-	loop_timer.split(starting="Build SegDepth JSON")
-	sgj=webdata.segdepths_to_json(segdepths_valid,img,ss2rsm_image)
-	st.put_json("/objects",sgj)
 	
 	loop_timer.split(starting="Seg3D Calculate")
 	
-	seg3ds=combined.segments_3dify(
+	seg3ds=combined.segments_depth_combine(
 		segments=segs,
 		sstrsm=ss2rsm_image,
 		depthmap=depth,
-		normal_sample_offset=None)#3)
+		normal_sample_offset=None)
+	
 	
 	if arguments.detect_walls:
 		loop_timer.split(starting="Detect building")
@@ -343,7 +329,7 @@ def display(img,*,stereo_right=None,frame_name=None):
 		seg_vis=visualizations.visualize_segmentations(segs,img.size)
 		
 		loop_timer.split(starting="SegDepth Visuals")
-		combined_vis=visualizations.visualize_segdepth(segdepths_valid,img.size,img)
+		combined_vis=visualizations.visualize_seg3d(seg3ds,img.size,img)
 		
 		loop_timer.split(starting="Matrix Visuals")
 		if arguments.stereo_solvers["monodepth"]:
@@ -445,10 +431,6 @@ def display(img,*,stereo_right=None,frame_name=None):
 			else:
 				st.put_string("/information",str(frame_name))
 			
-			objects_json=webdata.segdepths_to_json(
-				segdepths_valid,img,mapper=ss2rsm_image)
-			st.put_json("/objects",objects_json)
-			
 			# Depths
 			if arguments.stereo_solvers["monodepth"]:
 				st.put_image("/dmd.jpg",dvis_md)
@@ -486,9 +468,11 @@ def display(img,*,stereo_right=None,frame_name=None):
 			dvis_igev.save("out/dvis_igev.jpg")
 	
 	loop_timer.split(starting="Update Main Page")
-	seg3d_json=webdata.seg3d_to_json(seg3ds)
+	seg3d_json=webdata.seg3d_to_json(
+		seg3ds,use_flat=arguments.flatten_segments)
 	st.put_json("/seg3d",seg3d_json)
-	seg3dText_json=webdata.seg3d_to_text_json(seg3ds)
+	seg3dText_json=webdata.seg3d_to_text_json(
+		seg3ds,use_flat=arguments.flatten_segments)
 	st.put_json("/texts",seg3dText_json)
 	if arguments.pointcloud:
 		loop_timer.split(starting="Mainpage Point Cloud")

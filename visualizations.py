@@ -104,7 +104,7 @@ if font is None:
 	font=PIL.ImageFont.load_default()
 
 
-def visualize_segdepth(segdepths,size,bg=None):
+def visualize_seg3d(segdepths,size,bg=None):
 	'''
 	Visualize segdepths.
 	'''

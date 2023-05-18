@@ -62,7 +62,7 @@ Argument list (`python3 main.py --help` may be more accurate):
 - `--verbose` `-v` : Verbose logging. Repeat for even more verbosity. (`-vvv`)
 - `--pointcloud` `-pc` : Enable "point-cloud" visuals. Bad for performance.
 - `--detect-walls` `-dw` : Enable wall detection.
-
+- `--flatten-segments` `-fs` : Make segments flat.
 
 Examples:  
 `python3 main.py --source=image -i testimg.png --single-frame`  

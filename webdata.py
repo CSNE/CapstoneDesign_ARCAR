@@ -42,73 +42,16 @@ def depthmap_to_pointcloud_json(*,
 			"r":clr[0]/255,"g":clr[1]/255,"b":clr[2]/255})
 	return res
 
-def segdepths_to_json(
-		segdepths: typing.List[combined.SegDepth2D],
-		orig_img: PIL.Image,
-		mapper:coordinates.ScreenSpaceToRealSpaceMapper):
-	'''
-	Pack all the segdepth data into a JSON,
-	to be used in the browser visualizer.
-	'''
-	orig_img_size=orig_img.size
-	objects_json=[]
-	for sd in segdepths:
-		dep=sd.depth_average
-		seg=sd.segment
-		
-		# Calculate bounding boxes
-		bbox_center_X=(seg.bbox_pixel.xmin+seg.bbox_pixel.xmax)/2
-		bbox_size_X=seg.bbox_pixel.xmax-seg.bbox_pixel.xmin
-		bbox_center_Y=(seg.bbox_pixel.ymin+seg.bbox_pixel.ymax)/2
-		bbox_size_Y=seg.bbox_pixel.ymax-seg.bbox_pixel.ymin
-		
-		
-		acXmin, acYmin, _ = mapper.map_pxcoords(
-			pxX=seg.bbox_pixel.xmin,
-			pxY=seg.bbox_pixel.ymax,
-			depth=dep)
-		acXmax, acYmax, _ = mapper.map_pxcoords(
-			pxX=seg.bbox_pixel.xmax,
-			pxY=seg.bbox_pixel.ymin,
-			depth=dep)
-		
-		actual_coords_X=(acXmax+acXmin)/2
-		actual_coords_Y=(acYmax+acYmin)/2
-		actual_size_X=(acXmax-acXmin)
-		actual_size_Y=(acYmax-acYmin)
-		
-		# Get texture, a 100x100(max) JPG in b64 format
-		tex=orig_img.crop((
-			seg.bbox_pixel.xmin,seg.bbox_pixel.ymin,
-			seg.bbox_pixel.xmax,seg.bbox_pixel.ymax))
-		if tex.width>tex.height:
-			if tex.width>100:
-				tex=tex.resize((100,round(100/tex.width*tex.height)))
-		else:
-			if tex.height>100:
-				tex=tex.resize((round(100/tex.height*tex.width),100))
-		
-		bio=io.BytesIO()
-		tex.save(bio,format="JPEG")
-		b64=base64.b64encode(bio.getvalue()).decode()
-		
-		# Finally, pack it into a JSON-able format
-		obj_data={"name":str(seg.name),
-			 "coordX":float(actual_coords_X),
-			 "coordY":float(actual_coords_Y),
-			 "coordZ":float(dep),
-			 "sizeX":float(actual_size_X),
-			 "sizeY":float(actual_size_Y),
-			 "texture":"data:image/jpeg;base64,"+b64}
-		
-		objects_json.append(obj_data)
-	return objects_json
 
-def seg3d_to_json(seg3ds:typing.List[combined.Segment3D]):
+def seg3d_to_json(seg3ds:typing.List[combined.Segment3D],use_flat=False):
 	obj=[]
 	for seg3d in seg3ds:
 		pointlist=[]
-		for point in seg3d.point_list:
+		
+		if use_flat: plist=seg3d.point_list_flat
+		else: plist=seg3d.point_list
+		
+		for point in plist:
 			pointlist.append([point.x,point.y,point.z])
 		obj.append(
 			{"name":seg3d.name,
@@ -122,13 +65,17 @@ Text3D = collections.namedtuple(
 centerMM = lambda l: (min(l)+max(l))/2 #Min-Max Center
 median = lambda l: sorted(l)[len(l)/2]
 avg=lambda l: sum(l)/len(l)
-def seg3d_to_text_json(seg3ds:typing.List[combined.Segment3D]):
+def seg3d_to_text_json(seg3ds:typing.List[combined.Segment3D],use_flat=False):
 	obj=[]
 	for seg3d in seg3ds:
 		coordsX=[]
 		coordsY=[]
 		coordsZ=[]
-		for point in seg3d.point_list:
+		
+		if use_flat: plist=seg3d.point_list_flat
+		else: plist=seg3d.point_list
+		
+		for point in plist:
 			coordsX.append(point.x)
 			coordsY.append(point.y)
 			coordsZ.append(point.z)
