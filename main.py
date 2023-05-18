@@ -222,7 +222,7 @@ def display(img,*,stereo_right=None,frame_name=None):
 	if frame_name:
 		print(ansi.BLUE+""+frame_name+ansi.RESET)
 	frame_timer.split()
-	loop_timer.split(ending="Frame Acquisition")
+	loop_timer.split(ending="(Frame Acquisition)")
 	if arguments.debug_output=="tk":
 		if img_disp_root.opt_mirror:
 			img=img.transpose(PIL.Image.FLIP_LEFT_RIGHT)

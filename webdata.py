@@ -68,23 +68,18 @@ avg=lambda l: sum(l)/len(l)
 def seg3d_to_text_json(seg3ds:typing.List[combined.Segment3D],use_flat=False):
 	obj=[]
 	for seg3d in seg3ds:
-		coordsX=[]
-		coordsY=[]
-		coordsZ=[]
-		
-		if use_flat: plist=seg3d.point_list_flat
-		else: plist=seg3d.point_list
-		
-		for point in plist:
-			coordsX.append(point.x)
-			coordsY.append(point.y)
-			coordsZ.append(point.z)
+
+		x=(seg3d.bbox_flat.xmin+seg3d.bbox_flat.xmax)/2
+		y=seg3d.bbox_flat.ymax
+		z=seg3d.bbox_flat.zmin
+		sz=0.05*abs(z)
+
 		obj.append({
 			"text":seg3d.name,
-			"size":0.2,
-			"x":avg(coordsX),
-			"y":avg(coordsY),
-			"z":avg(coordsZ)})
+			"size":sz,
+			"x":x,
+			"y":y+sz/2,
+			"z":z})
 	return obj
 
 def wall_to_json(pmrs:typing.List[building_detect.PlaneMatchResult]):

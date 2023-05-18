@@ -34,7 +34,8 @@ Segment3D =collections.namedtuple(
 	["segment","name","confidence",
 	 "point_list","point_list_flat","center_of_mass",
 	 "depth_average","depth_min","depth_max",
-	 "depth_valid","depth_valid_ratio"])
+	 "depth_valid","depth_valid_ratio",
+	 "bbox","bbox_flat"])
 
 def sample_matrix(*,relX,relY,mat):
 	assert 0.0<=relX<=1.0
@@ -45,6 +46,7 @@ def sample_matrix(*,relX,relY,mat):
 	y=round(relY*sizY-0.5)
 	if y==sizY: y=sizY-1
 	return mat[y][x]
+
 
 def segments_depth_combine(*,
 		segments,
@@ -147,6 +149,8 @@ def segments_depth_combine(*,
 					relX=p.x,relY=p.y,
 					depth=depth_average)
 				plf.append(c3df)
+
+
 		res.append(
 			Segment3D(
 				segment=s,
@@ -159,7 +163,9 @@ def segments_depth_combine(*,
 				depth_max=depth_max,
 				depth_valid=(valid_depth_pixel_count>1),
 				depth_valid_ratio=depth_valid_ratio,
-				center_of_mass=coordinates.Coordinates2D(x=com[1],y=com[0])))
+				center_of_mass=coordinates.Coordinates2D(x=com[1],y=com[0]),
+				bbox=coordinates.calculateBbox3D(pl),
+				bbox_flat=coordinates.calculateBbox3D(plf)))
 	#dbg_img.save("out/seg3d_samplepoints.png")
 	return res
 

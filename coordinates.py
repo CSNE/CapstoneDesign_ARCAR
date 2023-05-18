@@ -12,6 +12,25 @@ Point3D = collections.namedtuple(
 BoundingBox = collections.namedtuple(
 	"BoundingBox",
 	["xmin","xmax","ymin","ymax"])
+BBox3D = collections.namedtuple(
+	"BBox3D",
+	["xmin","xmax","ymin","ymax","zmin","zmax"])
+
+def calculateBbox3D(pointlist:Point3D) -> BBox3D:
+	x=[]
+	y=[]
+	z=[]
+	for p in pointlist:
+		x.append(p.x)
+		y.append(p.y)
+		z.append(p.z)
+	return BBox3D(
+		xmin=min(x),
+		xmax=max(x),
+		ymin=min(y),
+		ymax=max(y),
+		zmin=min(z),
+		zmax=max(z))
 
 class ScreenSpaceToRealSpaceMapper:
 	'''
