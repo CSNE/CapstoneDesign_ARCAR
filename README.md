@@ -72,8 +72,8 @@ Examples:
 `python3 main.py --source=screenshot --screenshot-region=1920,0,3840,1080`  
 
 ## Structure
-`captures/`: Manually captured stereo images, by us.  
+`samples/`: Sample stereo images, some captured by us, some downloaded.  
 `IGEV_Stereo/`: IGEV code, copy of the [original git repo](https://github.com/gangweiX/IGEV). Some modifications made, to make it able to run on a CPU.  
 `monodepth2/`: MonoDepth2 code, submodule from the [original git repo](https://github.com/nianticlabs/monodepth2).  
 `PSMNet/`: PSMNet code, copy of the [original git repo](https://github.com/JiaRenChang/PSMNet). Some modifications made, to make it able to run on a CPU.  
-`test_images/`: Test stereo images, downloaded.  
+
