@@ -214,6 +214,10 @@ loop_timer=sequence_timer.SequenceTimer(
 frame_timer=sequence_timer.SequenceTimer(
 	prefix="Frame Total Time > ",
 	orange_thresh=0.3,red_thresh=1.0)
+
+class StopLoopException(BaseException):
+	pass
+	
 def display(img,*,stereo_right=None,frame_name=None):
 	global frmN
 	frmN+=1
@@ -281,9 +285,15 @@ def display(img,*,stereo_right=None,frame_name=None):
 
 
 	# Get the first non-null entry in the list - maybe make this smarter
-	depth=next(filter(
-		lambda x: x is not None,
-		[depth_igev,depth_opencv,depth_psm,depth_monodepth]))
+	try:
+		depth=next(filter(
+			lambda x: x is not None,
+			[depth_igev,depth_opencv,depth_psm,depth_monodepth]))
+	except StopIteration:
+		print(ansi.BOLD+ansi.RED+"No depth maps generated!"+ansi.RESET)
+		print(ansi.BOLD+ansi.RED+"Did you specify a valid stereo solver? (--stereo-solver)"+ansi.RESET)
+		raise StopLoopException
+		
 	
 	ss2rsm_image=coordinates.ScreenSpaceToRealSpaceMapper(
 		image_width=img.width,image_height=img.height,
@@ -593,6 +603,8 @@ try:
 	input("Press Enter to exit.")
 except KeyboardInterrupt:
 	print("^C Received. Exiting...              ")
+except StopLoopException:
+	pass
 except:
 	traceback.print_exc()
 finally:

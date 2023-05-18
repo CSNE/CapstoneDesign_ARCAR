@@ -51,7 +51,7 @@ _ap.add_argument(
 	action="store_true")
 _ap.add_argument(
 	"--stereo-solvers","-ss",
-	default="opencv")
+	default="opencv,monodepth")
 _ap.add_argument(
 	"--solve-resize","-srz",
 	default="480x320")

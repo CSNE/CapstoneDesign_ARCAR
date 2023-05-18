@@ -52,7 +52,7 @@ Argument list (`python3 main.py --help` may be more accurate):
 - `--video-speed` `-vs` : For `video` source, you can supply a video speed multiplier here. For example, `-vs 0.5` will play the video at half speed.
 - `--screenshot-region` `-sr` : For `screenshot` source, you can set the capture region. If not specified, captures the whole desktop.
 - `--cuda` `-cuda` : Use GPU acceleration. Only uses CPU by default.
-- `--stereo-solvers` `-ss` : Select (multiple) stereo solvers. Comma-separated. Default is `opencv`.
+- `--stereo-solvers` `-ss` : Select (multiple) stereo solvers. Comma-separated. Default is `opencv,monodepth`.
     - `monodepth` : MonoDepth2 (Monocular)
     - `opencv` : OpenCV StereoBM (Stereo)
     - `psm` : PSMNet (Stereo)
