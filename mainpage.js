@@ -126,25 +126,31 @@ function buildWireMeshCC(pointlist){
 
 var wire_meshes=[];
 function setSeg3D(s3d){
-    // Remove all objects first
-    for (var i=0;i<wire_meshes.length;i++){
-        scene.remove(wire_meshes[i])
-    }
-    wire_meshes=[];
+    var new_wires=[];
 
     for (var i in s3d){
         let name = s3d[i]["name"];
         let pointlist= s3d[i]["pointlist"];
         let wm=buildWireMeshCC(pointlist);
-        scene.add(wm);
-        wire_meshes.push(wm);
+        new_wires.push(wm);
     }
+    
+    for (var i=0;i<new_wires.length;i++){
+        scene.add(new_wires[i]);
+    }
+    for (var i=0;i<wire_meshes.length;i++){
+        scene.remove(wire_meshes[i])
+    }
+    wire_meshes=new_wires;
 }
 
 function updateSeg3D(){
     request(
         "seg3d",
-        function(resp){setSeg3D(JSON.parse(resp));},
+        function(resp){
+            setSeg3D(JSON.parse(resp));
+            //console.log("  Updated SEG3D");
+        },
         function(){});
 }
 
@@ -154,10 +160,7 @@ function updateSeg3D(){
 var object_points=[];
 var pointCubeSize=0.03;
 function setPointCloud(pointList){
-    for (var i=0;i<object_points.length;i++){
-        scene.remove(object_points[i])
-    }
-    object_points=[];
+    var new_points=[];
     //console.log(pointList);
     // Add objects
     for (var i=0;i<pointList.length;i++){
@@ -175,15 +178,26 @@ function setPointCloud(pointList){
         objMesh.position.y=pnt["y"];
         objMesh.position.z=pnt["z"];
 
-        scene.add(objMesh);
-        object_points.push(objMesh);
+        new_points.push(objMesh);
     }
+    
+    for (var i=0;i<new_points.length;i++){
+        scene.add(new_points[i]);
+        
+    }
+    for (var i=0;i<object_points.length;i++){
+        scene.remove(object_points[i])
+    }
+    object_points=new_points;
 }
 
 function updatePC(){
     request(
         "pointcloud",
-        function(resp){setPointCloud(JSON.parse(resp));},
+        function(resp){
+            setPointCloud(JSON.parse(resp));
+            //console.log("  Updated POINTCLOUD");
+        },
         function(){});
 }
 
@@ -193,54 +207,64 @@ const floader = new FontLoader();
 
 var object_texts=[];
 function setTexts(textList){
-    for (var i=0;i<object_texts.length;i++){
-        scene.remove(object_texts[i])
-    }
-    object_texts=[];
+    floader.load( 'font.typeface.json', function ( font ) {
+        var new_texts=[];
 
-    for (var i=0;i<textList.length;i++){
-        let tContent=textList[i]["text"];
-        let tSize=textList[i]["size"];
-        let x=textList[i]["x"];
-        let y=textList[i]["y"];
-        let z=textList[i]["z"];
+        for (var i=0;i<textList.length;i++){
+            let tContent=textList[i]["text"];
+            let tSize=textList[i]["size"];
+            let x=textList[i]["x"];
+            let y=textList[i]["y"];
+            let z=textList[i]["z"];
 
-        floader.load( 'font.typeface.json', function ( font ) {
-
-            const textGeom = new TextGeometry( tContent, {
-                font: font,
-                size: tSize, //80,
-                height: tSize/10, //5,
-                curveSegments: 12,
-                //bevelEnabled: true,
-                //bevelThickness: 10,
-                //bevelSize: 8,
-                //bevelOffset: 0,
-                //bevelSegments: 5
-            } );
             
-            textGeom.computeBoundingBox();
-            //textGeom.translate(-textGeom.boundingBox.max.x/2,0,0);
-            textGeom.center();
-            
-            const textMat= new THREE.MeshBasicMaterial();
-            //objMat.side=THREE.DoubleSide;
-            const textMesh = new THREE.Mesh(textGeom,textMat);
-            textMat.color=new THREE.Color(0,1,1);
-            textMesh.position.x=x;
-            textMesh.position.y=y;
-            textMesh.position.z=z;
 
-            scene.add(textMesh);
-            object_texts.push(textMesh);
-        });
-    }
+                const textGeom = new TextGeometry( tContent, {
+                    font: font,
+                    size: tSize, //80,
+                    height: tSize/10, //5,
+                    curveSegments: 12,
+                    //bevelEnabled: true,
+                    //bevelThickness: 10,
+                    //bevelSize: 8,
+                    //bevelOffset: 0,
+                    //bevelSegments: 5
+                } );
+                
+                textGeom.computeBoundingBox();
+                //textGeom.translate(-textGeom.boundingBox.max.x/2,0,0);
+                textGeom.center();
+                
+                const textMat= new THREE.MeshBasicMaterial();
+                //objMat.side=THREE.DoubleSide;
+                const textMesh = new THREE.Mesh(textGeom,textMat);
+                textMat.color=new THREE.Color(0,1,1);
+                textMesh.position.x=x;
+                textMesh.position.y=y;
+                textMesh.position.z=z;
+
+                new_texts.push(textMesh);
+            
+        }
+        
+        for (var i=0;i<new_texts.length;i++){
+            scene.add(new_texts[i]);
+            
+        }
+        for (var i=0;i<object_texts.length;i++){
+            scene.remove(object_texts[i])
+        }
+        object_texts=new_texts;
+    });
 }
 //setTexts([{"text":"TEST","size":1,"x":0,"y":0,"z":-10}]);
 function updateTexts(){
     request(
         "texts",
-        function(resp){setTexts(JSON.parse(resp));},
+        function(resp){
+            setTexts(JSON.parse(resp));
+            //console.log("  Updated TEXT");
+        },
         function(){});
 }
 
@@ -304,10 +328,7 @@ function createSquareFrameGeometry(innerL,outerL){
 var object_walls=[];
 var planeSize=3.0;
 function setWalls(wallList){
-    for (var i=0;i<object_walls.length;i++){
-        scene.remove(object_walls[i])
-    }
-    object_walls=[];
+    var new_walls=[];
     
     // Add objects
     for (var i=0;i<wallList.length;i++){
@@ -370,19 +391,31 @@ function setWalls(wallList){
             textMesh.position.z=z;
             textMesh.lookAt(laX,laY,laZ);
             
-            scene.add(textMesh);
-            object_walls.push(textMesh);
+            
+            new_walls.push(textMesh);
         });
-        
+    }
+    
+    
+    
+    for (var i=0;i<new_walls.length;i++){
+        scene.add(new_walls[i]);
         
     }
+    for (var i=0;i<object_walls.length;i++){
+        scene.remove(object_walls[i])
+    }
+    object_walls=new_walls;
 }
 
 function updateWalls(){
     request(
         "walls",
-        function(resp){setWalls(JSON.parse(resp));},
-            function(){});
+        function(resp){
+            setWalls(JSON.parse(resp));
+            //console.log("  Updated WALL");
+        },
+        function(){});
 }
 
 var last_update_flag;
