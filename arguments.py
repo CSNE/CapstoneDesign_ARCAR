@@ -69,7 +69,7 @@ _ap.add_argument(
 	"--detect-walls","-dw",
 	action="store_true")
 _ap.add_argument(
-	"--skip-wall-visuals","-swv",
+	"--visualize-wall-detections","-vwd",
 	action="store_true")
 _ap.add_argument(
 	"--flatten-segments","-fs",
@@ -82,7 +82,11 @@ source=_args.source
 debug_output=_args.debug_output
 pointcloud=_args.pointcloud
 detect_walls=_args.detect_walls
-do_wall_visual=not _args.skip_wall_visuals
+do_wall_visual= _args.visualize_wall_detections
+if do_wall_visual and (not detect_walls):
+	print("We can't visualize walls if wall detection is turned off!")
+	print("  (enable with --detect-walls)")
+	sys.exit(1)
 flatten_segments=_args.flatten_segments
 
 wc=_args.webcam_number

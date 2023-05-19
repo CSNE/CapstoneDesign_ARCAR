@@ -51,6 +51,7 @@
 	</script>
 	
 	<script type="module">
+		var webpageConfig= $$$PYTHON REPLACE: WEBPAGE_CONFIG$$$;
 		import {setupPointCloudRenderer} from "./webpage.js";
 		// Periodically fetch data form server
 		var infoDiv=document.getElementById("information");
@@ -84,46 +85,44 @@
 		addImage("dif","Stereo Difference");
 		addImage("str","Stereo Image (R)");
 		addBr();
-		addImage("dmd","MonoDepth Monocular Depth");
-		addImage("dcv","OpenCV Stereo Depth");
-		addImage("dpsm","PSMNet Stereo Depth");
-		addImage("digev","IGEV Stereo Depth");
+		if (webpageConfig["md"])   addImage("dmd","MonoDepth Monocular Depth");
+		if (webpageConfig["ocv"])  addImage("dcv","OpenCV Stereo Depth");
+		if (webpageConfig["psm"])  addImage("dpsm","PSMNet Stereo Depth");
+		if (webpageConfig["igev"]) addImage("digev","IGEV Stereo Depth");
 		addBr();
-		addCell(document.getElementById("pc_monodepth"),"Point Cloud (MonoDepth)");
-		addCell(document.getElementById("pc_opencv"),"Point Cloud (OpenCV)");
-		addCell(document.getElementById("pc_psmnet"),"Point Cloud (PSMNet)");
-		addCell(document.getElementById("pc_igev"),"Point Cloud (IGEV)");
+		if (webpageConfig["md"])   addCell(document.getElementById("pc_monodepth"),"Point Cloud (MonoDepth)");
+		if (webpageConfig["ocv"])  addCell(document.getElementById("pc_opencv"),"Point Cloud (OpenCV)");
+		if (webpageConfig["psm"])  addCell(document.getElementById("pc_psmnet"),"Point Cloud (PSMNet)");
+		if (webpageConfig["igev"]) addCell(document.getElementById("pc_igev"),"Point Cloud (IGEV)");
 		addBr();
 		addImage("seg","Segmentation");
 		addImage("com","Seg+Depth");
-		addImage("wblur","Blurred Depth");
+		//addImage("wblur","Blurred Depth");
 		addBr();
-		addImage("wmpc0","Wall[0] Pre-Choke Mask");
-		addImage("wmpc1","Wall[1] Pre-Choke Mask");
-		addImage("wmpc2","Wall[2] Pre-Choke Mask");
-		addImage("wmpc3","Wall[3] Pre-Choke Mask");
-		addBr();
-		addImage("werr0","Wall[0] Error");
-		addImage("werr1","Wall[1] Error");
-		addImage("werr2","Wall[2] Error");
-		addImage("werr3","Wall[3] Error");
-		addBr();
-		addImage("wmsk0","Wall[0] Mask");
-		addImage("wmsk1","Wall[1] Mask");
-		addImage("wmsk2","Wall[2] Mask");
-		addImage("wmsk3","Wall[3] Mask");
+		if (webpageConfig["wallvisual"]){
+			addImage("wmpc0","Wall[0] Pre-Choke Mask");
+			addImage("wmpc1","Wall[1] Pre-Choke Mask");
+			addImage("wmpc2","Wall[2] Pre-Choke Mask");
+			addImage("wmpc3","Wall[3] Pre-Choke Mask");
+			addBr();
+			addImage("werr0","Wall[0] Error");
+			addImage("werr1","Wall[1] Error");
+			addImage("werr2","Wall[2] Error");
+			addImage("werr3","Wall[3] Error");
+			addBr();
+			addImage("wmsk0","Wall[0] Mask");
+			addImage("wmsk1","Wall[1] Mask");
+			addImage("wmsk2","Wall[2] Mask");
+			addImage("wmsk3","Wall[3] Mask");
+		}
 		
-		
-		var pointCloudCanvases=[
-			{"canvas":pc_monodepth,
-			 "json":"/pc_monodepth.json"},
-			{"canvas":pc_opencv,
-			 "json":"/pc_opencv.json"},
-			{"canvas":pc_psmnet,
-			 "json":"/pc_psmnet.json"},
-			{"canvas":pc_igev,
-			 "json":"/pc_igev.json"},
-		];
+		var pointCloudCanvases=[];
+		if (webpageConfig["md"])   pointCloudCanvases.push({"canvas":pc_monodepth,"json":"/pc_monodepth.json"});
+		if (webpageConfig["ocv"])  pointCloudCanvases.push({"canvas":pc_opencv,"json":"/pc_opencv.json"});
+		if (webpageConfig["psm"])  pointCloudCanvases.push({"canvas":pc_psmnet,"json":"/pc_psmnet.json"});
+		if (webpageConfig["igev"]) pointCloudCanvases.push({"canvas":pc_igev,"json":"/pc_igev.json"});
+			
+			
 		for (var i in pointCloudCanvases){
 			pointCloudCanvases[i]["upFunc"]=setupPointCloudRenderer(
 				pointCloudCanvases[i]["canvas"]);
@@ -159,19 +158,21 @@
 				imgDOMs[k].src=k+".jpg?forcereload="+(new Date()).getTime();
 			}
 			
-			for (var i in pointCloudCanvases){
-				let o=pointCloudCanvases[i];
-				request(
-					o["json"],
-					function(resp){
-						//console.log("Request succ:"+o["json"]);
-						o["upFunc"](JSON.parse(resp));
-					},
-					function(resp){
-						//console.log("Request fail:"+o["json"]);
-						o["upFunc"]([]); //Clear points
-					}
-				)
+			if (webpageConfig["pointcloud"]){
+				for (var i in pointCloudCanvases){
+					let o=pointCloudCanvases[i];
+					request(
+						o["json"],
+						function(resp){
+							//console.log("Request succ:"+o["json"]);
+							o["upFunc"](JSON.parse(resp));
+						},
+						function(resp){
+							//console.log("Request fail:"+o["json"]);
+							o["upFunc"]([]); //Clear points
+						}
+					)
+				}
 			}
 		}
 		

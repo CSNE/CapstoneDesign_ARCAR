@@ -6,6 +6,8 @@ import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 
+var webpageConfig= $$$PYTHON REPLACE: WEBPAGE_CONFIG$$$;
+
 const scene = new THREE.Scene();
 
 // Lights
@@ -392,9 +394,9 @@ function updateCheck(){
                 console.log("Updating "+resp);
                 last_update_flag=resp;
                 updateSeg3D();
-                updatePC();
                 updateTexts();
-                updateWalls();
+                if (webpageConfig["pointcloud"]) updatePC();
+                if (webpageConfig["walls"]) updateWalls();
             }
         },
         function(e){}

@@ -78,19 +78,30 @@ class ServerThread(threading.Thread):
 		self._reqhandler=ReqHandler
 
 	def put_data(self,k,v,mimetype=None):
-
+		if v is None:
+			self.clear_data(k)
+			return
 		resp= WebResponse(content=v,mimetype=mimetype)
 		self.set_handler(k,lambda q: resp)
 	def clear_data(self,k):
 		self.clear_handler(k)
 
 	def put_image(self,k,img):
+		if img is None:
+			self.clear_data(k)
+			return
 		bio=io.BytesIO()
 		img.convert("RGB").save(bio,format="JPEG")
 		self.put_data(k,bio.getvalue(),"image/jpeg")
 	def put_string(self,k,s):
+		if s is None:
+			self.clear_data(k)
+			return
 		self.put_data(k,s.encode(),"text/plain")
 	def put_json(self,k,d):
+		if d is None:
+			self.clear_data(k)
+			return
 		bio=io.StringIO()
 		json.dump(d,bio)
 		self.put_data(k,bio.getvalue().encode(),"text/javascript")

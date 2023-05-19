@@ -36,6 +36,7 @@ import os
 import random
 import traceback
 import sys
+import json
 
 
 # 3rd party
@@ -180,11 +181,23 @@ st.start()
 cleanup_functions.append(lambda:st.die())
 web_url=F"http://localhost:{server_port}"
 
+webconfig_key=b"$$$PYTHON REPLACE: WEBPAGE_CONFIG$$$"
+webconfig_data=json.dumps({
+	"md":arguments.stereo_solvers["monodepth"],
+	"psm":arguments.stereo_solvers["psm"],
+	"ocv":arguments.stereo_solvers["opencv"],
+	"igev":arguments.stereo_solvers["igev"],
+	"wallvisual":arguments.do_wall_visual,
+	"walls":arguments.detect_walls,
+	"pointcloud":arguments.pointcloud}).encode()
+
+st.put_string("/update_flag","")
+
 with open("mainpage.html","rb") as f:
-	page=f.read()
+	page=f.read().replace(webconfig_key,webconfig_data)
 st.put_data("/main.html",page)
 with open("mainpage.js","rb") as f:
-	page=f.read()
+	page=f.read().replace(webconfig_key,webconfig_data)
 st.put_data("/mainpage.js",page,"text/javascript")
 with open("helvetiker_regular.typeface.json","rb") as f:
 	fnt=f.read()
@@ -193,11 +206,11 @@ print("Main page active at "+ansi.GREEN+ansi.BOLD+web_url+"/main.html"+ansi.RESE
 
 if arguments.debug_output=="web":
 	with open("webpage.html","rb") as f:
-		page=f.read()
+		page=f.read().replace(webconfig_key,webconfig_data)
 	st.put_data("/debug.html",page)
 	
 	with open("webpage.js","rb") as f:
-		page=f.read()
+		page=f.read().replace(webconfig_key,webconfig_data)
 	st.put_data("/webpage.js",page,"text/javascript")
 	
 	print("Debug page active at "+ansi.GREEN+ansi.BOLD+web_url+"/debug.html"+ansi.RESET)
@@ -356,13 +369,15 @@ def display(img,*,stereo_right=None,frame_name=None):
 			str_dif=PIL.ImageChops.difference(img,stereo_right)
 		
 		if arguments.detect_walls:
-			loop_timer.split(starting="Wall Detection")
-			wvis_blurred_depth=visualizations.visualize_matrix(
-				depth_blurred,"Depth Blurred",clip_percentiles=(5,95))
+			#wvis_blurred_depth=None
 			wvis_error=[None]*4
 			wvis_mask=[None]*4
 			wvis_maskpc=[None]*4
+			
 			if arguments.do_wall_visual:
+				loop_timer.split(starting="Wall Matrix Visuals")
+				#wvis_blurred_depth=visualizations.visualize_matrix(
+				#	depth_blurred,"Depth Blurred",clip_percentiles=(5,95))
 				for i in range(4):
 					if i<len(walls_unfiltered):
 						wall=walls_unfiltered[i]
@@ -451,17 +466,13 @@ def display(img,*,stereo_right=None,frame_name=None):
 				st.put_image("/digev.jpg",dvis_igev)
 				
 			# Wall
-			if arguments.detect_walls:
-				st.put_image("/wblur.jpg",wvis_blurred_depth)
+			if arguments.do_wall_visual:
+				#st.put_image("/wblur.jpg",wvis_blurred_depth)
 				for i in range(4):
-					if wvis_error[i] is not None:
-						st.put_image(F"/werr{i}.jpg",wvis_error[i])
-						st.put_image(F"/wmsk{i}.jpg",wvis_mask[i])
-						st.put_image(F"/wmpc{i}.jpg",wvis_maskpc[i])
-					else:
-						st.clear_data(F"/werr{i}.jpg")
-						st.clear_data(F"/wmsk{i}.jpg")
-						st.clear_data(F"/wmpc{i}.jpg")
+					st.put_image(F"/werr{i}.jpg",wvis_error[i])
+					st.put_image(F"/wmsk{i}.jpg",wvis_mask[i])
+					st.put_image(F"/wmpc{i}.jpg",wvis_maskpc[i])
+
 
 		elif arguments.debug_output=="file":
 			loop_timer.split(starting="File output save")
