@@ -47,6 +47,7 @@ function animation( time ) {
 
 function request(location,succ,fail){
     var xhr=new XMLHttpRequest();
+    xhr.timeout=1000;
     xhr.open("GET",location);
     xhr.addEventListener("load",function(e){
         if (xhr.status==200) succ(xhr.responseText);
