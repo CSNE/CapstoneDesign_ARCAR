@@ -187,6 +187,7 @@ webconfig_data=json.dumps({
 	"psm":arguments.stereo_solvers["psm"],
 	"ocv":arguments.stereo_solvers["opencv"],
 	"igev":arguments.stereo_solvers["igev"],
+	"depthvisual":arguments.visualize_depth_matrix,
 	"wallvisual":arguments.do_wall_visual,
 	"walls":arguments.detect_walls,
 	"pointcloud":arguments.pointcloud}).encode()
@@ -352,21 +353,25 @@ def display(img,*,stereo_right=None,frame_name=None):
 		seg_vis=visualizations.visualize_segmentations(segs,img.size)
 		combined_vis=visualizations.visualize_seg3d(seg3ds,img.size,img)
 		
-		loop_timer.split(starting="Matrix Visuals")
-		if arguments.stereo_solvers["monodepth"]:
-			dvis_md=visualizations.visualize_matrix(
-				depth_monodepth,"MonoDepth")
-		if arguments.stereo_solvers["opencv"]:
-			dvis_cv=visualizations.visualize_matrix(
-				depth_opencv,"OpenCV",clip_percentiles=(5,95))
-		if arguments.stereo_solvers["psm"]:
-			dvis_psm=visualizations.visualize_matrix(
-				depth_psm,"PSMNet",clip_percentiles=(5,95))
-		if arguments.stereo_solvers["igev"]:
-			dvis_igev=visualizations.visualize_matrix(
-				depth_igev,"IGEV",clip_percentiles=(5,85))
 		if stereo_right is not None:
+			loop_timer.split(starting="Stereo Difference")
 			str_dif=PIL.ImageChops.difference(img,stereo_right)
+		
+		if arguments.visualize_depth_matrix:
+			loop_timer.split(starting="Depth Matrix Visuals")
+			if arguments.stereo_solvers["monodepth"]:
+				dvis_md=visualizations.visualize_matrix(
+					depth_monodepth,"MonoDepth")
+			if arguments.stereo_solvers["opencv"]:
+				dvis_cv=visualizations.visualize_matrix(
+					depth_opencv,"OpenCV",clip_percentiles=(5,95))
+			if arguments.stereo_solvers["psm"]:
+				dvis_psm=visualizations.visualize_matrix(
+					depth_psm,"PSMNet",clip_percentiles=(5,95))
+			if arguments.stereo_solvers["igev"]:
+				dvis_igev=visualizations.visualize_matrix(
+					depth_igev,"IGEV",clip_percentiles=(5,85))
+		
 		
 		if arguments.detect_walls:
 			#wvis_blurred_depth=None
@@ -456,14 +461,15 @@ def display(img,*,stereo_right=None,frame_name=None):
 				st.put_string("/information",str(frame_name))
 			
 			# Depths
-			if arguments.stereo_solvers["monodepth"]:
-				st.put_image("/dmd.jpg",dvis_md)
-			if arguments.stereo_solvers["opencv"]:
-				st.put_image("/dcv.jpg",dvis_cv)
-			if arguments.stereo_solvers["psm"]:
-				st.put_image("/dpsm.jpg",dvis_psm)
-			if arguments.stereo_solvers["igev"]:
-				st.put_image("/digev.jpg",dvis_igev)
+			if arguments.visualize_depth_matrix:
+				if arguments.stereo_solvers["monodepth"]:
+					st.put_image("/dmd.jpg",dvis_md)
+				if arguments.stereo_solvers["opencv"]:
+					st.put_image("/dcv.jpg",dvis_cv)
+				if arguments.stereo_solvers["psm"]:
+					st.put_image("/dpsm.jpg",dvis_psm)
+				if arguments.stereo_solvers["igev"]:
+					st.put_image("/digev.jpg",dvis_igev)
 				
 			# Wall
 			if arguments.do_wall_visual:

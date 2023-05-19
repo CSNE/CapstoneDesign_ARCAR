@@ -74,6 +74,9 @@ _ap.add_argument(
 _ap.add_argument(
 	"--flatten-segments","-fs",
 	action="store_true")
+_ap.add_argument(
+	"--skip-matrix-visuals","-smv",
+	action="store_true")
 
 # Arguments Parsing
 _args=_ap.parse_args()
@@ -87,6 +90,7 @@ if do_wall_visual and (not detect_walls):
 	print("We can't visualize walls if wall detection is turned off!")
 	print("  (enable with --detect-walls)")
 	sys.exit(1)
+visualize_depth_matrix = not _args.skip_matrix_visuals
 flatten_segments=_args.flatten_segments
 
 wc=_args.webcam_number

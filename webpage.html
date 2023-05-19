@@ -30,10 +30,12 @@
 	
 	<div id="information"></div>
 	<div id="imgsContainer" style="display:flex;flex-direction:row;flex-wrap:wrap;"></div>
+	<div style="display:none;">
 	<canvas id="pc_monodepth"> </canvas>
 	<canvas id="pc_opencv"> </canvas>
 	<canvas id="pc_psmnet"> </canvas>
 	<canvas id="pc_igev"> </canvas>
+	<div>
 	
 	<script>
 		function playbackControl(type){
@@ -85,16 +87,28 @@
 		addImage("dif","Stereo Difference");
 		addImage("str","Stereo Image (R)");
 		addBr();
-		if (webpageConfig["md"])   addImage("dmd","MonoDepth Monocular Depth");
-		if (webpageConfig["ocv"])  addImage("dcv","OpenCV Stereo Depth");
-		if (webpageConfig["psm"])  addImage("dpsm","PSMNet Stereo Depth");
-		if (webpageConfig["igev"]) addImage("digev","IGEV Stereo Depth");
-		addBr();
-		if (webpageConfig["md"])   addCell(document.getElementById("pc_monodepth"),"Point Cloud (MonoDepth)");
-		if (webpageConfig["ocv"])  addCell(document.getElementById("pc_opencv"),"Point Cloud (OpenCV)");
-		if (webpageConfig["psm"])  addCell(document.getElementById("pc_psmnet"),"Point Cloud (PSMNet)");
-		if (webpageConfig["igev"]) addCell(document.getElementById("pc_igev"),"Point Cloud (IGEV)");
-		addBr();
+		if (webpageConfig["depthvisual"]){
+			if (webpageConfig["md"])   addImage("dmd","MonoDepth Monocular Depth");
+			if (webpageConfig["ocv"])  addImage("dcv","OpenCV Stereo Depth");
+			if (webpageConfig["psm"])  addImage("dpsm","PSMNet Stereo Depth");
+			if (webpageConfig["igev"]) addImage("digev","IGEV Stereo Depth");
+			addBr();
+		}
+		if (webpageConfig["pointcloud"]){
+			if (webpageConfig["md"])  
+				addCell(document.getElementById("pc_monodepth"),
+					"Point Cloud (MonoDepth)");
+			if (webpageConfig["ocv"]) 
+				addCell(document.getElementById("pc_opencv"),
+					"Point Cloud (OpenCV)");
+			if (webpageConfig["psm"]) 
+				addCell(document.getElementById("pc_psmnet"),
+					"Point Cloud (PSMNet)");
+			if (webpageConfig["igev"]) 
+				addCell(document.getElementById("pc_igev"),
+					"Point Cloud (IGEV)");
+			addBr();
+		}
 		addImage("seg","Segmentation");
 		addImage("com","Seg+Depth");
 		//addImage("wblur","Blurred Depth");

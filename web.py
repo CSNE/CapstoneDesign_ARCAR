@@ -65,6 +65,9 @@ class ServerThread(threading.Thread):
 
 					self.send_response(http.server.HTTPStatus.OK)
 					if wr is None:
+						# If we don't do this, the XMLHttpRequest will complain
+						# about XML parse errors
+						self.send_header("Content-Type","text/plain")
 						self.end_headers()
 					else:
 						if wr.mimetype is not None:
