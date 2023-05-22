@@ -28,7 +28,10 @@
 	<button onclick='pbcJump();'>JUMP</button>
 	</div>
 	
-	<div id="information"></div>
+	<div id="info1"></div>
+	<div id="info2"></div>
+	<div id="info3"></div>
+
 	<div id="imgsContainer" style="display:flex;flex-direction:row;flex-wrap:wrap;"></div>
 	<div style="display:none;">
 	<canvas id="pc_monodepth"> </canvas>
@@ -56,7 +59,6 @@
 		var webpageConfig= $$$PYTHON REPLACE: WEBPAGE_CONFIG$$$;
 		import {setupPointCloudRenderer} from "./webpage.js";
 		// Periodically fetch data form server
-		var infoDiv=document.getElementById("information");
 		
 
 		var imgDOMs={};
@@ -157,8 +159,18 @@
 		}
 		function update_all(){
 			request(
-				"/information",
-				function(resp){infoDiv.innerHTML=resp;},
+				"/info1",
+				function(resp){info1.innerHTML=resp;},
+				function(e){}
+			);
+			request(
+				"/info2",
+				function(resp){info2.innerHTML=resp;},
+				function(e){}
+			);
+			request(
+				"/info3",
+				function(resp){info3.innerHTML=resp;},
 				function(e){}
 			);
 			

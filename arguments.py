@@ -78,6 +78,11 @@ _ap.add_argument(
 	"--skip-matrix-visuals","-smv",
 	action="store_true")
 
+_ap.add_argument(
+	"--gps-device","-gps")
+_ap.add_argument(
+	"--gps-playback","-gpb")
+
 # Arguments Parsing
 _args=_ap.parse_args()
 
@@ -86,6 +91,12 @@ debug_output=_args.debug_output
 pointcloud=_args.pointcloud
 detect_walls=_args.detect_walls
 do_wall_visual= _args.visualize_wall_detections
+
+
+gps_dev=_args.gps_device
+gps_playback=_args.gps_playback
+use_gps = (gps_dev is not None) or (gps_playback is not None)
+
 if do_wall_visual and (not detect_walls):
 	print("We can't visualize walls if wall detection is turned off!")
 	print("  (enable with --detect-walls)")

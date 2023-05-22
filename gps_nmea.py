@@ -109,3 +109,6 @@ class NmeaGPS(threading.Thread):
 				print('Parse error: {}'.format(e))
 				continue
 
+
+
+	

@@ -1,7 +1,8 @@
-
+import coordinates
 import collections
 import math
 import gps_nmea
+from tuples import Tuples
 
 # coordinates, cartesian, centered on a point
 # we assume the earth is a circle - accuracy isn't too important here
@@ -60,10 +61,46 @@ class PositionSolver:
 	def __init__(self,gps:gps_nmea.NmeaGPS):
 		self._gps=gps
 		gps.add_listener(self._gps_callback)
-		self._last_gps_location=None
+		self._gd_history=[]
+		self._gdhist_maxlen=100
 	def _gps_callback(self,gd:gps_nmea.GPSData):
 		if gd.has_fix:
-			self._last_gps_location=LocalGroundCoordinates.from_GD(gd)
+			print("New fix:",gd)
+			self._gd_history.append(gd)
+			while len(self._gd_history)>self._gdhist_maxlen:
+				del self._gd_history[0]
 	def get_location(self):
-		return self._last_gps_location
+		if self._gd_history:
+			return LocalGroundCoordinates.from_GD(self._gd_history[-1])
+		else:
+			return None
+	def get_velocity(self):
+		vel=None
+		try:
+			#print("Vel",self._gd_history[-1])
+			gd1=self._gd_history[-2]
+			gd2=self._gd_history[-1]
+			p1=LocalGroundCoordinates.from_GD(gd1).to_tuple()
+			p2=LocalGroundCoordinates.from_GD(gd2).to_tuple()
+			#print(p1)
+			#print(p2)
+			deltaP=Tuples.sub(p2,p1)
+			#print(deltaP)
+			deltaT=(gd2.time_system-gd1.time_system)
+			#print(deltaT)
+			vel=Tuples.div(deltaP,deltaT)
+			#print(vel)
+		except IndexError: # Not enough history
+			pass
+		except TypeError: # Operations on None
+			pass
+		except AttributeError: #Dereferencing None
+			pass
+		return vel
+	
+if __name__=="__main__":
+	
+	ng=gps_nmea.NmeaGPS(playback_json="gps_2023-05-20_aptbike.json")
+	ng.start()
+	ps=PositionSolver(ng)
 	

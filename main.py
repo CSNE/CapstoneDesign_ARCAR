@@ -76,7 +76,13 @@ if arguments.source=="video":
 	import_timer.split(starting="Video")
 	import video
 	
-
+if arguments.use_gps:
+	import_timer.split(starting="GPS/Serial")
+	import geolocation
+	import gps_record
+	import gps_nmea
+	import serial
+	
 import_timer.split(starting="Web")
 import web
 import webdata
@@ -150,9 +156,23 @@ if arguments.stereo_solvers["monodepth"]:
 
 
 # Global variables
-
 cleanup_functions=[]
 
+
+## GPS Setup
+if arguments.use_gps:
+	if arguments.gps_dev:
+		#ser = serial.Serial(arguments.gps_dev, 9600, timeout=0)
+		gps=gps_nmea.NmeaGPS(serial_port=arguments.gps_dev)
+	elif arguments.gps_playback:
+		#ser= gps_record.FakeSerial(arguments.gps_playback)
+		gps=gps_nmea.NmeaGPS(playback_json=arguments.gps_playback)
+	else:
+		0/0
+	
+	gps.start()
+	cleanup_functions.append(lambda:gps.die())
+	ps=geolocation.PositionSolver(gps)
 
 ## GUI Setup
 if arguments.debug_output=="tk":
@@ -204,6 +224,10 @@ with open("helvetiker_regular.typeface.json","rb") as f:
 	fnt=f.read()
 st.put_data("/font.typeface.json",fnt)
 print("Main page active at "+ansi.GREEN+ansi.BOLD+web_url+"/main.html"+ansi.RESET)
+
+st.put_string("/info1",'')
+st.put_string("/info2",'')
+st.put_string("/info3",'')
 
 if arguments.debug_output=="web":
 	with open("webpage.html","rb") as f:
@@ -455,10 +479,16 @@ def display(img,*,stereo_right=None,frame_name=None):
 			# Segmentations
 			st.put_image("/seg.jpg",seg_vis)
 			st.put_image("/com.jpg",combined_vis)
+			
+			# Info String
 			if frame_name is None:
-				st.put_string("/information",str(frmN))
+				st.put_string("/info1",str(frmN))
 			else:
-				st.put_string("/information",str(frame_name))
+				st.put_string("/info1",str(frame_name))
+			
+			if arguments.use_gps:
+				st.put_string("/info2",str(ps.get_location()))
+				st.put_string("/info3",str(ps.get_velocity()))
 			
 			# Depths
 			if arguments.visualize_depth_matrix:
