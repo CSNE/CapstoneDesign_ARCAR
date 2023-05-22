@@ -212,7 +212,8 @@ webconfig_data=json.dumps({
 	"depthvisual":arguments.visualize_depth_matrix,
 	"wallvisual":arguments.do_wall_visual,
 	"walls":arguments.detect_walls,
-	"pointcloud":arguments.pointcloud}).encode()
+	"pointcloud":arguments.pointcloud,
+	"gps":arguments.use_gps}).encode()
 
 st.put_string("/update_flag","")
 
@@ -514,15 +515,18 @@ def display(img,*,stereo_right=None,frame_name=None):
 				st.put_string("/info3","No building match...")
 			
 				if (location is not None) and (velocity is not None):
-				
-					print(F"Location {location} | Velocity {velocity}")
+					
+					speed=Tuples.mag(velocity)
+					print(F"Location {location} | Speed {speed:.2f}m/s")
 					loc2d=(location.x,location.y) #X,Y only
 					vel2d=velocity[:2] #X,Y only
 					
 					
 					heading = Tuples.normalize(vel2d) # Heading unit vector
+					heading_deg = Tuples.degree(heading)
 					looking= Tuples.rotate(heading,deg=arguments.gps_look_offset)
-					print(F"Heading {heading} | Looking {looking}")
+					looking_deg= Tuples.degree(looking)
+					print(F"Heading {heading_deg:.1f}deg | Looking {looking_deg:.1f}deg")
 					
 					candidates=[]
 					for b in building_definitions.buildings_lgc:
@@ -530,14 +534,26 @@ def display(img,*,stereo_right=None,frame_name=None):
 						building_diff=Tuples.sub(building_location,loc2d)
 						lookdiff=Tuples.degree_between(building_diff,looking)
 						distance=Tuples.mag(building_diff)
-						print(F"Building {b.name} | X{building_location[0]} | Y{building_location[1]}")
-						print(F"  LookAngle {lookdiff} | Distance {distance}")
+						cosdiff=Tuples.cosine_between(building_diff,looking)
+						
+						closeness = cosdiff * 1000/distance
+						
+						print(F"Building {b.name} | LookAngle {lookdiff:.1f}deg | Distance {distance:.1f}m | Closeness {closeness:.5f}")
 						if distance<magic.gps.building_distance_cutoff:
-							candidates.append(lookdiff,b)
-					candidates.sort()
+							candidates.append((closeness,b))
+					candidates.sort(reverse=True)
 					if candidates:
 						best=candidates[0][1]
 						st.put_string("/info3","Looking at building: "+best.name)
+						
+					st.put_json("/gpsvis",
+						webdata.gpsinfo_json(
+							position=location.to_tuple(),
+							velocity_direction=heading, 
+							looking_direction=looking,
+							buildings=[i[1] for i in candidates[:10]]))
+				else:
+					st.clear_data("/gpsvis")
 					
 				
 			# Depths
@@ -579,6 +595,7 @@ def display(img,*,stereo_right=None,frame_name=None):
 	st.put_json("/seg3d",seg3d_json)
 	seg3dText_json=webdata.seg3d_to_text_json(
 		seg3ds,use_flat=arguments.flatten_segments)
+	
 	st.put_json("/texts",seg3dText_json)
 	if arguments.pointcloud:
 		loop_timer.split(starting="Mainpage Point Cloud")

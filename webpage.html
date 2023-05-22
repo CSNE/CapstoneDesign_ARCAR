@@ -38,6 +38,7 @@
 	<canvas id="pc_opencv"> </canvas>
 	<canvas id="pc_psmnet"> </canvas>
 	<canvas id="pc_igev"> </canvas>
+	<canvas id="gps_canvas" width="480" height="270"> </canvas>
 	<div>
 	
 	<script>
@@ -114,6 +115,20 @@
 		addImage("seg","Segmentation");
 		addImage("com","Seg+Depth");
 		//addImage("wblur","Blurred Depth");
+		if (webpageConfig["gps"]) {
+			addCell(document.getElementById("gps_canvas"),
+				"GPS");
+			var cvs=gps_canvas;
+			var cctx=cvs.getContext("2d");
+			
+			cctx.fillStyle =   "rgba(0,0,200,0.5)";
+			cctx.strokeStyle = "rgba(200,0,200,0.5)";
+			cctx.beginPath()
+			cctx.moveTo(100,100);
+			cctx.lineTo(200,200);
+			cctx.lineTo(200,100);
+			cctx.stroke();
+		}
 		addBr();
 		if (webpageConfig["wallvisual"]){
 			addImage("wmpc0","Wall[0] Pre-Choke Mask");
@@ -185,6 +200,93 @@
 						}
 					)
 				}
+			}
+			
+			if (webpageConfig["gps"]){
+				request(
+					"/gpsvis",
+					function(resp){
+						gpsVisUpdate(JSON.parse(resp));
+					},
+					function(resp){
+						cctx.clearRect(0,0,cvs.width,cvs.height);
+					}
+				)
+				
+			}
+		}
+		
+		var px_per_meter=2.0;
+		var grid_meter=50;
+		var arrow_length_meters=20;
+		var buildRectSize=10;
+		function toCvsCoords(xy){
+			let x=cvs.width/2+xy[0]*px_per_meter;
+			let y=cvs.height/2-xy[1]*px_per_meter;
+			return [x,y];
+		}
+		function gpsVisUpdate(data){
+			cctx.clearRect(0,0,cvs.width,cvs.height);
+			var cOrigin=toCvsCoords([0,0]);
+			
+			var vel=data["velocity"];
+			var velScaled=[vel[0]*arrow_length_meters,vel[1]*arrow_length_meters];
+			var cVel=toCvsCoords(velScaled);
+			
+			var look=data["looking"];
+			var lookScaled=[look[0]*arrow_length_meters,look[1]*arrow_length_meters];
+			var cLook=toCvsCoords(lookScaled);
+			
+			cctx.strokeStyle = "rgba(200,0,0,1.0)";
+			cctx.beginPath()
+			cctx.moveTo(cOrigin[0],cOrigin[1]);
+			cctx.lineTo(cVel[0],cVel[1]);
+			cctx.stroke();
+			
+			cctx.strokeStyle = "rgba(0,200,0,1.0)";
+			cctx.beginPath()
+			cctx.moveTo(cOrigin[0],cOrigin[1]);
+			cctx.lineTo(cLook[0],cLook[1]);
+			cctx.stroke();
+			
+			var pos=data["position"];
+			var nearestX=Math.round(pos[0]/grid_meter)*grid_meter;
+			var x=toCvsCoords([nearestX-pos[0],0])[0];
+			while (x>0) x-=px_per_meter*grid_meter;
+			do {
+				x+=px_per_meter*grid_meter;
+				cctx.strokeStyle = "rgba(0,0,0,0.3)";
+				cctx.beginPath()
+				cctx.moveTo(x,0);
+				cctx.lineTo(x,cvs.height);
+				cctx.stroke();
+			} while (x<cvs.width);
+			
+			var nearestY=Math.round(pos[1]/grid_meter)*grid_meter;
+			var y=toCvsCoords([0,nearestY-pos[1]])[1];
+			while (y>0) y-=px_per_meter*grid_meter;
+			do {
+				y+=px_per_meter*grid_meter;
+				cctx.strokeStyle = "rgba(0,0,0,0.3)";
+				cctx.beginPath()
+				cctx.moveTo(0,y);
+				cctx.lineTo(cvs.width,y);
+				cctx.stroke();
+			} while (y<cvs.width);
+			
+			for (var i=0;i<data["buildings"].length;i++){
+				let b=data["buildings"][i];
+				let cvsCoords=toCvsCoords([b["relX"],b["relY"]]);
+				//console.log(b);
+				//console.log(cvsCoords);
+				if (i==0) cctx.fillStyle = "rgba(0,0,200,1.0)";
+				else cctx.fillStyle = "rgba(0,0,0,1.0)";
+				cctx.fillRect(
+					cvsCoords[0]-buildRectSize/2, 
+					cvsCoords[1]-buildRectSize/2, 
+					buildRectSize, buildRectSize);
+				cctx.font="16px serif";
+				cctx.fillText(b["name"],cvsCoords[0],cvsCoords[1]);
 			}
 		}
 		

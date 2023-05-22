@@ -84,7 +84,7 @@ _ap.add_argument(
 	"--gps-playback","-gpb")
 _ap.add_argument(
 	"--gps-look-offset","-glo",
-	default=0)
+	default=0,type=float)
 
 _ap.add_argument(
 	"--stereo-distance","-sd",

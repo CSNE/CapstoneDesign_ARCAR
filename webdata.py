@@ -9,6 +9,8 @@ import io
 import base64
 import collections
 import building_detect
+import building_definitions
+from typing import List
 
 def depthmap_to_pointcloud_json(*,
 	depth_map,color_image,
@@ -92,4 +94,21 @@ def wall_to_json(pmrs:typing.List[building_detect.PlaneMatchResult]):
 			"x":pmr.center_real.x,
 			"y":pmr.center_real.y,
 			"z":pmr.center_real.z})
+	return obj
+
+def gpsinfo_json(*,
+	position,velocity_direction, looking_direction,
+	buildings:List[building_definitions.BuildingLGC]):
+	obj={}
+	obj["velocity"] = velocity_direction
+	obj["looking"] = looking_direction
+	obj["position"] = position
+	
+	building_list=[]
+	for b in buildings:
+		building_list.append({
+			"relX":b.lgc.x-position[0],
+			"relY":b.lgc.y-position[1],
+			"name":b.name})
+	obj["buildings"] = building_list
 	return obj

@@ -76,6 +76,11 @@ class Tuples:
 			rad=math.radians(deg)
 		return (v[0]*math.cos(rad)-v[1]*math.sin(rad),
 		        v[0]*math.sin(rad)+v[1]*math.cos(rad))
+	@classmethod
+	def degree(cls,v):
+		cls.dimension_equal_assert(2,v)
+		return math.degrees(math.atan2(v[1],v[0]))
+	
 
 if __name__=="__main__":
 	print("DE",Tuples.dimension_equal((1,2),(3,4)))

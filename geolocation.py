@@ -5,23 +5,22 @@ import gps_nmea
 from tuples import Tuples
 import time
 
-# coordinates, cartesian, centered on a point
-# we assume the earth is a circle - accuracy isn't too important here
-# W - <-- X --> + E (Longitude)
-# S - <-- Y --> + N (Latitude)
-# Z = Altitude
 
-# Yonsei
+# Yonsei Shinchon main gate
 CENTER_LATITUDE=37.560179
 CENTER_LONGITUDE=126.936925
-
-
 
 EARTH_RADIUS=6400*1000
 METER_PER_LATITUDE=2*math.pi*EARTH_RADIUS/360
 HORIZ_SMALLCIRC_R=math.cos(math.radians(CENTER_LATITUDE))*EARTH_RADIUS
 METER_PER_LONGITUDE=2*math.pi*HORIZ_SMALLCIRC_R/360
 
+# coordinates, cartesian, centered on a point
+# Here we approximate the earth's surface as a plane.
+# we also assume the earth is a perfect sphere
+# W - <-- X --> + E (Longitude)
+# S - <-- Y --> + N (Latitude)
+# Z = Altitude
 class LocalGroundCoordinates:
 	def __init__(self,*,x,y,z):
 		self._x=x
@@ -42,8 +41,8 @@ class LocalGroundCoordinates:
 		rlat=latitude-CENTER_LATITUDE
 		rlon=longitude-CENTER_LONGITUDE
 		return cls(
-			x=rlat*METER_PER_LATITUDE,
-			y=rlon*METER_PER_LONGITUDE,
+			x=rlon*METER_PER_LONGITUDE,
+			y=rlat*METER_PER_LATITUDE,
 			z=altitude)
 	@classmethod
 	def from_GD(cls,gd):
@@ -51,8 +50,6 @@ class LocalGroundCoordinates:
 			longitude=gd.longitude,
 			latitude=gd.latitude,
 			altitude=gd.altitude)
-	def to_LLA(self):
-		0/0
 	def to_tuple(self):
 		return (self.x,self.y,self.z)
 	def __str__(self):
