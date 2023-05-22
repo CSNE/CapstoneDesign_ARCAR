@@ -82,6 +82,9 @@ _ap.add_argument(
 	"--gps-device","-gps")
 _ap.add_argument(
 	"--gps-playback","-gpb")
+_ap.add_argument(
+	"--gps-look-offset","-glo",
+	default=0)
 
 # Arguments Parsing
 _args=_ap.parse_args()
@@ -96,6 +99,7 @@ do_wall_visual= _args.visualize_wall_detections
 gps_dev=_args.gps_device
 gps_playback=_args.gps_playback
 use_gps = (gps_dev is not None) or (gps_playback is not None)
+gps_look_offset = _args.gps_look_offset
 
 if do_wall_visual and (not detect_walls):
 	print("We can't visualize walls if wall detection is turned off!")

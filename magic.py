@@ -56,3 +56,6 @@ class mapping:
 	# How big is the frame?
 	reference_distance=5
 	reference_width=8
+
+class gps:
+	building_distance_cutoff=100

@@ -158,21 +158,7 @@
 			xhr.send();
 		}
 		function update_all(){
-			request(
-				"/info1",
-				function(resp){info1.innerHTML=resp;},
-				function(e){}
-			);
-			request(
-				"/info2",
-				function(resp){info2.innerHTML=resp;},
-				function(e){}
-			);
-			request(
-				"/info3",
-				function(resp){info3.innerHTML=resp;},
-				function(e){}
-			);
+			
 			
 			for (var k in imgDOMs){
 				/*
@@ -220,6 +206,24 @@
 		}
 		setInterval(updateCheck,50);
 		
+		function updateInfoboxes(){
+			request(
+				"/info1",
+				function(resp){info1.innerHTML=resp;},
+				function(e){}
+			);
+			request(
+				"/info2",
+				function(resp){info2.innerHTML=resp;},
+				function(e){}
+			);
+			request(
+				"/info3",
+				function(resp){info3.innerHTML=resp;},
+				function(e){}
+			);
+		}
+		setInterval(updateInfoboxes,100);
 		
 		
 		

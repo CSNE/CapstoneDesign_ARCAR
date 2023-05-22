@@ -64,6 +64,12 @@ class Tuples:
 	def normalize(cls,v):
 		return cls.div(v,cls.mag(v))
 	@classmethod
+	def cosine_between(cls,v,u):
+		return cls.dot(cls.normalize(v),cls.normalize(u))
+	@classmethod
+	def degree_between(cls,v,u):
+		return math.degrees(math.acos(cls.cosine_between(v,u)))
+	@classmethod
 	def rotate(cls,v,deg=None,rad=None):
 		cls.dimension_equal_assert(2,v)
 		if rad is None:

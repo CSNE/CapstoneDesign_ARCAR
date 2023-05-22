@@ -3,6 +3,7 @@ import collections
 import math
 import gps_nmea
 from tuples import Tuples
+import time
 
 # coordinates, cartesian, centered on a point
 # we assume the earth is a circle - accuracy isn't too important here
@@ -11,12 +12,10 @@ from tuples import Tuples
 # Z = Altitude
 
 # Yonsei
-#CENTER_LATITUDE=37.560179
-#CENTER_LONGITUDE=126.936925
+CENTER_LATITUDE=37.560179
+CENTER_LONGITUDE=126.936925
 
-# Ecorich
-CENTER_LATITUDE=37.456462
-CENTER_LONGITUDE=127.013232
+
 
 EARTH_RADIUS=6400*1000
 METER_PER_LATITUDE=2*math.pi*EARTH_RADIUS/360
@@ -39,13 +38,19 @@ class LocalGroundCoordinates:
 		return self._z
 	
 	@classmethod
-	def from_GD(cls,gd):
-		rlat=gd.latitude-CENTER_LATITUDE
-		rlon=gd.longitude-CENTER_LONGITUDE
+	def from_lla(cls,*,longitude,latitude,altitude):
+		rlat=latitude-CENTER_LATITUDE
+		rlon=longitude-CENTER_LONGITUDE
 		return cls(
 			x=rlat*METER_PER_LATITUDE,
 			y=rlon*METER_PER_LONGITUDE,
-			z=gd.altitude)
+			z=altitude)
+	@classmethod
+	def from_GD(cls,gd):
+		return cls.from_lla(
+			longitude=gd.longitude,
+			latitude=gd.latitude,
+			altitude=gd.altitude)
 	def to_LLA(self):
 		0/0
 	def to_tuple(self):
@@ -62,19 +67,35 @@ class PositionSolver:
 		self._gps=gps
 		gps.add_listener(self._gps_callback)
 		self._gd_history=[]
-		self._gdhist_maxlen=100
+		self._gdhist_maxlen=100 #entries
+		self._gdhist_maxtime=10 #sec
+	def _prune_history(self):
+		t=time.time()
+		while True:
+			if not self._gd_history: #Empty
+				break
+			elif len(self._gd_history)>self._gdhist_maxlen: 
+				# Too long
+				del self._gd_history[0]
+			elif self._gd_history[0].time_system<t-self._gdhist_maxtime:
+				# Too old
+				del self._gd_history[0]
+			else: #OK
+				break
+		
 	def _gps_callback(self,gd:gps_nmea.GPSData):
 		if gd.has_fix:
-			print("New fix:",gd)
+			#print("New fix:",gd)
 			self._gd_history.append(gd)
-			while len(self._gd_history)>self._gdhist_maxlen:
-				del self._gd_history[0]
+			self._prune_history()
 	def get_location(self):
+		self._prune_history()
 		if self._gd_history:
 			return LocalGroundCoordinates.from_GD(self._gd_history[-1])
 		else:
 			return None
 	def get_velocity(self):
+		self._prune_history()
 		vel=None
 		try:
 			#print("Vel",self._gd_history[-1])

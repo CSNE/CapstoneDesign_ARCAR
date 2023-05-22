@@ -95,6 +95,8 @@ import visualizations
 import stereo_playback
 import building_detect
 import magic
+from tuples import Tuples
+import building_definitions
 
 if arguments.stereo_solvers["opencv"]:
 	import_timer.split(starting="Stereo")
@@ -487,9 +489,39 @@ def display(img,*,stereo_right=None,frame_name=None):
 				st.put_string("/info1",str(frame_name))
 			
 			if arguments.use_gps:
-				st.put_string("/info2",str(ps.get_location()))
-				st.put_string("/info3",str(ps.get_velocity()))
+				location=ps.get_location()
+				velocity=ps.get_velocity()
+				
+				st.put_string("/info2",str(location)+" / "+str(velocity))
+				st.put_string("/info3","No building match...")
 			
+				if (location is not None) and (velocity is not None):
+				
+					print(F"Location {location} | Velocity {velocity}")
+					loc2d=(location.x,location.y) #X,Y only
+					vel2d=velocity[:2] #X,Y only
+					
+					
+					heading = Tuples.normalize(vel2d) # Heading unit vector
+					looking= Tuples.rotate(heading,deg=arguments.gps_look_offset)
+					print(F"Heading {heading} | Looking {looking}")
+					
+					candidates=[]
+					for b in building_definitions.buildings_lgc:
+						building_location=(b.lgc.x,b.lgc.y)
+						building_diff=Tuples.sub(building_location,loc2d)
+						lookdiff=Tuples.degree_between(building_diff,looking)
+						distance=Tuples.mag(building_diff)
+						print(F"Building {b.name} | X{building_location[0]} | Y{building_location[1]}")
+						print(F"  LookAngle {lookdiff} | Distance {distance}")
+						if distance<magic.gps.building_distance_cutoff:
+							candidates.append(lookdiff,b)
+					candidates.sort()
+					if candidates:
+						best=candidates[0][1]
+						st.put_string("/info3","Looking at building: "+best.name)
+					
+				
 			# Depths
 			if arguments.visualize_depth_matrix:
 				if arguments.stereo_solvers["monodepth"]:
