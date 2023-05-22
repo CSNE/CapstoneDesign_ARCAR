@@ -12,10 +12,10 @@ Using `conda` is recommended:
 Please follow the instructions on the PyTorch website:  
 https://pytorch.org/get-started/locally  
 #### Other dependencies (Conda or PIP)
-Conda: `conda install matplotlib opencv scikit-image tensorboardX`  
-PIP: `pip3 install matplotlib opencv-python scikit-image tensorboardX`  
+Conda: `conda install matplotlib opencv scikit-image tensorboardX pyserial`  
+PIP: `pip3 install matplotlib opencv-python scikit-image tensorboardX pyserial`  
 #### Other dependencies (PIP only)
-`pip install ultralytics timm==0.5.4`
+`pip install ultralytics timm==0.5.4 pynmea2`
 #### CUDA
 Only required when using `--cuda` options.  
 On Windows, install the latest NVIDIA Drivers, then install CUDA runtime: `conda install cuda`  
