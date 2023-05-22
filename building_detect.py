@@ -11,12 +11,7 @@ import collections
 from tuples import Tuples
 import scipy.ndimage
 import magic
-
-def derivative(dm):
-	pass
-
-def cluster(deriv_map):
-	pass
+import threading
 
 # https://stackoverflow.com/a/66384452
 def save_ma(fn,ma):
@@ -91,64 +86,146 @@ def realize_plane(shape,pd:PlaneDefinition):
 PlaneMatchResult=collections.namedtuple(
 	"PlaneMatchResult",
 	["match_ratio","plane_definition","normal_vector","mask_prechoke","mask","error","depth","center_real","center_map"])
-def get_fit_candidates(depthmap,n,r,sstrsm):
-	res=[]
-	for i in range(n):
-		testpoint=coordinates.Coordinates2D(
-			x=random.randint(r,depthmap.shape[1]-r-1),
-			y=random.randint(r,depthmap.shape[0]-r-1))
-		
-		pd=linear_approximate(depthmap,testpoint,r)
-		depth=pd.originZ
-		
-		px_to_meters=sstrsm.map_pxdistance(distX=1,distY=1,depth=depth)
-		nvec=Tuples.normalize([pd.gradientX/px_to_meters.x,-pd.gradientY/px_to_meters.y,1])
-		plane=realize_plane(depthmap.shape,pd)
-		#visualizations.visualize_matrix(plane).save("out/plane.png")
-		error=depthmap-plane
-		#visualizations.visualize_matrix(ext_error,clip_values=(-1,+2)).save("out/err.png")
-		
-		err_threshed=numpy.ma.masked_greater(numpy.absolute(error),depth*magic.walls.inwall_thresh_ratio)
-		mask_prechoke=numpy.logical_not(err_threshed.mask)
-		
-		emask_blurred=maths.gaussian_blur(mask_prechoke.astype(numpy.float32),magic.walls.choke_sdev)
-		emask_choked=numpy.ma.masked_greater(emask_blurred,magic.walls.choke_thresh)
-		mask=emask_choked.mask
-		mask_nz=numpy.count_nonzero(mask)
-		
-		if mask_nz==0:
-			continue
-			
-		ratio=mask_nz / mask.size
-		#print(ratio)
-		
-		com=scipy.ndimage.center_of_mass(mask)
-		comZ=pd.f(*com)
-		com_real=sstrsm.map_pxcoords(pxX=com[1],pxY=com[0],depth=comZ)
-		#print("COM",com)
-		#print("COMr",com_real)
-		
-		
-		
-		#print((pd,ratio))
-		res.append(PlaneMatchResult(
-			match_ratio=ratio,
-			plane_definition=pd,
-			normal_vector=nvec,
-			mask_prechoke=mask_prechoke,
-			mask=mask,
-			error=error,
-			depth=depth,
-			center_real=com_real,
-			center_map=coordinates.Coordinates2D(x=com[1],y=com[0])))
+
+import sequence_timer
+sqt=None#sequence_timer.SequenceTimer(prefix="WallFit Single",ms_format="5.2")
+
+def random_fit(depthmap,r,sstrsm,idx=0):
+	#sqt3=sequence_timer.SequenceTimer(prefix="WallFit Thread",ms_format="5.2")
+	#sqt3.split(starting=F"Th# {idx}")
+	global sqt
+	if sqt: sqt.split(starting="Linear Approx")
+	testpoint=coordinates.Coordinates2D(
+		x=random.randint(r,depthmap.shape[1]-r-1),
+		y=random.randint(r,depthmap.shape[0]-r-1))
 	
+	pd=linear_approximate(depthmap,testpoint,r)
+	depth=pd.originZ
+	
+	if sqt: sqt.split(starting="Realize Plane")
+	px_to_meters=sstrsm.map_pxdistance(distX=1,distY=1,depth=depth)
+	nvec=Tuples.normalize([pd.gradientX/px_to_meters.x,-pd.gradientY/px_to_meters.y,1])
+	plane=realize_plane(depthmap.shape,pd)
+	#visualizations.visualize_matrix(plane).save("out/plane.png")
+	if sqt: sqt.split(starting="Error calc")
+	error=depthmap-plane
+	#visualizations.visualize_matrix(ext_error,clip_values=(-1,+2)).save("out/err.png")
+	if sqt: sqt.split(starting="Calc mask")
+	err_threshed=numpy.ma.masked_greater(
+		numpy.absolute(error),depth*magic.walls.inwall_thresh_ratio)
+	mask_prechoke=numpy.logical_not(err_threshed.mask)
+	
+	if sqt: sqt.split(starting="Cast mask")
+	mask_prechoke_f32=mask_prechoke.astype(numpy.float32)
+	
+	if sqt: sqt.split(starting="Blur mask")
+	if magic.walls.choke_use_gaussian:
+		emask_blurred=maths.gaussian_blur(
+			mask_prechoke_f32,magic.walls.choke_gaussian_sdev)
+	else:
+		emask_blurred=maths.box_blur(
+			mask_prechoke_f32,magic.walls.choke_box_size)
+	
+	if sqt: sqt.split(starting="Choke mask")
+	emask_choked=numpy.ma.masked_greater(
+		emask_blurred,magic.walls.choke_thresh)
+	mask=emask_choked.mask
+	
+	if sqt: sqt.split(starting="Count NZ")
+	mask_nz=numpy.count_nonzero(mask)
+	
+	if mask_nz==0:
+		return None
+		
+	ratio=mask_nz / mask.size
+	#print(ratio)
+	
+	if sqt: sqt.split(starting="Calc COM")
+	com=scipy.ndimage.center_of_mass(mask)
+	comZ=pd.f(*com)
+	com_real=sstrsm.map_pxcoords(pxX=com[1],pxY=com[0],depth=comZ)
+	#print("COM",com)
+	#print("COMr",com_real)
+	if sqt: sqt.split()
+	sqt=None
+	
+	#sqt3.split()
+	#print((pd,ratio))
+	return PlaneMatchResult(
+		match_ratio=ratio,
+		plane_definition=pd,
+		normal_vector=nvec,
+		mask_prechoke=mask_prechoke,
+		mask=mask,
+		error=error,
+		depth=depth,
+		center_real=com_real,
+		center_map=coordinates.Coordinates2D(x=com[1],y=com[0]))
+
+
+class WallFitThread(threading.Thread):
+	def __init__(self,task,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+		self._task=task
+	def run(self):
+		while True:
+			# Is work left?
+			with self._task["lock"]:
+				if self._task["n_left"]==0:
+					return
+				idx=self._task["n_left"]
+				self._task["n_left"] -= 1
+			
+			# Calculate
+			rf=random_fit(
+				self._task["depthmap"],
+				self._task["r"],
+				self._task["sstrsm"],
+				idx)
+			
+			# Add result
+			if rf:
+				with self._task["lock"]:
+					self._task["results"].append(rf)
+
+import sequence_timer
+sqt2=None#sequence_timer.SequenceTimer(prefix="WallFit Loop",ms_format="6.2")
+def get_fit_candidates(depthmap,n,r,sstrsm):
+	global sqt2
+	if magic.walls.threaded:
+		if sqt2: sqt2.split(starting="Task init")
+		task={
+			"depthmap": depthmap,
+			"r":r,
+			"sstrsm":sstrsm,
+			"lock":threading.RLock(),
+			"results":list(),
+			"n_left":n}
+		if sqt2: sqt2.split(starting="Thread create")
+		threads=[WallFitThread(task) for i in range(magic.walls.thread_count)]
+		print("Finding wall with",magic.walls.thread_count,"threads")
+		if sqt2: sqt2.split(starting="Thread Start")
+		for t in threads:
+			t.start()
+		if sqt2: sqt2.split(starting="Thread wait")
+		for t in threads:
+			t.join()
+		if sqt2: sqt2.split(starting="Thread join")
+		print("Thread joined.")
+		res=task["results"]
+		
+	else:
+		res=[]
+		for i in range(n):
+			rf=random_fit(depthmap,r,sstrsm)
+			if rf:
+				res.append(rf)
+	
+	if sqt2: sqt2.split(starting="Filter & Sort")
 	res=[i for i in res if i.depth<magic.walls.max_distance] #MAGIC: maximum distance
 	res.sort(key=lambda x:x.match_ratio, reverse=True) # High matches first
 	
-	for i in res:
-		pass
-		#print(i)
-	
+	if sqt2: sqt2.split(starting="Deduplicate")
 	# Remove duplicates
 	i=0
 	while i<len(res):
@@ -166,10 +243,8 @@ def get_fit_candidates(depthmap,n,r,sstrsm):
 			j-=1
 		i+=1
 		
-	for i in res:
-		pass
-		#print(i)
-	
+	if sqt2: sqt2.split()
+	sqt2=None
 	
 		
 	return res[:10]

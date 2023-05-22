@@ -49,3 +49,7 @@ def gaussian_blur(npa,sdev):
 	return scipy.ndimage.gaussian_filter(
 		npa,sdev,
 		mode="nearest",truncate=3.0)
+def box_blur(npa,siz):
+	return scipy.ndimage.uniform_filter(
+		npa,siz,
+		mode="nearest")

@@ -6,11 +6,22 @@ class visuals:
 	font_size=36
 	
 class walls:
+	# Scale the depth map down before running wall detection?
+	do_prescale=True
+	prescale_depth=(240,160)
+	
 	# How much area of the screen the wall should occupy for it to be valid
 	match_threshold=0.05
 	
-	choke_sdev=5
+	threaded=True
+	thread_count=4
+	
+	# Blur when choking
+	choke_use_gaussian=False
+	choke_gaussian_sdev=5
+	choke_box_size=7
 	choke_thresh=0.9
+	
 	# How many samples to... sample
 	random_samples=100
 	# Radius for calculating derivative
@@ -27,9 +38,11 @@ class walls:
 
 class system:
 	tk_initialize_wait=0.5
-
+	
+	
 class web:
 	server_port=28301
+	
 	
 class monodepth:
 	# Multiplier for depth estimate

@@ -356,12 +356,29 @@ def display(img,*,stereo_right=None,frame_name=None):
 	
 	if arguments.detect_walls:
 		loop_timer.split(starting="Detect building")
-		depth_blurred=maths.gaussian_blur(depth,magic.walls.blur_sdev)
+		walldepth_blurred=maths.gaussian_blur(depth,magic.walls.blur_sdev)
+		if magic.walls.do_prescale:
+			walldepth_size=maths.fit(
+				walldepth_blurred.shape,
+				(magic.walls.prescale_depth[1],magic.walls.prescale_depth[0]))
+			walldepth_scaled=maths.resize_matrix(walldepth_blurred,walldepth_size)
+			print("Resize Wall Depth",walldepth_blurred.shape,
+				"->",walldepth_scaled.shape)
+			
+		else:
+			walldepth_scaled=walldepth_blurred
+			
+		ss2rsm_walldepth=coordinates.ScreenSpaceToRealSpaceMapper(
+			image_width=walldepth_scaled.shape[1],
+			image_height=walldepth_scaled.shape[0],
+			reference_distance=magic.mapping.reference_distance,
+			reference_width=magic.mapping.reference_width)
+		
 		walls_unfiltered=building_detect.get_fit_candidates(
-			depth_blurred,
+			walldepth_scaled,
 			magic.walls.random_samples,
 			magic.walls.derivative_radius,
-			ss2rsm_depthmap)
+			ss2rsm_walldepth)
 		
 		walls=[i for i in walls_unfiltered if i.match_ratio>magic.walls.match_threshold] #MAGIC: match thresh
 		print(F"{len(walls)} walls detected.                     ")
