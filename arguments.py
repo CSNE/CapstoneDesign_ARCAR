@@ -86,6 +86,10 @@ _ap.add_argument(
 	"--gps-look-offset","-glo",
 	default=0)
 
+_ap.add_argument(
+	"--stereo-distance","-sd",
+	default=16,type=float)
+
 # Arguments Parsing
 _args=_ap.parse_args()
 
@@ -94,6 +98,7 @@ debug_output=_args.debug_output
 pointcloud=_args.pointcloud
 detect_walls=_args.detect_walls
 do_wall_visual= _args.visualize_wall_detections
+stereo_multiplier=_args.stereo_distance/16
 
 
 gps_dev=_args.gps_device

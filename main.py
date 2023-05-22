@@ -279,7 +279,8 @@ def display(img,*,stereo_right=None,frame_name=None):
 	# Depth estimation
 	if arguments.stereo_solvers["monodepth"]:
 		loop_timer.split(starting="MonoDepth")
-		md_raw=md_de.estimate(img,depth_multiplier=magic.monodepth.multiplier)
+		md_raw=md_de.estimate(img,
+			depth_multiplier=magic.monodepth.multiplier*arguments.stereo_multiplier)
 		# Restore aspect ratio
 		img_smallsize=maths.fit(img.size,(480,320))
 		depth_monodepth=maths.resize_matrix(md_raw,(img_smallsize[1],img_smallsize[0]))
@@ -292,7 +293,7 @@ def display(img,*,stereo_right=None,frame_name=None):
 			loop_timer.split(starting="OpenCV")
 			depth_opencv=stereo.stereo_calculate(
 				left=stereo_left,right=stereo_right,
-				depth_multiplier=magic.opencv.multiplier) 
+				depth_multiplier=magic.opencv.multiplier*arguments.stereo_multiplier) 
 			if hasattr(depth_opencv,"count"): # Only has it if MaskedArray
 				pass#print("OpenCV valid pixels: {}/{}".format(depth_opencv.count(),depth_opencv.size))
 		else:
@@ -306,7 +307,7 @@ def display(img,*,stereo_right=None,frame_name=None):
 			depth_psm = psmnet.calculate(
 				left=stereo_left_rsz,
 				right=stereo_right_rsz,
-				depth_multiplier=magic.psm.multiplier).astype(float)
+				depth_multiplier=magic.psm.multiplier*arguments.stereo_multiplier).astype(float)
 		else:
 			depth_psm=None
 
@@ -315,7 +316,7 @@ def display(img,*,stereo_right=None,frame_name=None):
 			depth_igev = igev.calculate(
 				left=stereo_left_rsz,
 				right=stereo_right_rsz,
-				depth_multiplier=magic.igev.multiplier) 
+				depth_multiplier=magic.igev.multiplier*arguments.stereo_multiplier) 
 		else:
 			depth_igev=None
 	else:
