@@ -328,51 +328,49 @@ function createSquareFrameGeometry(innerL,outerL){
 var object_walls=[];
 var planeSize=3.0;
 function setWalls(wallList){
-    var new_walls=[];
-    
-    // Add objects
-    for (var i=0;i<wallList.length;i++){
-        var wall=wallList[i];
+    floader.load( 'font.typeface.json', function ( font ) {
+        var new_walls=[];
         
-        let x=wall["x"];
-        let y=wall["y"];
-        let z=wall["z"];
-        let laX=wall["x"]+wall["nvX"];
-        let laY=wall["y"]+wall["nvY"];
-        let laZ=wall["z"]+wall["nvZ"];
-        let tContent = "Wall "+i;
-        let tSize=0.4;
-        
-        /*
-        
-        const objGeom = new THREE.PlaneGeometry(planeSize,planeSize);
-        const objMat= new THREE.MeshStandardMaterial();
-        objMat.wireframe=true;
-        //const objMat = new THREE.LineBasicMaterial();
-        objMat.color=new THREE.Color(0,1,1);
-        //objMat.side=THREE.DoubleSide;
-        const objMesh = new THREE.Mesh(objGeom,objMat);*/
-        const objGeom=BufferGeometryUtils.mergeGeometries(
-            [createSquareFrameGeometry(0.9,1.0),
-             createSquareFrameGeometry(1.2,1.3)],false);
-                                                          
-        
-        const objMat = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
-        objMat.color = new THREE.Color(0.5,0.0,0.5);
-        objMat.side=THREE.DoubleSide;
-        const objMesh = new THREE.Mesh( objGeom, objMat );
-    
-        objMesh.position.x=x;
-        objMesh.position.y=y;
-        objMesh.position.z=z;
-        
-        objMesh.lookAt(laX,laY,laZ);
-        
-        scene.add(objMesh);
-        object_walls.push(objMesh);
-        
-        floader.load( 'font.typeface.json', function ( font ) {
+        // Add objects
+        for (var i=0;i<wallList.length;i++){
+            var wall=wallList[i];
             
+            let x=wall["x"];
+            let y=wall["y"];
+            let z=wall["z"];
+            let laX=wall["x"]+wall["nvX"];
+            let laY=wall["y"]+wall["nvY"];
+            let laZ=wall["z"]+wall["nvZ"];
+            let tContent = "Wall "+i;
+            let tSize=0.4;
+            
+            /*
+            
+            const objGeom = new THREE.PlaneGeometry(planeSize,planeSize);
+            const objMat= new THREE.MeshStandardMaterial();
+            objMat.wireframe=true;
+            //const objMat = new THREE.LineBasicMaterial();
+            objMat.color=new THREE.Color(0,1,1);
+            //objMat.side=THREE.DoubleSide;
+            const objMesh = new THREE.Mesh(objGeom,objMat);*/
+            const objGeom=BufferGeometryUtils.mergeGeometries(
+                [createSquareFrameGeometry(0.9,1.0),
+                createSquareFrameGeometry(1.2,1.3)],false);
+                                                            
+            
+            const objMat = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
+            objMat.color = new THREE.Color(0.5,0.0,0.5);
+            objMat.side=THREE.DoubleSide;
+            const objMesh = new THREE.Mesh( objGeom, objMat );
+        
+            objMesh.position.x=x;
+            objMesh.position.y=y;
+            objMesh.position.z=z;
+            
+            objMesh.lookAt(laX,laY,laZ);
+            
+            new_walls.push(objMesh);
+                
             const textGeom = new TextGeometry( tContent, {
                 font: font,
                 size: tSize,
@@ -393,19 +391,20 @@ function setWalls(wallList){
             
             
             new_walls.push(textMesh);
-        });
-    }
-    
-    
-    
-    for (var i=0;i<new_walls.length;i++){
-        scene.add(new_walls[i]);
+            
+        }
         
-    }
-    for (var i=0;i<object_walls.length;i++){
-        scene.remove(object_walls[i])
-    }
-    object_walls=new_walls;
+        
+        
+        for (var i=0;i<new_walls.length;i++){
+            scene.add(new_walls[i]);
+            
+        }
+        for (var i=0;i<object_walls.length;i++){
+            scene.remove(object_walls[i])
+        }
+        object_walls=new_walls;
+    });
 }
 
 function updateWalls(){
