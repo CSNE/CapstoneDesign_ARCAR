@@ -65,10 +65,11 @@ class segdepth:
 	# the segdepth will be rejected
 	ratio_threshold=0.1
 
-class mapping:
-	# How big is the frame?
+class camera:
+	# Camera parameters
 	reference_distance=5
 	reference_width=8
+	aspect_hv=4/3
 
 class gps:
 	building_distance_cutoff=100

@@ -37,6 +37,7 @@ import random
 import traceback
 import sys
 import json
+import math
 
 
 # 3rd party
@@ -215,13 +216,22 @@ webconfig_data=json.dumps({
 	"pointcloud":arguments.pointcloud,
 	"gps":arguments.use_gps}).encode()
 
+ref_height=magic.camera.reference_width/magic.camera.aspect_hv
+pov_tan=(ref_height/2)/magic.camera.reference_distance
+pov_vert_deg=math.degrees(math.atan(pov_tan))*2
+if arguments.verblevel>=1:
+	print("Calculated Camera POV:",pov_vert_deg)
+camfov_key=b"$$$PYTHON REPLACE: CAM FOV$$$"
+camfov_b=str(pov_vert_deg).encode()
+
+
 st.put_string("/update_flag","")
 
 with open("mainpage.html","rb") as f:
 	page=f.read().replace(webconfig_key,webconfig_data)
 st.put_data("/main.html",page)
 with open("mainpage.js","rb") as f:
-	page=f.read().replace(webconfig_key,webconfig_data)
+	page=f.read().replace(webconfig_key,webconfig_data).replace(camfov_key,camfov_b)
 st.put_data("/mainpage.js",page,"text/javascript")
 with open("helvetiker_regular.typeface.json","rb") as f:
 	fnt=f.read()
@@ -235,7 +245,7 @@ st.put_string("/info3",'')
 st.put_json("/camVelocity",[0,0,0])
 
 # 0deg = [0,1] +90deg=[-1,0] -90deg=[+1,0]
-unit_velocity=Tuples.rotate([0,1],deg=arguments.gps_look_offset)
+unit_velocity=Tuples.rotate([0,1],deg=-arguments.gps_look_offset)
 
 if arguments.debug_output=="web":
 	with open("webpage.html","rb") as f:
@@ -344,12 +354,12 @@ def display(img,*,stereo_right=None,frame_name=None):
 	
 	ss2rsm_image=coordinates.ScreenSpaceToRealSpaceMapper(
 		image_width=img.width,image_height=img.height,
-		reference_distance=magic.mapping.reference_distance,
-		reference_width=magic.mapping.reference_width)
+		reference_distance=magic.camera.reference_distance,
+		reference_width=magic.camera.reference_width)
 	ss2rsm_depthmap=coordinates.ScreenSpaceToRealSpaceMapper(
 		image_width=depth.shape[1],image_height=depth.shape[0],
-		reference_distance=magic.mapping.reference_distance,
-		reference_width=magic.mapping.reference_width)
+		reference_distance=magic.camera.reference_distance,
+		reference_width=magic.camera.reference_width)
 	
 	
 	loop_timer.split(starting="Seg3D Calculate")
@@ -379,8 +389,8 @@ def display(img,*,stereo_right=None,frame_name=None):
 		ss2rsm_walldepth=coordinates.ScreenSpaceToRealSpaceMapper(
 			image_width=walldepth_scaled.shape[1],
 			image_height=walldepth_scaled.shape[0],
-			reference_distance=magic.mapping.reference_distance,
-			reference_width=magic.mapping.reference_width)
+			reference_distance=magic.camera.reference_distance,
+			reference_width=magic.camera.reference_width)
 		
 		walls_unfiltered=building_detect.get_fit_candidates(
 			walldepth_scaled,
@@ -638,8 +648,9 @@ def display(img,*,stereo_right=None,frame_name=None):
 					s3d,name))
 		if gps_valid:
 			velvec=Tuples.mult(unit_velocity,speed)
-			print("VV",velvec)
-			st.put_json("/camVelocity",[-velvec[0],0,velvec[1]])
+			if arguments.verblevel>=2:
+				print("Velocity vector",velvec)
+			st.put_json("/camVelocity",[velvec[0],0,-velvec[1]])
 			
 	st.put_json("/texts",seg3dText_json)
 	if arguments.pointcloud:

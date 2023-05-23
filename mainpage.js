@@ -33,7 +33,7 @@ function makeCanvasFull(){
 }
 
 // Camera controls
-const camera = new THREE.PerspectiveCamera( 60, w/h, 0.001, 1000 );
+const camera = new THREE.PerspectiveCamera( $$$PYTHON REPLACE: CAM FOV$$$, w/h, 0.001, 1000 );
 const controls = new OrbitControls( camera, renderer.domElement );
 controls.target=new THREE.Vector3( 0, 0, -3 );
 camera.position.set( 0, 0, 0 );
@@ -84,7 +84,7 @@ function updateCV(){
         "camVelocity",
         function(resp){
             cameraVelocity=JSON.parse(resp);
-            console.log(cameraVelocity);
+            //console.log(cameraVelocity);
         },
         function(){});
 }
