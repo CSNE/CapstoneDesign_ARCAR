@@ -9,55 +9,51 @@ buildings=[
 	BuildingDef(
 		latitude=37.56082028116716, 
 		longitude=126.9353526867473,
-		name="공학원"),
+		name="Eng Research Park"),
 	BuildingDef(
 		latitude=37.561477325183965, 
 		longitude=126.93596955291314,
-		name="1공학관(S)"),
+		name="EngHall-1(S)"),
 	BuildingDef(
 		latitude=37.56218007992962, 
 		longitude=126.93624260527221,
-		name="1공학관(N)"),
+		name="EngHall-1(N)"),
 	BuildingDef(
 		latitude=37.56173031643782, 
 		longitude=126.93657948873086,
-		name="1공학관"),
+		name="EngHall-1"),
 	BuildingDef(
 		latitude=37.561842757551894, 
 		longitude=126.93603692851528,
-		name="4공학관"),
+		name="EngHall-4"),
 	BuildingDef(
 		latitude=37.56173031568103, 
 		longitude=126.93513621286633,
-		name="3공학관"),
+		name="EngHall-3"),
 	BuildingDef(
 		latitude=37.562300949412595, 
 		longitude=126.93520003956498,
-		name="2공학관"),
+		name="EngHall-2"),
 	BuildingDef(
 		latitude=37.56269729859164, 
 		longitude=126.9355440191072,
-		name="스포츠과학관"),
+		name="Sports Sciences Hall"),
 	BuildingDef(
 		latitude=37.563088026169765, 
 		longitude=126.93572487599894,
-		name="체육관"),
+		name="Gym"),
 	BuildingDef(
 		latitude=37.56294185162516, 
 		longitude=126.93444471576267,
-		name="IBS관"),
+		name="IBS Hall"),
 	BuildingDef(
 		latitude=37.563338198103764, 
 		longitude=126.93466457739468,
-		name="과학원"),
+		name="Science Research Hall"),
 	BuildingDef(
 		latitude=37.56408131456686, 
 		longitude=126.93474450888216,
-		name="과학관"),
-	BuildingDef(
-		latitude=37.56312983169124, 
-		longitude=126.93380726576062,
-		name="첨단과학기술연구관")
+		name="Science Hall")
 	]
 	
 

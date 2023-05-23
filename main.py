@@ -391,6 +391,50 @@ def display(img,*,stereo_right=None,frame_name=None):
 			print("  ",walls[i].plane_definition)
 			print("  ",walls[i].normal_vector)
 			print("  ",walls[i].center_real)'''
+		
+		
+	if arguments.use_gps:
+		loop_timer.split(starting="GPS Operations")
+		location=ps.get_location()
+		velocity=ps.get_velocity()
+		gps_valid=(location is not None) and (velocity is not None)
+		
+		building_candidates=[]
+		if gps_valid:
+			
+			speed=Tuples.mag(velocity)
+			print(F"Location {location} | Speed {speed:.2f}m/s")
+			loc2d=(location.x,location.y) #X,Y only
+			vel2d=velocity[:2] #X,Y only
+			
+			
+			heading = Tuples.normalize(vel2d) # Heading unit vector
+			heading_deg = Tuples.degree(heading)
+			looking= Tuples.rotate(heading,deg=arguments.gps_look_offset)
+			looking_deg= Tuples.degree(looking)
+			print(F"Heading {heading_deg:.1f}deg | Looking {looking_deg:.1f}deg")
+			
+			for b in building_definitions.buildings_lgc:
+				building_location=(b.lgc.x,b.lgc.y)
+				building_diff=Tuples.sub(building_location,loc2d)
+				lookdiff=Tuples.degree_between(building_diff,looking)
+				distance=Tuples.mag(building_diff)
+				cosdiff=Tuples.cosine_between(building_diff,looking)
+				
+				closeness = cosdiff * 1000/distance
+				
+				print(F"Building {b.name} | LookAngle {lookdiff:.1f}deg | Distance {distance:.1f}m | Closeness {closeness:.5f}")
+				if distance<magic.gps.building_distance_cutoff:
+					building_candidates.append((closeness,b))
+			building_candidates.sort(reverse=True)
+			building_candidates=[i[1] for i in building_candidates]
+			if building_candidates:
+				print("Best match:",building_candidates[0])
+			
+				
+				
+			
+		
 	
 	if arguments.debug_output != "nothing":
 		loop_timer.split(starting="Segment Visuals")
@@ -508,53 +552,22 @@ def display(img,*,stereo_right=None,frame_name=None):
 				st.put_string("/info1",str(frame_name))
 			
 			if arguments.use_gps:
-				location=ps.get_location()
-				velocity=ps.get_velocity()
-				
 				st.put_string("/info2",str(location)+" / "+str(velocity))
-				st.put_string("/info3","No building match...")
-			
-				if (location is not None) and (velocity is not None):
-					
-					speed=Tuples.mag(velocity)
-					print(F"Location {location} | Speed {speed:.2f}m/s")
-					loc2d=(location.x,location.y) #X,Y only
-					vel2d=velocity[:2] #X,Y only
-					
-					
-					heading = Tuples.normalize(vel2d) # Heading unit vector
-					heading_deg = Tuples.degree(heading)
-					looking= Tuples.rotate(heading,deg=arguments.gps_look_offset)
-					looking_deg= Tuples.degree(looking)
-					print(F"Heading {heading_deg:.1f}deg | Looking {looking_deg:.1f}deg")
-					
-					candidates=[]
-					for b in building_definitions.buildings_lgc:
-						building_location=(b.lgc.x,b.lgc.y)
-						building_diff=Tuples.sub(building_location,loc2d)
-						lookdiff=Tuples.degree_between(building_diff,looking)
-						distance=Tuples.mag(building_diff)
-						cosdiff=Tuples.cosine_between(building_diff,looking)
-						
-						closeness = cosdiff * 1000/distance
-						
-						print(F"Building {b.name} | LookAngle {lookdiff:.1f}deg | Distance {distance:.1f}m | Closeness {closeness:.5f}")
-						if distance<magic.gps.building_distance_cutoff:
-							candidates.append((closeness,b))
-					candidates.sort(reverse=True)
-					if candidates:
-						best=candidates[0][1]
-						st.put_string("/info3","Looking at building: "+best.name)
-						
+				
+				if gps_valid:
+					if building_candidates:
+						st.put_string("/info3","Looking at building: "+building_candidates[0].name)
+					else:
+						st.put_string("/info3","No building match...")
 					st.put_json("/gpsvis",
 						webdata.gpsinfo_json(
 							position=location.to_tuple(),
 							velocity_direction=heading, 
 							looking_direction=looking,
-							buildings=[i[1] for i in candidates[:10]]))
+							buildings=building_candidates[:10]))
 				else:
+					st.put_string("/info3","")
 					st.clear_data("/gpsvis")
-					
 				
 			# Depths
 			if arguments.visualize_depth_matrix:
@@ -596,6 +609,16 @@ def display(img,*,stereo_right=None,frame_name=None):
 	seg3dText_json=webdata.seg3d_to_text_json(
 		seg3ds,use_flat=arguments.flatten_segments)
 	
+	if arguments.use_gps:
+		if building_candidates:
+			name=building_candidates[0].name
+		else:
+			name="???"
+		for s3d in seg3ds:
+			if s3d.name=="building":
+				seg3dText_json.append(webdata.seg3d_building_to_text_json(
+					s3d,name))
+			
 	st.put_json("/texts",seg3dText_json)
 	if arguments.pointcloud:
 		loop_timer.split(starting="Mainpage Point Cloud")

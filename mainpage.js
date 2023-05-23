@@ -213,38 +213,41 @@ function setTexts(textList){
         for (var i=0;i<textList.length;i++){
             let tContent=textList[i]["text"];
             let tSize=textList[i]["size"];
+            
             let x=textList[i]["x"];
             let y=textList[i]["y"];
             let z=textList[i]["z"];
-
             
+            let r=textList[i]["r"];
+            let g=textList[i]["g"];
+            let b=textList[i]["b"];
 
-                const textGeom = new TextGeometry( tContent, {
-                    font: font,
-                    size: tSize, //80,
-                    height: tSize/10, //5,
-                    curveSegments: 12,
-                    //bevelEnabled: true,
-                    //bevelThickness: 10,
-                    //bevelSize: 8,
-                    //bevelOffset: 0,
-                    //bevelSegments: 5
-                } );
-                
-                textGeom.computeBoundingBox();
-                //textGeom.translate(-textGeom.boundingBox.max.x/2,0,0);
-                textGeom.center();
-                
-                const textMat= new THREE.MeshBasicMaterial();
-                //objMat.side=THREE.DoubleSide;
-                const textMesh = new THREE.Mesh(textGeom,textMat);
-                textMat.color=new THREE.Color(0,1,1);
-                textMesh.position.x=x;
-                textMesh.position.y=y;
-                textMesh.position.z=z;
-
-                new_texts.push(textMesh);
+            const textGeom = new TextGeometry( tContent, {
+                font: font,
+                size: tSize, //80,
+                height: tSize/10, //5,
+                curveSegments: 12,
+                //bevelEnabled: true,
+                //bevelThickness: 10,
+                //bevelSize: 8,
+                //bevelOffset: 0,
+                //bevelSegments: 5
+            } );
             
+            textGeom.computeBoundingBox();
+            //textGeom.translate(-textGeom.boundingBox.max.x/2,0,0);
+            textGeom.center();
+            
+            const textMat= new THREE.MeshBasicMaterial();
+            //objMat.side=THREE.DoubleSide;
+            const textMesh = new THREE.Mesh(textGeom,textMat);
+            textMat.color=new THREE.Color(r,g,b);
+            textMesh.position.x=x;
+            textMesh.position.y=y;
+            textMesh.position.z=z;
+
+            new_texts.push(textMesh);
+        
         }
         
         for (var i=0;i<new_texts.length;i++){

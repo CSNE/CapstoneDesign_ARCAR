@@ -81,9 +81,29 @@ def seg3d_to_text_json(seg3ds:typing.List[combined.Segment3D],use_flat=False):
 			"size":sz,
 			"x":x,
 			"y":y+sz/2,
-			"z":z})
+			"z":z,
+			"r":0.0,
+			"g":1.0,
+			"b":1.0})
 	return obj
-
+	
+def seg3d_building_to_text_json(seg3d:combined.Segment3D,name):
+	
+	x=(seg3d.bbox_flat.xmin+seg3d.bbox_flat.xmax)/2
+	y=(seg3d.bbox_flat.ymin+seg3d.bbox_flat.ymax)/2
+	z=seg3d.bbox_flat.zmin
+	sz=0.10*abs(z)
+		
+	return {
+		"text":name,
+		"size":sz,
+		"x":x,
+		"y":y+sz/2,
+		"z":z,
+		"r":1.0,
+		"g":1.0,
+		"b":0.0}
+	
 def wall_to_json(pmrs:typing.List[building_detect.PlaneMatchResult]):
 	obj=[]
 	for pmr in pmrs:
