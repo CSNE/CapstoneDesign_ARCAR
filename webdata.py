@@ -45,7 +45,9 @@ def depthmap_to_pointcloud_json(*,
 	return res
 
 
-def seg3d_to_json(seg3ds:typing.List[combined.Segment3D],use_flat=False):
+def seg3d_to_json(
+		seg3ds:typing.List[combined.Segment3D],
+		use_flat=False):
 	obj=[]
 	for seg3d in seg3ds:
 		pointlist=[]
@@ -67,7 +69,9 @@ Text3D = collections.namedtuple(
 centerMM = lambda l: (min(l)+max(l))/2 #Min-Max Center
 median = lambda l: sorted(l)[len(l)/2]
 avg=lambda l: sum(l)/len(l)
-def seg3d_to_text_json(seg3ds:typing.List[combined.Segment3D],use_flat=False):
+def seg3d_to_text_json(
+		seg3ds:typing.List[combined.Segment3D],
+		use_flat=False):
 	obj=[]
 	for seg3d in seg3ds:
 
@@ -115,6 +119,7 @@ def wall_to_json(pmrs:typing.List[building_detect.PlaneMatchResult]):
 			"y":pmr.center_real.y,
 			"z":pmr.center_real.z})
 	return obj
+
 
 def gpsinfo_json(*,
 	position,velocity_direction, looking_direction,

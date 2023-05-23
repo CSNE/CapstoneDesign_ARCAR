@@ -39,9 +39,27 @@ controls.target=new THREE.Vector3( 0, 0, -3 );
 camera.position.set( 0, 0, 0 );
 controls.update();
 
+var cameraVelocity=[-1,0,0];
+var lastUpdateTime=0;
 // Anim Loop
 function animation( time ) {
     controls.update();
+    
+    var deltaT=(time-lastUpdateTime)/1000; //seconds
+    lastUpdateTime=time;
+    
+    var moveTarget=[]
+        .concat(object_walls)
+        .concat(object_texts)
+        .concat(object_points)
+        .concat(wire_meshes);
+    for (var i in moveTarget){
+        var obj=moveTarget[i];
+        obj.position.x-=cameraVelocity[0]*deltaT;
+        obj.position.y-=cameraVelocity[1]*deltaT;
+        obj.position.z-=cameraVelocity[2]*deltaT;
+    }
+    
     renderer.render( scene, camera );
 }
 
@@ -61,6 +79,15 @@ function request(location,succ,fail){
     xhr.send();
 }
 
+function updateCV(){
+    request(
+        "camVelocity",
+        function(resp){
+            cameraVelocity=JSON.parse(resp);
+            console.log(cameraVelocity);
+        },
+        function(){});
+}
 
 // Display: Seg3D
 function buildWireMesh(pointlist){
@@ -430,6 +457,7 @@ function updateCheck(){
                 last_update_flag=resp;
                 updateSeg3D();
                 updateTexts();
+                updateCV();
                 if (webpageConfig["pointcloud"]) updatePC();
                 if (webpageConfig["walls"]) updateWalls();
             }

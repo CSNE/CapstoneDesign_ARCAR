@@ -58,7 +58,7 @@ class psm:
 	multiplier=40
 class igev:
 	# Multiplier for depth estimate
-	multiplier=50
+	multiplier=20
 	
 class segdepth:
 	# if less than this ratio of pixels have valid depth data,

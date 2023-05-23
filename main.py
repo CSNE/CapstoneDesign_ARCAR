@@ -232,6 +232,11 @@ st.put_string("/info1",'')
 st.put_string("/info2",'')
 st.put_string("/info3",'')
 
+st.put_json("/camVelocity",[0,0,0])
+
+# 0deg = [0,1] +90deg=[-1,0] -90deg=[+1,0]
+unit_velocity=Tuples.rotate([0,1],deg=arguments.gps_look_offset)
+
 if arguments.debug_output=="web":
 	with open("webpage.html","rb") as f:
 		page=f.read().replace(webconfig_key,webconfig_data)
@@ -410,10 +415,16 @@ def display(img,*,stereo_right=None,frame_name=None):
 			loc2d=(location.x,location.y) #X,Y only
 			vel2d=velocity[:2] #X,Y only
 			
+			speed=Tuples.mag(vel2d)
 			
-			heading = Tuples.normalize(vel2d) # Heading unit vector
-			heading_deg = Tuples.degree(heading)
+			if speed > 0.001: #1mm/sec
+				heading = Tuples.normalize(vel2d) # Heading unit vector
+			else:
+				heading = [1,0]
+				if arguments.verblevel>1:
+					print("Speed near zero. Insert fake heading [1,0]")
 			looking= Tuples.rotate(heading,deg=arguments.gps_look_offset)
+			heading_deg = Tuples.degree(heading)
 			looking_deg= Tuples.degree(looking)
 			if arguments.verblevel>1:
 				print(F"Heading {heading_deg:.1f}deg | Looking {looking_deg:.1f}deg")
@@ -609,10 +620,12 @@ def display(img,*,stereo_right=None,frame_name=None):
 	
 	loop_timer.split(starting="Update Main Page")
 	seg3d_json=webdata.seg3d_to_json(
-		seg3ds,use_flat=arguments.flatten_segments)
+		seg3ds,
+		use_flat=arguments.flatten_segments)
 	st.put_json("/seg3d",seg3d_json)
 	seg3dText_json=webdata.seg3d_to_text_json(
-		seg3ds,use_flat=arguments.flatten_segments)
+		seg3ds,
+		use_flat=arguments.flatten_segments)
 	
 	if arguments.use_gps:
 		if building_candidates:
@@ -623,6 +636,10 @@ def display(img,*,stereo_right=None,frame_name=None):
 			if s3d.name=="building":
 				seg3dText_json.append(webdata.seg3d_building_to_text_json(
 					s3d,name))
+		if gps_valid:
+			velvec=Tuples.mult(unit_velocity,speed)
+			print("VV",velvec)
+			st.put_json("/camVelocity",[-velvec[0],0,velvec[1]])
 			
 	st.put_json("/texts",seg3dText_json)
 	if arguments.pointcloud:
