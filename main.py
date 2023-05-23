@@ -364,8 +364,9 @@ def display(img,*,stereo_right=None,frame_name=None):
 				walldepth_blurred.shape,
 				(magic.walls.prescale_depth[1],magic.walls.prescale_depth[0]))
 			walldepth_scaled=maths.resize_matrix(walldepth_blurred,walldepth_size)
-			print("Resize Wall Depth",walldepth_blurred.shape,
-				"->",walldepth_scaled.shape)
+			if arguments.verblevel>1:
+				print("Resize Wall Depth",walldepth_blurred.shape,
+					"->",walldepth_scaled.shape)
 			
 		else:
 			walldepth_scaled=walldepth_blurred
@@ -382,8 +383,9 @@ def display(img,*,stereo_right=None,frame_name=None):
 			magic.walls.derivative_radius,
 			ss2rsm_walldepth)
 		
-		walls=[i for i in walls_unfiltered if i.match_ratio>magic.walls.match_threshold] #MAGIC: match thresh
-		print(F"{len(walls)} walls detected.                     ")
+		walls=[i for i in walls_unfiltered if i.match_ratio>magic.walls.match_threshold] 
+		if arguments.verblevel>0:
+			print(F"{len(walls)} walls detected.                     ")
 		'''
 		for i in range(len(walls[:4])):
 			print(i)
@@ -403,7 +405,8 @@ def display(img,*,stereo_right=None,frame_name=None):
 		if gps_valid:
 			
 			speed=Tuples.mag(velocity)
-			print(F"Location {location} | Speed {speed:.2f}m/s")
+			if arguments.verblevel>1:
+				print(F"Location {location} | Speed {speed:.2f}m/s")
 			loc2d=(location.x,location.y) #X,Y only
 			vel2d=velocity[:2] #X,Y only
 			
@@ -412,7 +415,8 @@ def display(img,*,stereo_right=None,frame_name=None):
 			heading_deg = Tuples.degree(heading)
 			looking= Tuples.rotate(heading,deg=arguments.gps_look_offset)
 			looking_deg= Tuples.degree(looking)
-			print(F"Heading {heading_deg:.1f}deg | Looking {looking_deg:.1f}deg")
+			if arguments.verblevel>1:
+				print(F"Heading {heading_deg:.1f}deg | Looking {looking_deg:.1f}deg")
 			
 			for b in building_definitions.buildings_lgc:
 				building_location=(b.lgc.x,b.lgc.y)
@@ -422,14 +426,15 @@ def display(img,*,stereo_right=None,frame_name=None):
 				cosdiff=Tuples.cosine_between(building_diff,looking)
 				
 				closeness = cosdiff * 1000/distance
-				
-				print(F"Building {b.name} | LookAngle {lookdiff:.1f}deg | Distance {distance:.1f}m | Closeness {closeness:.5f}")
+				if arguments.verblevel>2:
+					print(F"Building {b.name} | LookAngle {lookdiff:.1f}deg | Distance {distance:.1f}m | Closeness {closeness:.5f}")
 				if distance<magic.gps.building_distance_cutoff:
 					building_candidates.append((closeness,b))
 			building_candidates.sort(reverse=True)
 			building_candidates=[i[1] for i in building_candidates]
 			if building_candidates:
-				print("Best match:",building_candidates[0])
+				if arguments.verblevel>1:
+					print("Best match:",building_candidates[0])
 			
 				
 				
@@ -450,16 +455,16 @@ def display(img,*,stereo_right=None,frame_name=None):
 			loop_timer.split(starting="Depth Matrix Visuals")
 			if arguments.stereo_solvers["monodepth"]:
 				dvis_md=visualizations.visualize_matrix(
-					depth_monodepth,"MonoDepth")
+					depth_monodepth,"MonoDepth",clip_values=(0,50))#)
 			if arguments.stereo_solvers["opencv"]:
 				dvis_cv=visualizations.visualize_matrix(
-					depth_opencv,"OpenCV",clip_percentiles=(5,95))
+					depth_opencv,"OpenCV",clip_values=(0,50))#clip_percentiles=(5,95))
 			if arguments.stereo_solvers["psm"]:
 				dvis_psm=visualizations.visualize_matrix(
-					depth_psm,"PSMNet",clip_percentiles=(5,95))
+					depth_psm,"PSMNet",clip_values=(0,50))#,clip_percentiles=(5,95))
 			if arguments.stereo_solvers["igev"]:
 				dvis_igev=visualizations.visualize_matrix(
-					depth_igev,"IGEV",clip_percentiles=(5,85))
+					depth_igev,"IGEV",clip_values=(0,50))#,clip_percentiles=(5,85))
 		
 		
 		if arguments.detect_walls:
@@ -676,7 +681,7 @@ def capture_loop():
 			if arguments.singleframe: break
 	elif arguments.source=="stereo_playback":
 		sp=stereo_playback.StereoPlayback(arguments.infile)
-		
+		sp.play()
 		force_refresh=False
 		def pch(q):
 			nonlocal force_refresh
@@ -712,8 +717,8 @@ def capture_loop():
 			framepath=sp.get_frame_fp()[0]
 			#print("Read frame",framepath)
 			last_fidx=sp.frameindex
-			if sp.over():
-				break
+			#if sp.over():
+			#	break
 			iL,iR=sp.get_frame()
 			display(iL,stereo_right=iR,
 				frame_name=framepath)

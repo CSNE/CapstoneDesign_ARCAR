@@ -21,7 +21,7 @@ class FakeSerial:
 	
 		
 if __name__=="__main__":
-	ser = serial.Serial('/dev/ttyACM1', 9600, timeout=0)
+	ser = serial.Serial('/dev/ttyACM0', 9600, timeout=0)
 
 	data=[]
 	startT=time.time()
@@ -51,7 +51,7 @@ if __name__=="__main__":
 			break
 
 	print("Save...")
-	with open("gps_1.json","w") as f:
+	with open("gsc3.json","w") as f:
 		#print(data)
 		#print(f)
 		json.dump(data,f,indent=2)

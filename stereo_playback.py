@@ -48,7 +48,7 @@ class StereoPlayback:
     def update(self):
         if self._is_playing:
             dT=time.time()-self._play_start_walltime
-            self.set_time((dT+self._play_start_vidtime)*1000)
+            self.set_time(dT*1000+self._play_start_vidtime)
     def set_time(self,ms):
         #print("time set",ms)
         while (self._fidx+1)<len(self._frames):
