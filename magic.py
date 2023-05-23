@@ -72,4 +72,4 @@ class camera:
 	aspect_hv=4/3
 
 class gps:
-	building_distance_cutoff=100
+	building_distance_cutoff=300

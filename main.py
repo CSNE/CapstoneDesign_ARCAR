@@ -233,7 +233,8 @@ st.put_data("/main.html",page)
 with open("mainpage.js","rb") as f:
 	page=f.read().replace(webconfig_key,webconfig_data).replace(camfov_key,camfov_b)
 st.put_data("/mainpage.js",page,"text/javascript")
-with open("helvetiker_regular.typeface.json","rb") as f:
+#with open("helvetiker_regular.typeface.json","rb") as f:
+with open("NanumGothic_Regular.json","rb") as f:
 	fnt=f.read()
 st.put_data("/font.typeface.json",fnt)
 print("Main page active at "+ansi.GREEN+ansi.BOLD+web_url+"/main.html"+ansi.RESET)
@@ -476,16 +477,16 @@ def display(img,*,stereo_right=None,frame_name=None):
 			loop_timer.split(starting="Depth Matrix Visuals")
 			if arguments.stereo_solvers["monodepth"]:
 				dvis_md=visualizations.visualize_matrix(
-					depth_monodepth,"MonoDepth",clip_values=(0,50))#)
+					depth_monodepth,"MonoDepth",clip_values=(0,30))#)
 			if arguments.stereo_solvers["opencv"]:
 				dvis_cv=visualizations.visualize_matrix(
-					depth_opencv,"OpenCV",clip_values=(0,50))#clip_percentiles=(5,95))
+					depth_opencv,"OpenCV",clip_values=(0,30))#clip_percentiles=(5,95))
 			if arguments.stereo_solvers["psm"]:
 				dvis_psm=visualizations.visualize_matrix(
-					depth_psm,"PSMNet",clip_values=(0,50))#,clip_percentiles=(5,95))
+					depth_psm,"PSMNet",clip_values=(0,30))#,clip_percentiles=(5,95))
 			if arguments.stereo_solvers["igev"]:
 				dvis_igev=visualizations.visualize_matrix(
-					depth_igev,"IGEV",clip_values=(0,50))#,clip_percentiles=(5,85))
+					depth_igev,"IGEV",clip_values=(0,30))#,clip_percentiles=(5,85))
 		
 		
 		if arguments.detect_walls:
@@ -590,7 +591,7 @@ def display(img,*,stereo_right=None,frame_name=None):
 							position=location.to_tuple(),
 							velocity_direction=heading, 
 							looking_direction=looking,
-							buildings=building_candidates[:10]))
+							buildings=building_candidates[:30]))
 				else:
 					st.put_string("/info3","")
 					st.clear_data("/gpsvis")
