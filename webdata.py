@@ -11,6 +11,7 @@ import collections
 import building_detect
 import building_definitions
 from typing import List
+import magic
 
 def depthmap_to_pointcloud_json(*,
 	depth_map,color_image,
@@ -78,7 +79,7 @@ def seg3d_to_text_json(
 		x=(seg3d.bbox_flat.xmin+seg3d.bbox_flat.xmax)/2
 		y=seg3d.bbox_flat.ymax
 		z=seg3d.bbox_flat.zmin
-		sz=0.05*abs(z)
+		sz=magic.visuals.text3d_segment_size*abs(z)
 
 		obj.append({
 			"text":seg3d.name,
@@ -96,7 +97,7 @@ def seg3d_building_to_text_json(seg3d:combined.Segment3D,name):
 	x=(seg3d.bbox_flat.xmin+seg3d.bbox_flat.xmax)/2
 	y=(seg3d.bbox_flat.ymin+seg3d.bbox_flat.ymax)/2
 	z=seg3d.bbox_flat.zmin
-	sz=0.10*abs(z)
+	sz=magic.visuals.text3d_building_size*abs(z)
 		
 	return {
 		"text":name,

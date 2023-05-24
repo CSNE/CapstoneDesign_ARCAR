@@ -5,6 +5,9 @@ class visuals:
 	mainpage_pointcloud_count=5000
 	font_size=36
 	
+	text3d_segment_size=0.04
+	text3d_building_size=0.07
+	
 class walls:
 	# Scale the depth map down before running wall detection?
 	do_prescale=True
