@@ -9,10 +9,11 @@ import collections
 
 # Local
 import coordinates
+import magic
 
 ## Model Setup
-model_seg = ultralytics.YOLO("yolov8s-seg.pt")
-
+model_seg_official= ultralytics.YOLO("yolov8s-seg-official.pt")
+model_seg_custom = ultralytics.YOLO("yolov8s-seg-custom.pt")
 
 # namedtuple for storing the segmentation results.
 SegmentationResult=collections.namedtuple(
@@ -22,8 +23,14 @@ SegmentationResult=collections.namedtuple(
 	 "bbox_ratio","bbox_pixel"])
 
 
-
-def segment(pim:PIL.Image,use_cuda=False) -> SegmentationResult:
+def segment(pim:PIL.Image,use_cuda=False):
+	res=[]
+	if magic.yolo.run_official_pretrained_model:
+		res.extend(segment_(pim,model_seg_official,use_cuda))
+	res.extend(segment_(pim,model_seg_custom,use_cuda))
+	return res
+	
+def segment_(pim:PIL.Image,model,use_cuda=False):
 	'''
 	Run segmentation on YOLO, given a PIL image.
 	'''
@@ -32,7 +39,7 @@ def segment(pim:PIL.Image,use_cuda=False) -> SegmentationResult:
 	dev="cpu"
 	if use_cuda:
 		dev="0" #CUDA device 0
-	results_seg=model_seg(pim,device=dev)
+	results_seg=model(pim,device=dev)
 	assert len(results_seg)==1
 	result_seg=results_seg[0]
 

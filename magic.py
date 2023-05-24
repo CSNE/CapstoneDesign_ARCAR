@@ -12,6 +12,11 @@ class visuals:
 	
 	depthvis_absolute_clip=False
 	
+	visual2d_fontsize=24
+	
+class yolo:
+	run_official_pretrained_model=True
+	
 class walls:
 	# Scale the depth map down before running wall detection?
 	do_prescale=True

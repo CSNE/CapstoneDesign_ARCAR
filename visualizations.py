@@ -94,7 +94,7 @@ font_size=magic.visuals.font_size
 font=None
 for font_path in font_list:
 	try:
-		font=PIL.ImageFont.truetype(font_path,size=36)
+		font=PIL.ImageFont.truetype(font_path,size=magic.visuals.visual2d_fontsize)
 		print("Font",font_path.split("/")[-1],"loaded")
 		break
 	except OSError:
@@ -135,7 +135,7 @@ def visualize_seg3d(segdepths,size,bg=None):
 		# Write text
 		draw.text(
 			(bbox_center_X,bbox_center_Y),
-			F"{seg.name}\n{dep:.1f}m\n{dep_percentage:.1f}%",
+			F"{seg.name}\n{dep:.1f}m",
 			fill="#00FFFF",font=font,anchor="ms")
 	return vis
 
