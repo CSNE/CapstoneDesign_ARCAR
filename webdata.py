@@ -56,10 +56,13 @@ def seg3d_to_json(
 		if use_flat: plist=seg3d.point_list_flat
 		else: plist=seg3d.point_list
 		
+		dist=seg3d.bbox_flat.zmin
+		
 		for point in plist:
 			pointlist.append([point.x,point.y,point.z])
 		obj.append(
 			{"name":seg3d.name,
+			 "width":dist*0.005,
 			 "pointlist":pointlist})
 	return obj
 

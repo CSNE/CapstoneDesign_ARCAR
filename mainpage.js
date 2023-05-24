@@ -125,7 +125,7 @@ function buildWireMesh(pointlist){
 }
 
 // Use Catmull-Rom Curve
-function buildWireMeshCC(pointlist){
+function buildWireMeshCC(pointlist,w){
     
     let points=[];
     for (var i in pointlist){
@@ -139,7 +139,7 @@ function buildWireMeshCC(pointlist){
     const geometry = new THREE.TubeGeometry(
         curve,
         128, //Curve Segments
-        0.05, //Radius
+        w/2, //Radius
         4,   //Radial Segments
         true //Closed
     )
@@ -157,8 +157,9 @@ function setSeg3D(s3d){
 
     for (var i in s3d){
         let name = s3d[i]["name"];
+        let width = s3d[i]["width"];
         let pointlist= s3d[i]["pointlist"];
-        let wm=buildWireMeshCC(pointlist);
+        let wm=buildWireMeshCC(pointlist,width);
         new_wires.push(wm);
     }
     
