@@ -6,6 +6,8 @@ class visuals:
 	font_size=36
 	
 	text3d_segment_size=0.04
+	text3d_segment_centerY=True
+	
 	text3d_building_size=0.07
 	
 class walls:

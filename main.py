@@ -647,26 +647,37 @@ def display(img,*,stereo_right=None,frame_name=None):
 		seg3ds,
 		use_flat=arguments.flatten_segments)
 	st.put_json("/seg3d",seg3d_json)
-	seg3dText_json=webdata.seg3d_to_text_json(
-		seg3ds,
-		use_flat=arguments.flatten_segments)
 	
+	seg3dText_json=[]
+	building_text_skip=False
 	if arguments.use_gps:
 		if building_match:
 			name=building_match.name
 		else:
-			name="???"
+			name="(Building?)"
+		
+		building_text_skip=True
+		
 		for s3d in seg3ds:
 			if s3d.name=="building":
 				seg3dText_json.append(webdata.seg3d_building_to_text_json(
 					s3d,name))
+		
 		if gps_valid:
 			velvec=Tuples.mult(unit_velocity,speed)
 			if arguments.verblevel>=2:
 				print("Velocity vector",velvec)
 			st.put_json("/camVelocity",[velvec[0],0,-velvec[1]])
-			
+	
+	if building_text_skip:
+		seg3ds_for_text=[i for i in seg3ds if i.name!="building"]
+	else:
+		seg3ds_for_text=seg3ds
+	seg3dText_json.extend(webdata.seg3d_to_text_json(
+		seg3ds_for_text,
+		use_flat=arguments.flatten_segments))
 	st.put_json("/texts",seg3dText_json)
+	
 	if arguments.pointcloud:
 		loop_timer.split(starting="Mainpage Point Cloud")
 		pc_main=webdata.depthmap_to_pointcloud_json(

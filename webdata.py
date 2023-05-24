@@ -77,7 +77,10 @@ def seg3d_to_text_json(
 	for seg3d in seg3ds:
 
 		x=(seg3d.bbox_flat.xmin+seg3d.bbox_flat.xmax)/2
-		y=seg3d.bbox_flat.ymax
+		if magic.visuals.text3d_segment_centerY:
+			y=(seg3d.bbox_flat.ymin+seg3d.bbox_flat.ymax)/2
+		else:
+			y=seg3d.bbox_flat.ymax
 		z=seg3d.bbox_flat.zmin
 		sz=magic.visuals.text3d_segment_size*abs(z)
 
