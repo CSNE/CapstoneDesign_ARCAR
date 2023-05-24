@@ -72,8 +72,8 @@ class segdepth:
 
 class camera:
 	# Camera parameters
-	reference_distance=5
-	reference_width=8
+	reference_distance=1.96
+	reference_width=1.92
 	aspect_hv=4/3
 
 class gps:
