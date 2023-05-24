@@ -417,6 +417,7 @@ def display(img,*,stereo_right=None,frame_name=None):
 		velocity=ps.get_velocity()
 		gps_valid=(location is not None) and (velocity is not None)
 		
+		building_match=None
 		building_candidates=[]
 		if gps_valid:
 			
@@ -447,16 +448,28 @@ def display(img,*,stereo_right=None,frame_name=None):
 				distance=Tuples.mag(building_diff)
 				cosdiff=Tuples.cosine_between(building_diff,looking)
 				
-				closeness = cosdiff * 1000/distance
+				if distance<10: distance=10
+				if distance>100: distance=100
+				closeness = cosdiff * 1000 * (1/distance)
 				if arguments.verblevel>2:
 					print(F"Building {b.name} | LookAngle {lookdiff:.1f}deg | Distance {distance:.1f}m | Closeness {closeness:.5f}")
 				if distance<magic.gps.building_distance_cutoff:
 					building_candidates.append((closeness,b))
 			building_candidates.sort(reverse=True)
-			building_candidates=[i[1] for i in building_candidates]
+			
+			
 			if building_candidates:
-				if arguments.verblevel>1:
-					print("Best match:",building_candidates[0])
+				building_match=building_candidates[0][1]
+				closeness=building_candidates[0][0]
+				
+				if arguments.verblevel>1: print(F"Best match: {building_match.name} (Closeness {closeness:.5f})")
+				
+				if closeness<0:
+					building_match=None
+					if arguments.verblevel>1: print("  -> Reject due to low closeness.")
+				
+			
+			building_candidates=[i[1] for i in building_candidates]
 			
 				
 				
@@ -582,8 +595,8 @@ def display(img,*,stereo_right=None,frame_name=None):
 				st.put_string("/info2",str(location)+" / "+str(velocity))
 				
 				if gps_valid:
-					if building_candidates:
-						st.put_string("/info3","Looking at building: "+building_candidates[0].name)
+					if building_match:
+						st.put_string("/info3","Looking at building: "+building_match.name)
 					else:
 						st.put_string("/info3","No building match...")
 					st.put_json("/gpsvis",
@@ -639,8 +652,8 @@ def display(img,*,stereo_right=None,frame_name=None):
 		use_flat=arguments.flatten_segments)
 	
 	if arguments.use_gps:
-		if building_candidates:
-			name=building_candidates[0].name
+		if building_match:
+			name=building_match.name
 		else:
 			name="???"
 		for s3d in seg3ds:
