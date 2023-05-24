@@ -10,6 +10,8 @@ class visuals:
 	
 	text3d_building_size=0.07
 	
+	depthvis_absolute_clip=False
+	
 class walls:
 	# Scale the depth map down before running wall detection?
 	do_prescale=True

@@ -487,19 +487,23 @@ def display(img,*,stereo_right=None,frame_name=None):
 			str_dif=PIL.ImageChops.difference(img,stereo_right)
 		
 		if arguments.visualize_depth_matrix:
+			if magic.visuals.depthvis_absolute_clip:
+				cliparg={"clip_values":(0,30)}
+			else:
+				cliparg={"clip_percentiles":(5,90)}
 			loop_timer.split(starting="Depth Matrix Visuals")
 			if arguments.stereo_solvers["monodepth"]:
 				dvis_md=visualizations.visualize_matrix(
-					depth_monodepth,"MonoDepth",clip_values=(0,30))#)
+					depth_monodepth,"MonoDepth",**cliparg)
 			if arguments.stereo_solvers["opencv"]:
 				dvis_cv=visualizations.visualize_matrix(
-					depth_opencv,"OpenCV",clip_values=(0,30))#clip_percentiles=(5,95))
+					depth_opencv,"OpenCV",**cliparg)
 			if arguments.stereo_solvers["psm"]:
 				dvis_psm=visualizations.visualize_matrix(
-					depth_psm,"PSMNet",clip_values=(0,30))#,clip_percentiles=(5,95))
+					depth_psm,"PSMNet",**cliparg)
 			if arguments.stereo_solvers["igev"]:
 				dvis_igev=visualizations.visualize_matrix(
-					depth_igev,"IGEV",clip_values=(0,30))#,clip_percentiles=(5,85))
+					depth_igev,"IGEV",**cliparg)
 		
 		
 		if arguments.detect_walls:
