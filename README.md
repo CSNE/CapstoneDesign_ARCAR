@@ -64,6 +64,11 @@ Argument list (`python3 main.py --help` may be more accurate):
 - `--detect-walls` `-dw` : Enable wall detection.
 - `--visualize-wall-detections` `-vwd` : Visualize wall detection algorithm in the debug page.  
 - `--flatten-segments` `-fs` : Make segments flat.
+- `--skip-matrix-visuals` `-smv` : Don't visualize depth maps in the debug page.  
+- `--gps-device` `-gps` : Select NMEA0183 serial device. Probably COM?? for windows, /dev/tty?? for linux.  
+- `--gps-playback` `-gpb` : Play back GPS data recorded with `gps_record.py`  
+- `--gps-look-offset` `-glo` : Select camera angle rotation, relative to GPS velocity vector direction. Example: `0` if camera looking straight ahead, `-90` for camera mounted on the right side of car.  
+- `--stereo-distance` `-sd` : Specify stereo camera distance. Centimeters. Default 16.  
 
 Examples:  
 `python3 main.py --source=image -i testimg.png --single-frame`  
@@ -71,9 +76,11 @@ Examples:
 `python3 main.py -src webcam -wc 2 -o web`  
 `python3 main.py --source=webcam_stereo --webcam-left 6 --webcam-right 8 --debug_output web --stereo-solvers=psm,igev --solve-resize=640x480`
 `python3 main.py --source=screenshot --screenshot-region=1920,0,3840,1080`  
+`python3 main.py --source=webcam_stereo --webcam-left 1 --webcam-right 2 --debug_output web --stereo-solvers=igev --solve-resize=240x160 --cuda -v --flatten-segments --gps-device COM4 --gps-look-offset -90 --stereo-distance 38`
 
 ## Structure
 `samples/`: Sample stereo images, some captured by us, some downloaded.  
+`gps_rec/`: GPS record data, created with `gps_record.py`  
 `IGEV_Stereo/`: IGEV code, copy of the [original git repo](https://github.com/gangweiX/IGEV). Some modifications made, to make it able to run on a CPU.  
 `monodepth2/`: MonoDepth2 code, submodule from the [original git repo](https://github.com/nianticlabs/monodepth2).  
 `PSMNet/`: PSMNet code, copy of the [original git repo](https://github.com/JiaRenChang/PSMNet). Some modifications made, to make it able to run on a CPU.  
